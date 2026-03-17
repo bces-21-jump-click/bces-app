@@ -2,6 +2,12 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Profiles : lecture publique (autocomplete connexion), écriture auth
+    match /profiles/{profileId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    // Tout le reste : authentifié uniquement
     match /{document=**} {
       allow read, write: if request.auth != null;
     }
