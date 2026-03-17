@@ -1,0 +1,761 @@
+<div class="rh-page">
+  <!-- ── Header ──────────────────────────────── -->
+  <div class="page-header">
+    <h1>👥 Ressources Humaines</h1>
+    <div class="header-actions">
+      <input type="text" placeholder="Rechercher…" class="search-input" [ngModel]="recherche()"
+        (ngModelChange)="recherche.set($event)" />
+      <button class="btn-action" (click)="openAddDialog()">➕ Ajouter</button>
+      <button class="btn-action" (click)="openSpecialtiesDialog()">⭐ Spécialités</button>
+      <div class="procedures-group">
+        @for (cl of RH_CHECKLISTS; track cl.id) {
+        <button class="btn-action btn-action--sm" (click)="openProcedures(cl)">{{ cl.icon }} {{ cl.title }}</button>
+        }
+      </div>
+      <button class="btn-action" (click)="openTrackingDialog()">🎓 Suivi RH</button>
+      <button class="btn-action" (click)="openDirectory()">📒 Annuaire</button>
+      <button class="btn-action" (click)="openCandidaturesDialog()">
+        📥 Candidatures
+        @if (waitingCandidaturesCount() > 0) { <span class="badge">{{ waitingCandidaturesCount() }}</span> }
+      </button>
+      <button class="btn-action" (click)="openPromotionsDialog()">
+        ⬆️ Promotions
+        @if (promotionRequests().length > 0) { <span class="badge">{{ promotionRequests().length }}</span> }
+      </button>
+      <button class="btn-action" (click)="openStatistics()">📊 Stats</button>
+    </div>
+  </div>
+
+  <!-- ── Checklists ──────────────────────────── -->
+  <div class="checklists-section">
+    <div class="checklist-panel">
+      <button class="checklist-header" (click)="weeklyOpen.set(!weeklyOpen())">
+        <h2>📅 Hebdomadaire</h2>
+        @if (weeklyOverdueCount() > 0) { <span class="badge-overdue">{{ weeklyOverdueCount() }} en retard</span> }
+        <span class="chevron" [class.open]="weeklyOpen()">▼</span>
+      </button>
+      @if (weeklyOpen()) {
+      <div class="checklist-tasks">
+        @for (task of weeklyTasks(); track task.id) {
+        <div class="task-item" [class.overdue]="isTaskOverdue(task, 'weekly')" [class.done]="task.done">
+          <input type="checkbox" [checked]="task.done" (change)="toggleTask('weekly', task.id)" />
+          <span class="task-text">{{ task.text }}</span>
+          <span class="task-date">{{ getCheckDate(task) }}</span>
+          <button class="btn-remove-task" (click)="removeTask('weekly', task.id)" title="Supprimer">✕</button>
+        </div>
+        } @empty { <p class="empty-small">Aucune tâche</p> }
+        <button class="btn-add-task" (click)="addTask('weekly')">+ Ajouter</button>
+      </div>
+      }
+    </div>
+
+    <div class="checklist-panel">
+      <button class="checklist-header" (click)="monthlyOpen.set(!monthlyOpen())">
+        <h2>📆 Mensuel</h2>
+        @if (monthlyOverdueCount() > 0) { <span class="badge-overdue">{{ monthlyOverdueCount() }} en retard</span> }
+        <span class="chevron" [class.open]="monthlyOpen()">▼</span>
+      </button>
+      @if (monthlyOpen()) {
+      <div class="checklist-tasks">
+        @for (task of monthlyTasks(); track task.id) {
+        <div class="task-item" [class.overdue]="isTaskOverdue(task, 'monthly')" [class.done]="task.done">
+          <input type="checkbox" [checked]="task.done" (change)="toggleTask('monthly', task.id)" />
+          <span class="task-text">{{ task.text }}</span>
+          <span class="task-date">{{ getCheckDate(task) }}</span>
+          <button class="btn-remove-task" (click)="removeTask('monthly', task.id)" title="Supprimer">✕</button>
+        </div>
+        } @empty { <p class="empty-small">Aucune tâche</p> }
+        <button class="btn-add-task" (click)="addTask('monthly')">+ Ajouter</button>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- ── Table controls ──────────────────────── -->
+  <div class="table-controls">
+    <button class="btn-small" (click)="emailBlur.set(!emailBlur())">
+      {{ emailBlur() ? '👁️ Afficher emails' : '🙈 Masquer emails' }}
+    </button>
+    <span class="employee-count">{{ filteredEmployees().length }} employé(s)</span>
+  </div>
+
+  <!-- ── Employee Table ──────────────────────── -->
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Employé</th>
+        <th>Email</th>
+        <th>Rôle</th>
+        <th>Spécialités</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (e of filteredEmployees(); track e.id) {
+      <tr>
+        <td class="col-name">
+          <span class="employee-name">
+            @if (e.sex === 'F') { <span>👩</span> } @else { <span>👨</span> }
+            <span class="emp-emoji">{{ e.emoji }}</span>
+            <span>{{ e.name }}</span>
+            @if (isBirthday(e)) { <span title="Anniversaire !">🎂</span> }
+            @if (needsHeliReimbursement(e)) {
+            <button class="btn-icon btn-heli" type="button" title="Remboursement hélicoptère"
+              (click)="confirmReimbursement(e)">🚁</button>
+            }
+            @if (e.simpleFault) {
+            <button class="btn-icon indicator-fault" type="button" title="Faute simple"
+              (click)="showFaultDetails(e)">⚠️</button>
+            }
+            @if (e.suspension) { <span class="indicator-suspension" title="Mise à pied">🚫</span> }
+          </span>
+        </td>
+        <td [class.email-blur]="emailBlur()">{{ e.email }}</td>
+        <td><span class="role-badge" [style.background]="obtenirCouleurRole(e.role)">{{ e.role }}</span></td>
+        <td class="col-specialties">
+          @for (s of e.specialties; track s) {
+          <span class="specialty-chip" [class.chief]="(e.chiefSpecialties || []).includes(s)">
+            @if ((e.chiefSpecialties || []).includes(s)) { 👑 }
+            {{ getSpecialtyIcon(s) }} {{ getSpecialtyName(s) }}
+          </span>
+          } @empty { <span class="vide">-</span> }
+        </td>
+        <td class="col-actions">
+          <div class="row-actions">
+            <button class="btn-icon" type="button" title="Modifier" (click)="editEmployee(e)">✏️</button>
+            <button class="btn-icon" type="button" title="Dossier" (click)="openDetails(e)">📁</button>
+            <button class="btn-icon" type="button" title="Supprimer" (click)="openDeleteDialog(e)">🗑️</button>
+            <button class="btn-icon" type="button" title="Faute" (click)="openFaultDialog(e)">⚠️</button>
+            <button class="btn-icon" type="button" title="Mise à pied" (click)="openSuspensionDialog(e)">🚫</button>
+          </div>
+        </td>
+      </tr>
+      } @empty {
+      <tr>
+        <td colspan="5" class="empty">Aucun employé</td>
+      </tr>
+      }
+    </tbody>
+  </table>
+
+  <!-- ═══════════════ DIALOGS ═══════════════ -->
+
+  @if (dialog()) {
+  <div class="overlay" (click)="closeDialog()"></div>
+  }
+
+  <!-- ── Edit Employee ───────────────────────── -->
+  @if (dialog() === 'editEmployee') {
+  <div class="dialog dialog--lg" role="dialog" aria-modal="true">
+    <h2>{{ formTitle() }}</h2>
+    <div class="form-grid">
+      <label class="field"><span>Nom *</span>
+        <input type="text" [ngModel]="editedEmployee().name" (ngModelChange)="updateEdit('name', $event)"
+          name="eName" />
+      </label>
+      <label class="field"><span>Sexe</span>
+        <select [ngModel]="editedEmployee().sex" (ngModelChange)="updateEdit('sex', $event)" name="eSex">
+          <option value="">--</option>
+          <option value="H">Homme</option>
+          <option value="F">Femme</option>
+        </select>
+      </label>
+      <label class="field"><span>Email</span>
+        <input type="email" [ngModel]="editedEmployee().email" (ngModelChange)="updateEdit('email', $event)"
+          name="eEmail" />
+      </label>
+      <label class="field"><span>Téléphone</span>
+        <input type="text" [ngModel]="editedEmployee().phone" (ngModelChange)="updateEdit('phone', $event)"
+          name="ePhone" />
+      </label>
+      <label class="field"><span>Emoji</span>
+        <input type="text" [ngModel]="editedEmployee().emoji" (ngModelChange)="updateEdit('emoji', $event)"
+          name="eEmoji" />
+      </label>
+      <label class="field"><span>Rôle</span>
+        <select [ngModel]="editedEmployee().role" (ngModelChange)="updateEdit('role', $event)" name="eRole">
+          @for (r of ORDRE_ROLES; track r) { <option [value]="r">{{ r }}</option> }
+        </select>
+      </label>
+      <label class="field"><span>Date de naissance</span>
+        <input type="date" [ngModel]="editedEmployee().birthDate" (ngModelChange)="updateEdit('birthDate', $event)"
+          name="eBirth" />
+      </label>
+      <label class="field"><span>Date d'arrivée</span>
+        <input type="date" [ngModel]="editedEmployee().arrivalDate" (ngModelChange)="updateEdit('arrivalDate', $event)"
+          name="eArrival" />
+      </label>
+      <label class="field"><span>Date CDI</span>
+        <input type="date" [ngModel]="editedEmployee().cdiDate" (ngModelChange)="updateEdit('cdiDate', $event)"
+          name="eCdi" />
+      </label>
+      <label class="field"><span>Dernière promotion</span>
+        <input type="date" [ngModel]="editedEmployee().lastPromotionDate"
+          (ngModelChange)="updateEdit('lastPromotionDate', $event)" name="ePromo" />
+      </label>
+      <label class="field"><span>Diplôme médecin</span>
+        <input type="date" [ngModel]="editedEmployee().medicalDegreeDate"
+          (ngModelChange)="updateEdit('medicalDegreeDate', $event)" name="eMed" />
+      </label>
+      <label class="field"><span>Formation hélico</span>
+        <input type="date" [ngModel]="editedEmployee().helicopterTrainingDate"
+          (ngModelChange)="updateEdit('helicopterTrainingDate', $event)" name="eHeli" />
+      </label>
+      <div class="field field--full">
+        <span>Spécialités</span>
+        <div class="chip-select">
+          @for (s of specialties(); track s.id) {
+          <button type="button" class="chip-toggle" [class.selected]="editedEmployee().specialties.includes(s.value)"
+            (click)="toggleEditSpecialty(s.value)">
+            {{ s.icon }} {{ s.name }}
+          </button>
+          }
+        </div>
+      </div>
+      @if (editedEmployee().specialties.length > 0) {
+      <div class="field field--full">
+        <span>Chef de pôle</span>
+        <div class="chip-select">
+          @for (s of editedEmployee().specialties; track s) {
+          <button type="button" class="chip-toggle" [class.selected]="editedEmployee().chiefSpecialties.includes(s)"
+            (click)="toggleEditChiefSpecialty(s)">
+            👑 {{ getSpecialtyName(s) }}
+          </button>
+          }
+        </div>
+      </div>
+      }
+      <div class="field field--full toggle-row">
+        <label><input type="checkbox" [ngModel]="editedEmployee().isRHTrainee"
+            (ngModelChange)="updateEdit('isRHTrainee', $event)" name="eRHTrainee" /> Stagiaire RH</label>
+        <label><input type="checkbox" [ngModel]="editedEmployee().helicopterTrainingReimbursed"
+            (ngModelChange)="updateEdit('helicopterTrainingReimbursed', $event)" name="eHeliReimb" /> Hélico
+          remboursé</label>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="closeDialog()">Annuler</button>
+      <button type="button" class="btn-primary" (click)="saveEmployee()">Enregistrer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Employee Details ────────────────────── -->
+  @if (dialog() === 'details' && selectedEmployee()) {
+  <div class="dialog dialog--md" role="dialog" aria-modal="true">
+    <h2>{{ selectedEmployee()!.emoji }} {{ selectedEmployee()!.name }}</h2>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="label">Email</span><span>{{ selectedEmployee()!.email }}</span></div>
+      <div class="detail-item"><span class="label">Téléphone</span><span>{{ selectedEmployee()!.phone }}</span></div>
+      <div class="detail-item"><span class="label">Rôle</span><span class="role-badge"
+          [style.background]="obtenirCouleurRole(selectedEmployee()!.role)">{{ selectedEmployee()!.role }}</span></div>
+      <div class="detail-item"><span class="label">Sexe</span><span>{{ selectedEmployee()!.sex === 'H' ? 'Homme' :
+          selectedEmployee()!.sex === 'F' ? 'Femme' : '-' }}</span></div>
+      <div class="detail-item"><span class="label">Naissance</span><span>{{ formatDate(selectedEmployee()!.birthDate) }}
+          @if (calculateAge(selectedEmployee()!.birthDate) !== null) { ({{ calculateAge(selectedEmployee()!.birthDate)
+          }} ans) }</span></div>
+      <div class="detail-item"><span class="label">Arrivée</span><span>{{ formatDate(selectedEmployee()!.arrivalDate)
+          }}</span></div>
+      <div class="detail-item"><span class="label">Ancienneté</span><span>{{
+          calculateSeniority(selectedEmployee()!.arrivalDate) }}</span></div>
+      <div class="detail-item"><span class="label">CDI</span><span>{{ formatDate(selectedEmployee()!.cdiDate) }} @if
+          (calculateDays(selectedEmployee()!.cdiDate) !== null) { ({{ calculateDays(selectedEmployee()!.cdiDate) }} j)
+          }</span></div>
+      <div class="detail-item"><span class="label">Dernière promotion</span><span>{{
+          formatDate(selectedEmployee()!.lastPromotionDate) }} @if (calculateDays(selectedEmployee()!.lastPromotionDate)
+          !== null) { ({{ calculateDays(selectedEmployee()!.lastPromotionDate) }} j) }</span></div>
+      <div class="detail-item"><span class="label">Diplôme médecin</span><span>{{
+          formatDate(selectedEmployee()!.medicalDegreeDate) }}</span></div>
+      <div class="detail-item"><span class="label">Formation hélico</span><span>{{
+          formatDate(selectedEmployee()!.helicopterTrainingDate) }}</span></div>
+      <div class="detail-item"><span class="label">Hélico remboursé</span><span>{{
+          selectedEmployee()!.helicopterTrainingReimbursed ? '✅' : '❌' }}</span></div>
+    </div>
+    <div class="detail-specialties">
+      <span class="label">Spécialités</span>
+      <div class="chip-list">
+        @for (s of selectedEmployee()!.specialties; track s) {
+        <span class="specialty-chip" [class.chief]="(selectedEmployee()!.chiefSpecialties || []).includes(s)">
+          @if ((selectedEmployee()!.chiefSpecialties || []).includes(s)) { 👑 }
+          {{ getSpecialtyIcon(s) }} {{ getSpecialtyName(s) }}
+        </span>
+        } @empty { <span class="vide">Aucune</span> }
+      </div>
+    </div>
+    @if (selectedEmployee()!.simpleFault) {
+    <div class="alerte">⚠️ Faute : {{ selectedEmployee()!.simpleFault!.reason }} — expire le {{
+      formatDate(selectedEmployee()!.simpleFault!.expireDate) }}
+      <button class="btn-small btn-danger" type="button" (click)="deleteFault(selectedEmployee()!)">Retirer</button>
+    </div>
+    }
+    @if (selectedEmployee()!.suspension) {
+    <div class="alerte danger">🚫 Mise à pied : du {{ selectedEmployee()!.suspension!.startDate }} au {{
+      selectedEmployee()!.suspension!.endDate }} ({{ selectedEmployee()!.suspension!.duration }} j)
+      <button class="btn-small btn-danger" type="button"
+        (click)="deleteSuspension(selectedEmployee()!)">Retirer</button>
+    </div>
+    }
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="editEmployee(selectedEmployee()!)">✏️ Modifier</button>
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Delete Employee ─────────────────────── -->
+  @if (dialog() === 'deleteEmployee' && selectedEmployee()) {
+  <div class="dialog dialog--sm" role="dialog" aria-modal="true">
+    <h2>🗑️ Supprimer {{ selectedEmployee()!.name }}</h2>
+    <p>Cette action est irréversible.</p>
+    <label class="field"><span>Raison *</span>
+      <select [ngModel]="deleteReason()" (ngModelChange)="deleteReason.set($event)" name="delReason">
+        <option value="">Choisir…</option>
+        @for (r of DELETE_REASONS; track r) { <option [value]="r">{{ r }}</option> }
+      </select>
+    </label>
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="closeDialog()">Annuler</button>
+      <button type="button" class="btn-danger" [disabled]="!deleteReason()" (click)="confirmDelete()">Confirmer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Specialties ─────────────────────────── -->
+  @if (dialog() === 'specialties') {
+  <div class="dialog dialog--md" role="dialog" aria-modal="true">
+    <h2>⭐ Spécialités</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Emoji</th>
+          <th>Nom</th>
+          <th>RDV</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of specialties(); track s.id) {
+        <tr>
+          <td>{{ s.icon }}</td>
+          <td>{{ s.name }}</td>
+          <td>
+            <button class="btn-small" type="button" (click)="toggleSpecialtyAppointments(s)">{{ s.canTakeAppointments ?
+              '✅' : '❌' }}</button>
+          </td>
+          <td class="row-actions">
+            <button class="btn-icon" type="button" (click)="editSpecialtyItem(s)">✏️</button>
+            <button class="btn-icon" type="button" (click)="deleteSpecialty(s)">🗑️</button>
+          </td>
+        </tr>
+        } @empty { <tr>
+          <td colspan="4" class="empty">Aucune spécialité</td>
+        </tr> }
+      </tbody>
+    </table>
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="openAddSpecialty()">➕ Ajouter</button>
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Edit Specialty ──────────────────────── -->
+  @if (dialog() === 'editSpecialty') {
+  <div class="dialog dialog--sm" role="dialog" aria-modal="true">
+    <h2>{{ editedSpecialty().id ? 'Modifier' : 'Nouvelle' }} spécialité</h2>
+    <div class="form-grid">
+      <label class="field"><span>Nom *</span>
+        <input type="text" [ngModel]="editedSpecialty().name" (ngModelChange)="updateSpecialty('name', $event)"
+          name="sName" />
+      </label>
+      <label class="field"><span>Emoji</span>
+        <input type="text" [ngModel]="editedSpecialty().icon" (ngModelChange)="updateSpecialty('icon', $event)"
+          name="sIcon" />
+      </label>
+      <label class="field"><span>Valeur</span>
+        <input type="text" [ngModel]="editedSpecialty().value" (ngModelChange)="updateSpecialty('value', $event)"
+          name="sValue" />
+      </label>
+      <label class="field toggle-row">
+        <input type="checkbox" [ngModel]="editedSpecialty().canTakeAppointments"
+          (ngModelChange)="updateSpecialty('canTakeAppointments', $event)" name="sAppt" />
+        Prend des RDV
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="dialog.set('specialties')">Retour</button>
+      <button type="button" class="btn-primary" (click)="saveSpecialty()">Enregistrer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Procedures ──────────────────────────── -->
+  @if (dialog() === 'procedures' && selectedChecklist()) {
+  <div class="dialog dialog--lg" role="dialog" aria-modal="true">
+    <h2>{{ selectedChecklist()!.icon }} {{ selectedChecklist()!.title }}</h2>
+    <div class="progress-bar-container">
+      <div class="progress-bar" [style.width.%]="checklistProgress()"></div>
+      <span class="progress-label">{{ checklistProgress() }}%</span>
+    </div>
+    <div class="procedures-list">
+      @for (step of selectedChecklist()!.steps; track $index) {
+      @if (isStepHeader(step)) {
+      <h3 class="step-header">{{ getStepHeader(step) }}</h3>
+      } @else {
+      <div class="step-item" [class.checked]="checklistSteps()[$index]">
+        <input type="checkbox" [checked]="checklistSteps()[$index]" (change)="toggleChecklistStep($index)" />
+        <span class="step-text">
+          {{ getStepText(step) }}
+          @if (getStepLink(step); as link) {
+          <a [href]="link.url" target="_blank" rel="noopener noreferrer" class="step-link">🔗 {{ link.text }}</a>
+          }
+        </span>
+      </div>
+      }
+      }
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Tracking Selection ──────────────────── -->
+  @if (dialog() === 'trackingSelection') {
+  <div class="dialog dialog--md" role="dialog" aria-modal="true">
+    <h2>🎓 Suivi RH — Choisir un stagiaire</h2>
+    <div class="trainee-list">
+      @for (e of rhTrainees(); track e.id) {
+      <button class="trainee-item" type="button" (click)="selectTrainee(e)">
+        {{ e.emoji }} {{ e.name }}
+        <span class="role-badge" [style.background]="obtenirCouleurRole(e.role)">{{ e.role }}</span>
+      </button>
+      } @empty { <p class="empty">Aucun stagiaire RH</p> }
+    </div>
+    <hr />
+    <h3>Ajouter / Retirer des stagiaires</h3>
+    <div class="trainee-toggle-list">
+      @for (e of employees(); track e.id) {
+      <label class="trainee-toggle">
+        <input type="checkbox" [checked]="e.isRHTrainee" (change)="toggleRHTrainee(e)" />
+        {{ e.name }}
+      </label>
+      }
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Tracking ────────────────────────────── -->
+  @if (dialog() === 'tracking' && selectedTrackingEmployee()) {
+  <div class="dialog dialog--lg" role="dialog" aria-modal="true">
+    <h2>🎓 Suivi de {{ selectedTrackingEmployee()!.name }}</h2>
+    @for (group of RH_VALIDATION; track group.id) {
+    <div class="tracking-group">
+      <div class="tracking-group-header">
+        <h3>{{ group.title }}</h3>
+        <div class="progress-bar-container progress-bar--small">
+          <div class="progress-bar" [style.width.%]="getCategoryProgress(group)"
+            [style.background]="getCompetencyColor(getCategoryProgress(group))"></div>
+          <span class="progress-label">{{ getCategoryProgress(group) }}%</span>
+        </div>
+      </div>
+      <div class="tracking-items">
+        @for (item of group.items; track item.id) {
+        <button class="tracking-item" type="button" (click)="toggleCompetency(item.id)">
+          <span class="tracking-status" [style.background]="getRHStatusObj(item.id).color">
+            {{ getRHStatusObj(item.id).icon }}
+          </span>
+          <span>{{ item.title }}</span>
+          <span class="tracking-label">{{ getRHStatusObj(item.id).label }}</span>
+        </button>
+        }
+      </div>
+    </div>
+    }
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="dialog.set('trackingSelection')">Retour</button>
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Directory ───────────────────────────── -->
+  @if (dialog() === 'directory') {
+  <div class="dialog dialog--md" role="dialog" aria-modal="true">
+    <h2>📒 Annuaire</h2>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Rôle</th>
+          <th>Téléphone</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (e of sortedDirectoryEmployees(); track e.id) {
+        <tr>
+          <td>{{ e.emoji }} {{ e.name }}</td>
+          <td><span class="role-badge" [style.background]="obtenirCouleurRole(e.role)">{{ e.role }}</span></td>
+          <td>{{ e.phone }}</td>
+        </tr>
+        }
+      </tbody>
+    </table>
+    <div class="dialog-actions">
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Statistics ──────────────────────────── -->
+  @if (dialog() === 'statistics') {
+  <div class="dialog dialog--lg" role="dialog" aria-modal="true">
+    <h2>📊 Statistiques</h2>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <h3>Effectif total</h3>
+        <span class="stat-big">{{ effectifTotal() }}</span>
+        <p class="stat-note">Hors Temporaire et Non assigné</p>
+      </div>
+      <div class="stat-card">
+        <h3>Parité</h3>
+        <div class="stat-parite">
+          <span>👨 {{ statsParSexe().hommes }}</span>
+          <span>👩 {{ statsParSexe().femmes }}</span>
+        </div>
+      </div>
+      <div class="stat-card stat-card--wide">
+        <h3>Répartition par grade</h3>
+        <div class="stat-bars">
+          @for (s of statsParRole(); track s[0]) {
+          <div class="stat-row">
+            <span class="role-badge" [style.background]="obtenirCouleurRole(s[0])">{{ s[0] }}</span>
+            <div class="stat-bar" [style.width.%]="(s[1] / employees().length) * 100"></div>
+            <span class="stat-val">{{ s[1] }}</span>
+          </div>
+          }
+        </div>
+      </div>
+      <div class="stat-card stat-card--wide">
+        <h3>Spécialités</h3>
+        <div class="stat-bars">
+          @for (s of statsParSpecialite(); track s[0]) {
+          <div class="stat-row">
+            <span class="stat-label">{{ getSpecialtyIcon(s[0]) }} {{ getSpecialtyName(s[0]) }}</span>
+            <div class="stat-bar" [style.width.%]="(s[1] / employees().length) * 100"></div>
+            <span class="stat-val">{{ s[1] }}</span>
+          </div>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Candidatures ────────────────────────── -->
+  @if (dialog() === 'candidatures') {
+  <div class="dialog dialog--lg" role="dialog" aria-modal="true">
+    <div class="dialog-title-row">
+      <h2>📥 Candidatures</h2>
+      <button class="btn-action" type="button" (click)="openCandidatureForm()">➕ Ajouter</button>
+    </div>
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nom</th>
+          <th>Statut</th>
+          <th>Téléphone</th>
+          <th>Email</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of candidatures(); track c.id) {
+        <tr>
+          <td>{{ c.name }}</td>
+          <td><span class="status-badge" [style.background]="getCandidatureStatusColor(c.status)">{{ c.status }}</span>
+          </td>
+          <td>{{ c.phone }}</td>
+          <td>{{ c.email }}</td>
+          <td class="row-actions">
+            <button class="btn-icon" type="button" (click)="openCandidatureForm(c)">✏️</button>
+            <button class="btn-icon" type="button" (click)="deleteCandidature(c)">🗑️</button>
+          </td>
+        </tr>
+        } @empty { <tr>
+          <td colspan="5" class="empty">Aucune candidature</td>
+        </tr> }
+      </tbody>
+    </table>
+    <div class="dialog-actions">
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Candidature Form ────────────────────── -->
+  @if (dialog() === 'candidatureForm') {
+  <div class="dialog dialog--lg" role="dialog" aria-modal="true">
+    <h2>{{ editedCandidature().id ? 'Modifier' : 'Nouvelle' }} candidature</h2>
+    <div class="form-grid">
+      <label class="field"><span>Nom *</span>
+        <input type="text" [ngModel]="editedCandidature().name" (ngModelChange)="updateCandidate('name', $event)"
+          name="cName" />
+      </label>
+      <label class="field"><span>Téléphone *</span>
+        <input type="text" [ngModel]="editedCandidature().phone" (ngModelChange)="updateCandidate('phone', $event)"
+          name="cPhone" />
+      </label>
+      <label class="field field--full"><span>Email * (&#64;discord.gg)</span>
+        <input type="email" [ngModel]="editedCandidature().email" (ngModelChange)="updateCandidate('email', $event)"
+          name="cEmail" />
+      </label>
+      <label class="field"><span>Statut</span>
+        <select [ngModel]="editedCandidature().status" (ngModelChange)="updateCandidate('status', $event)"
+          name="cStatus">
+          @for (s of CANDIDATURE_STATUSES; track s) { <option [value]="s">{{ s }}</option> }
+        </select>
+      </label>
+      <label class="field field--full"><span>Disponibilités</span>
+        <textarea [ngModel]="editedCandidature().availabilities"
+          (ngModelChange)="updateCandidate('availabilities', $event)" name="cAvail" rows="2"></textarea>
+      </label>
+    </div>
+
+    <!-- Voting -->
+    @if (editedCandidature().status === "Entretien en cours d'analyse") {
+    <div class="vote-section">
+      <h3>Avis des RH</h3>
+      <div class="vote-buttons">
+        <button class="btn-vote" [class.active]="myVote() === 'pour'" (click)="vote('pour')">
+          👍 POUR ({{ getVoteCounts(editedCandidature().votes).pour }})
+        </button>
+        <button class="btn-vote btn-vote--contre" [class.active]="myVote() === 'contre'" (click)="vote('contre')">
+          👎 CONTRE ({{ getVoteCounts(editedCandidature().votes).contre }})
+        </button>
+      </div>
+    </div>
+    }
+
+    <!-- Interview -->
+    @if (showInterviewSection()) {
+    <div class="interview-section">
+      <h3>Questionnaire Entretien</h3>
+      @for (q of INTERVIEW_QUESTIONS; track q.key) {
+      <label class="field field--full"><span>{{ q.label }}</span>
+        <textarea [ngModel]="editedCandidature().answers[q.key] || ''" (ngModelChange)="updateAnswer(q.key, $event)"
+          [attr.name]="'q_' + q.key" rows="2" [readonly]="isInterviewReadonly()"></textarea>
+      </label>
+      }
+    </div>
+    }
+
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="dialog.set('candidatures')">Retour</button>
+      <button type="button" class="btn-primary" (click)="saveCandidature()">Sauvegarder</button>
+    </div>
+    @if (editedCandidature().status === "Entretien en cours d'analyse") {
+    <div class="dialog-actions finalize-actions">
+      <button type="button" class="btn-danger" (click)="finalizeCandidature('reject')">❌ Refuser</button>
+      <button type="button" class="btn-success" (click)="finalizeCandidature('accept')">✅ Embaucher</button>
+    </div>
+    }
+  </div>
+  }
+
+  <!-- ── Promotions ──────────────────────────── -->
+  @if (dialog() === 'promotions') {
+  <div class="dialog dialog--md" role="dialog" aria-modal="true">
+    <h2>⬆️ Demandes de promotion</h2>
+    @if (promotionRequests().length > 0) {
+    <div class="promotion-list">
+      @for (emp of promotionRequests(); track emp.id) {
+      <div class="promotion-item">
+        <div class="promotion-info">
+          <strong>{{ emp.name }}</strong>
+          <span class="specialty-chip">{{ getSpecialtyIcon(getPromotionValue(emp)) }} {{
+            getSpecialtyName(getPromotionValue(emp)) }}</span>
+          @if (getPromotionMotivation(emp)) {
+          <p class="promotion-motivation">📝 {{ getPromotionMotivation(emp) }}</p>
+          }
+        </div>
+        <div class="promotion-actions">
+          <button class="btn-success" type="button" (click)="acceptPromotion(emp)">✅ Accepter</button>
+          <button class="btn-danger" type="button" (click)="rejectPromotion(emp)">❌ Refuser</button>
+        </div>
+      </div>
+      }
+    </div>
+    } @else {
+    <p class="empty">Aucune demande en attente</p>
+    }
+    <div class="dialog-actions">
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Fault ───────────────────────────────── -->
+  @if (dialog() === 'fault' && faultEmployee()) {
+  <div class="dialog dialog--sm" role="dialog" aria-modal="true">
+    <h2>⚠️ Ajouter une faute</h2>
+    <p>Employé : <strong>{{ faultEmployee()!.name }}</strong></p>
+    <label class="field field--full"><span>Raison *</span>
+      <textarea [ngModel]="faultReason()" (ngModelChange)="faultReason.set($event)" name="faultReason"
+        rows="3"></textarea>
+    </label>
+    <p class="form-hint">Expire automatiquement après 30 jours.</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="closeDialog()">Annuler</button>
+      <button type="button" class="btn-danger" [disabled]="!faultReason()" (click)="saveFault()">Ajouter</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Fault Details ───────────────────────── -->
+  @if (dialog() === 'faultDetails' && selectedEmployee()?.simpleFault) {
+  <div class="dialog dialog--sm" role="dialog" aria-modal="true">
+    <h2>⚠️ Détails de la faute</h2>
+    <div class="detail-grid">
+      <div class="detail-item"><span class="label">Employé</span><span>{{ selectedEmployee()!.name }}</span></div>
+      <div class="detail-item"><span class="label">Raison</span><span>{{ selectedEmployee()!.simpleFault!.reason
+          }}</span></div>
+      <div class="detail-item"><span class="label">Date</span><span>{{ formatDate(selectedEmployee()!.simpleFault!.date)
+          }}</span></div>
+      <div class="detail-item"><span class="label">Expire le</span><span>{{
+          formatDate(selectedEmployee()!.simpleFault!.expireDate) }}</span></div>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn-primary" (click)="closeDialog()">Fermer</button>
+    </div>
+  </div>
+  }
+
+  <!-- ── Suspension ──────────────────────────── -->
+  @if (dialog() === 'suspension' && suspensionEmployee()) {
+  <div class="dialog dialog--sm" role="dialog" aria-modal="true">
+    <h2>🚫 Mise à pied</h2>
+    <p>Employé : <strong>{{ suspensionEmployee()!.name }}</strong></p>
+    <div class="form-grid">
+      <label class="field"><span>Date de début</span>
+        <input type="date" [ngModel]="suspensionStartDate()" (ngModelChange)="suspensionStartDate.set($event)"
+          name="suspDate" />
+      </label>
+      <label class="field"><span>Durée (jours)</span>
+        <input type="number" min="1" [ngModel]="suspensionDuration()" (ngModelChange)="suspensionDuration.set($event)"
+          name="suspDur" />
+      </label>
+    </div>
+    <div class="dialog-actions">
+      <button type="button" class="btn-secondary" (click)="closeDialog()">Annuler</button>
+      <button type="button" class="btn-primary" (click)="saveSuspension()">Appliquer</button>
+    </div>
+  </div>
+  }
+</div>

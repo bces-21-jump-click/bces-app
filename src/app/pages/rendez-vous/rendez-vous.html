@@ -1,0 +1,61 @@
+<div class="rendez-vous-page">
+    <div class="page-header">
+        <h1>📅 Rendez-vous</h1>
+        <div class="actions">
+            <select [ngModel]="filtreSpecialite()" (ngModelChange)="filtreSpecialite.set($event)">
+                <option value="">Toutes spécialités</option>
+                @for (s of specialites(); track s) {
+                <option [value]="s">{{ s }}</option>
+                }
+            </select>
+            <select [ngModel]="filtreStatut()" (ngModelChange)="filtreStatut.set($event)">
+                <option value="">Tous statuts</option>
+                @for (s of statuts; track s) {
+                <option [value]="s">{{ s }}</option>
+                }
+            </select>
+            <div class="vue-toggle">
+                <button [class.active]="vue() === 'liste'" (click)="vue.set('liste')">📋</button>
+                <button [class.active]="vue() === 'calendrier'" (click)="vue.set('calendrier')">📅</button>
+            </div>
+        </div>
+    </div>
+
+    @if (vue() === 'liste') {
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Heure</th>
+                <th>Patient</th>
+                <th>Médecin</th>
+                <th>Spécialité</th>
+                <th>Motif</th>
+                <th>Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            @for (r of rendezVousFiltres(); track r.id) {
+            <tr>
+                <td>{{ r.date }}</td>
+                <td>{{ r.time }}</td>
+                <td>{{ r.patientName }}</td>
+                <td>{{ r.doctor }}</td>
+                <td>{{ r.specialty }}</td>
+                <td>{{ r.reason }}</td>
+                <td><span class="statut-badge" [class]="getStatutClass(r.status)">{{ r.status }}</span></td>
+            </tr>
+            } @empty {
+            <tr>
+                <td colspan="7" class="empty">Aucun rendez-vous</td>
+            </tr>
+            }
+        </tbody>
+    </table>
+    } @else {
+    <div class="calendrier-placeholder">
+        <p>📅 Vue calendrier</p>
+        <p class="muted">{{ rendezVousFiltres().length }} rendez-vous</p>
+    </div>
+    }
+</div>

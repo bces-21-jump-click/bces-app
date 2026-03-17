@@ -1,0 +1,74 @@
+<div class="connexion-page">
+  <div class="login-card auth-shell">
+    <img src="assets/images/logo.png" alt="BCES Logo" class="logo" />
+    <h1>BCES</h1>
+
+    @if (erreur()) {
+    <div class="erreur" role="alert" aria-live="polite">{{ erreur() }}</div>
+    }
+    @if (succes()) {
+    <div class="succes" role="status" aria-live="polite">{{ succes() }}</div>
+    }
+
+    @if (mode() === 'connexion') {
+    <label for="champ-nom">
+      Nom
+      <select id="champ-nom" [ngModel]="name()" (ngModelChange)="name.set($event)">
+        <option value="" disabled>Sélectionner un profil</option>
+        @for (n of nameList(); track n) {
+        <option [value]="n">{{ n }}</option>
+        }
+      </select>
+    </label>
+
+    <label for="champ-mdp-connexion">
+      Mot de passe
+      <input id="champ-mdp-connexion" type="password" [ngModel]="motDePasse()" (ngModelChange)="motDePasse.set($event)"
+        placeholder="Mot de passe" autocomplete="current-password" (keydown.enter)="soumettre()" />
+    </label>
+
+    <div class="auth-actions">
+      <button class="btn-primary" (click)="soumettre()" [disabled]="chargement()">
+        {{ chargement() ? 'Connexion...' : 'Se connecter' }}
+      </button>
+      <span class="auth-separator">ou</span>
+      <button class="btn-link" type="button" (click)="mode.set('inscription')">Demande d'accès</button>
+    </div>
+
+    } @else {
+
+    <label for="champ-prenom">
+      Prénom [RP]
+      <input id="champ-prenom" type="text" [ngModel]="prenom()" (ngModelChange)="prenom.set($event)"
+        placeholder="Prénom" />
+    </label>
+
+    <label for="champ-nom-inscription">
+      Nom [RP]
+      <input id="champ-nom-inscription" type="text" [ngModel]="nom()" (ngModelChange)="nom.set($event)"
+        placeholder="Nom" />
+    </label>
+
+    <label for="champ-mdp-inscription">
+      Mot de passe
+      <input id="champ-mdp-inscription" type="password" [ngModel]="motDePasse()"
+        (ngModelChange)="motDePasse.set($event)" placeholder="Mot de passe" autocomplete="new-password" />
+    </label>
+
+    <label for="champ-confirmation">
+      Confirmer le mot de passe
+      <input id="champ-confirmation" type="password" [ngModel]="confirmationMotDePasse()"
+        (ngModelChange)="confirmationMotDePasse.set($event)" placeholder="Confirmer le mot de passe"
+        autocomplete="new-password" (keydown.enter)="soumettre()" />
+    </label>
+
+    <div class="auth-actions">
+      <button class="btn-primary" (click)="soumettre()" [disabled]="chargement()">
+        {{ chargement() ? 'Envoi...' : 'Demande d\'accès' }}
+      </button>
+      <span class="auth-separator">ou</span>
+      <button class="btn-link" type="button" (click)="mode.set('connexion')">Se connecter</button>
+    </div>
+    }
+  </div>
+</div>

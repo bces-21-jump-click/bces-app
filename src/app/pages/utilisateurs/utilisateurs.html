@@ -1,0 +1,126 @@
+<div class="utilisateurs-page">
+    <div class="page-header">
+        <h1>Utilisateurs</h1>
+        <div class="actions">
+            <input type="text" placeholder="Rechercher..." [ngModel]="recherche()"
+                (ngModelChange)="recherche.set($event)" class="search-input" />
+        </div>
+    </div>
+
+    @if (erreur()) {
+    <p class="erreur-message">{{ erreur() }}</p>
+    }
+
+    <div class="tabs">
+        <button [class.active]="onglet() === 'utilisateurs'" (click)="onglet.set('utilisateurs')">
+            Utilisateurs
+        </button>
+        <button [class.active]="onglet() === 'demandes'" (click)="onglet.set('demandes')">
+            Demandes en attente
+            @if (nbDemandes() > 0) {
+            <span class="badge">{{ nbDemandes() }}</span>
+            }
+        </button>
+    </div>
+
+    @switch (onglet()) {
+    @case ('utilisateurs') {
+    <div class="tab-content">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Permissions</th>
+                    @if (estAdmin()) {
+                    <th>Actions</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (u of utilisateursFiltres(); track u.id) {
+                <tr>
+                    <td>{{ u.name }}</td>
+                    <td>
+                        @if (u.permissions && u.permissions.length > 0) {
+                        @for (perm of u.permissions; track perm) {
+                        <span class="permission-icon" [title]="permissionName(perm)">{{ permissionIcon(perm) }}</span>
+                        }
+                        } @else {
+                        <span class="vide">Aucune</span>
+                        }
+                    </td>
+                    @if (estAdmin()) {
+                    <td class="col-actions">
+                        <button class="btn-small btn-small--edit" type="button" (click)="ouvrirEdition(u)"
+                            [attr.aria-label]="'Modifier ' + u.name">Modifier</button>
+                    </td>
+                    }
+                </tr>
+                } @empty {
+                <tr>
+                    <td [attr.colspan]="estAdmin() ? 3 : 2" class="empty">Aucun utilisateur</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+
+    @case ('demandes') {
+    <div class="tab-content">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (d of demandes(); track d.id) {
+                <tr>
+                    <td>{{ d.name }}</td>
+                    <td>
+                        <div class="ligne-actions">
+                            <button class="btn-action success" (click)="approuver(d)">Accepter</button>
+                            <button class="btn-action danger" (click)="refuser(d)">Refuser</button>
+                        </div>
+                    </td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="2" class="empty">Aucune demande en attente</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+    }
+
+    @if (dialogOuvert() && utilisateurEdite()) {
+    <div class="backdrop" (click)="fermerEdition()"></div>
+    <div class="dialog" role="dialog" aria-modal="true">
+        <h2>Modifier un utilisateur</h2>
+        <h3>{{ utilisateurEdite()!.name }}</h3>
+
+        <div class="permissions-grid">
+            <h4>Permissions</h4>
+            @for (perm of mesPermissions(); track perm.value) {
+            <label class="permission-checkbox">
+                <input type="checkbox" [checked]="permissionsEditees().includes(perm.value)"
+                    (change)="togglePermission(perm.value)" />
+                <span class="permission-label">{{ perm.icon }} {{ perm.name }}</span>
+            </label>
+            }
+        </div>
+
+        <button class="btn-action danger full-width" type="button"
+            (click)="supprimerUtilisateur(utilisateurEdite()!)">Supprimer cet utilisateur</button>
+
+        <div class="dialog-actions">
+            <button class="btn-primary" type="button" (click)="enregistrerPermissions()">Modifier</button>
+            <button class="btn-secondary" type="button" (click)="fermerEdition()">Annuler</button>
+        </div>
+    </div>
+    }
+</div>

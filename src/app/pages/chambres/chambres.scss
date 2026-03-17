@@ -1,0 +1,311 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.chambres-page {
+  padding: 0.45rem 0.45rem 0.45rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sheet-block {
+  overflow-x: auto;
+  border: 1px solid var(--dispatch-zone-border);
+  border-radius: 8px;
+  background: var(--dispatch-zone-bg);
+  box-shadow:
+    0 2px 8px var(--theme-shadow-soft),
+    0 0 0 1px var(--dispatch-card-border);
+}
+
+.sheet-grid {
+  display: grid;
+  width: max-content;
+  min-width: 100%;
+}
+
+.sheet-grid--6 {
+  grid-template-columns: max-content repeat(6, minmax(145px, 1fr));
+}
+
+.sheet-grid--5 {
+  grid-template-columns: max-content repeat(5, minmax(145px, 1fr));
+}
+
+.sheet-grid--3 {
+  grid-template-columns: max-content repeat(3, minmax(220px, 1fr));
+}
+
+.corner-cell,
+.group-head,
+.column-head,
+.row-label,
+.sheet-cell {
+  min-height: 36px;
+  box-sizing: border-box;
+  font-size: 0.71rem;
+  color: var(--text-primary);
+}
+
+.corner-cell {
+  border: 0;
+  background: transparent;
+}
+
+.corner-cell--double {
+  grid-row: span 2;
+}
+
+.corner-cell--span-2 {
+  grid-column: span 2;
+}
+
+.group-head,
+.column-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 0.38rem 0.85rem;
+  border: 1px solid var(--dispatch-zone-border);
+  background: var(--dispatch-col-header);
+  color: var(--dispatch-col-header-text);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: center;
+  box-shadow: 0 2px 6px var(--theme-shadow-medium);
+}
+
+.group-head--span-3 {
+  grid-column: span 3;
+}
+
+.column-head--top {
+  min-height: 42px;
+}
+
+.row-label {
+  display: flex;
+  align-items: center;
+  padding: 0.28rem 0.55rem;
+  border: 1px solid var(--dispatch-card-border);
+  background: color-mix(in srgb, var(--dispatch-card-bg) 86%, black 14%);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  color: var(--text-secondary);
+}
+
+.sheet-cell {
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--dispatch-card-border);
+  background: var(--dispatch-card-bg);
+  padding: 0.22rem 0.28rem;
+}
+
+.chambre-tone {
+  border-color: color-mix(
+    in srgb,
+    var(--chambre-couleur, transparent) 45%,
+    var(--dispatch-card-border) 55%
+  );
+  background: color-mix(
+    in srgb,
+    var(--chambre-couleur, transparent) 18%,
+    var(--dispatch-card-bg) 82%
+  );
+}
+
+.sheet-cell--empty {
+  background: var(--dispatch-card-bg);
+}
+
+.admission-split {
+  display: grid;
+  grid-template-columns: 110px 1fr;
+  align-items: stretch;
+  width: calc(100% + 0.56rem);
+  margin: -0.22rem -0.28rem;
+}
+
+.admission-block {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+}
+
+.admission-block:first-child {
+  border-right: 1px solid var(--dispatch-card-border);
+  background: color-mix(in srgb, var(--dispatch-card-bg) 92%, black 8%);
+}
+
+.chambre-tone .admission-block:first-child {
+  border-right-color: color-mix(
+    in srgb,
+    var(--chambre-couleur, transparent) 45%,
+    var(--dispatch-zone-border) 55%
+  );
+  background: color-mix(
+    in srgb,
+    var(--chambre-couleur, transparent) 18%,
+    var(--dispatch-card-bg) 82%
+  );
+}
+
+.admission-block input {
+  border: 0;
+  border-radius: 0;
+  min-height: 30px;
+  padding: 0.18rem 0.24rem;
+}
+
+.admission-block--stamp {
+  justify-content: center;
+  padding: 0.18rem 0.24rem;
+  white-space: nowrap;
+}
+
+.stamp-input {
+  text-align: center;
+  color: #ffffff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: default;
+}
+
+.stamp-input:focus {
+  border: 0;
+  background: transparent;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.68rem;
+  padding: 0.14rem 0.2rem;
+  box-sizing: border-box;
+  outline: none;
+}
+
+select {
+  background: color-mix(in srgb, var(--dispatch-card-bg) 88%, black 12%);
+}
+
+select option {
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border: 1px solid var(--accent);
+  background: var(--accent-subtle);
+  box-shadow: 0 0 0 2px var(--accent-subtle);
+}
+
+textarea {
+  resize: vertical;
+  min-height: 46px;
+  line-height: 1.25;
+}
+
+.statut-chambre-select {
+  --statut-couleur: #d3d6dc;
+  border-left: 0;
+  font-weight: 700;
+}
+
+.checks {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: stretch;
+  width: calc(100% + 0.56rem);
+  margin: -0.22rem -0.28rem;
+}
+
+.checks .check-block {
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.checks .check-block:first-child {
+  border-right: 1px solid color-mix(in srgb, var(--dispatch-zone-border) 76%, transparent 24%);
+}
+
+.chambre-tone .checks .check-block:first-child {
+  border-right-color: color-mix(
+    in srgb,
+    var(--chambre-couleur, transparent) 42%,
+    var(--dispatch-zone-border) 58%
+  );
+}
+
+.checks input[type='checkbox'] {
+  width: auto;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.checks .check-block--fdo {
+  background-color: rgba(239, 68, 68, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.8);
+}
+
+.checks .check-block--soins-ok {
+  background-color: rgba(34, 197, 94, 0.5);
+  box-shadow: inset 0 0 0 1px rgba(34, 197, 94, 0.8);
+}
+
+.checks .check-block--soins-alert {
+  background-color: rgba(239, 68, 68, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(239, 68, 68, 0.8);
+}
+
+.btn-clear {
+  margin-left: 0.22rem;
+  width: 18px;
+  height: 18px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--dispatch-col-header-text);
+  font-size: 0.64rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  vertical-align: middle;
+}
+
+.btn-clear:hover {
+  background: rgba(239, 68, 68, 0.22);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
+.operations-block .sheet-grid {
+  min-width: 780px;
+}
+
+@media (max-width: 860px) {
+  .chambres-page {
+    padding: 0.45rem;
+  }
+
+  .sheet-grid {
+    min-width: max-content;
+  }
+}

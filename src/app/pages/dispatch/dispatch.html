@@ -1,0 +1,607 @@
+<!-- ===== MAIN 4-COLUMN GRID ===== -->
+<div class="dispatch-grid">
+
+  <!-- ===== COL 1: CENTRALE + INTERVENTIONS ===== -->
+  <section class="column column-centrale">
+    <div class="section-header">Centrale & Interventions</div>
+
+    <!-- Centrale -->
+    <div class="centrale-card" [style.border-top-color]="couleurTypeIntervention(etat().centrale.type)"
+      [style.background]="fondTypeIntervention(etat().centrale.type)">
+      <div class="card-title card-title--centrale">
+        <span class="card-title-icon">📡</span>
+        <span>Centrale</span>
+      </div>
+      <div class="card-selects">
+        <select class="select-type" [style.border-color]="couleurTypeIntervention(etat().centrale.type)"
+          [style.background]="fondTypeIntervention(etat().centrale.type)" [ngModel]="etat().centrale.type"
+          (ngModelChange)="majCentraleChamp('type', $event)">
+          <option value="">Type...</option>
+          @for (t of typesIntervention; track t.id) {
+          <option [value]="t.id">{{ t.emoji }} {{ t.label }}</option>
+          }
+        </select>
+        <select class="select-statut" [style.border-color]="couleurStatutRetour(etat().centrale.statut_retour)"
+          [style.background]="fondStatutRetour(etat().centrale.statut_retour)" [ngModel]="etat().centrale.statut_retour"
+          (ngModelChange)="majCentraleChamp('statut_retour', $event)">
+          <option value="">Statut...</option>
+          @for (s of statutsRetour; track s.id) {
+          <option [value]="s.id">{{ s.label }}</option>
+          }
+        </select>
+        <div class="location-pair">
+          <input type="text" [ngModel]="etat().centrale.lieu" (ngModelChange)="majCentraleChamp('lieu', $event)"
+            placeholder="ZIP" class="zip-input" />
+          <input type="text" [ngModel]="etat().centrale.complement"
+            (ngModelChange)="majCentraleChamp('complement', $event)" placeholder="Complément"
+            class="complement-input" />
+        </div>
+      </div>
+      <div class="drop-zone" (dragover)="onDragOver($event)" (drop)="onDropCentrale($event)">
+        <div class="effectif-cards-grid">
+          @for (eid of trierIdsEffectifs(etat().centrale.effectifs); track eid) {
+          @if (obtenirEffectif(eid); as eff) {
+          <div class="effectif-card" draggable="true" (dragstart)="onDragStart($event, eff.id, 'centrale')"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+          }
+        </div>
+        @if (etat().centrale.effectifs.length === 0) {
+        <div class="drop-placeholder">Déposer ici</div>
+        }
+      </div>
+    </div>
+
+    <!-- Interventions -->
+    @for (inter of etat().interventions; track $index; let i = $index) {
+    <div class="intervention-card" [style.border-top-color]="couleurTypeIntervention(inter.type)"
+      [style.background]="fondTypeIntervention(inter.type)">
+      <div class="card-title-row">
+        <span class="card-title">{{ trouverLabelType(inter.type) }} Intervention {{ i + 1 }}</span>
+        <button class="btn-suppr" (click)="supprimerIntervention(i)" aria-label="Supprimer intervention">✕</button>
+      </div>
+      <div class="card-selects">
+        <select class="select-type" [style.border-color]="couleurTypeIntervention(inter.type)"
+          [style.background]="fondTypeIntervention(inter.type)" [ngModel]="inter.type"
+          (ngModelChange)="majInterventionChamp(i, 'type', $event)">
+          @for (t of typesIntervention; track t.id) {
+          <option [value]="t.id">{{ t.emoji }} {{ t.label }}</option>
+          }
+        </select>
+        <select class="select-statut" [style.border-color]="couleurStatutRetour(inter.statut_retour)"
+          [style.background]="fondStatutRetour(inter.statut_retour)" [ngModel]="inter.statut_retour"
+          (ngModelChange)="majInterventionChamp(i, 'statut_retour', $event)">
+          <option value="">Statut...</option>
+          @for (s of statutsRetour; track s.id) {
+          <option [value]="s.id">{{ s.label }}</option>
+          }
+        </select>
+        <div class="location-pair">
+          <input type="text" [ngModel]="inter.lieu" (ngModelChange)="majInterventionChamp(i, 'lieu', $event)"
+            placeholder="ZIP" class="zip-input" />
+          <input type="text" [ngModel]="inter.complement"
+            (ngModelChange)="majInterventionChamp(i, 'complement', $event)" placeholder="Complément"
+            class="complement-input" />
+        </div>
+      </div>
+      <div class="drop-zone" (dragover)="onDragOver($event)" (drop)="onDropIntervention($event, i)">
+        <div class="effectif-cards-grid">
+          @for (eid of trierIdsEffectifs(inter.effectifs); track eid) {
+          @if (obtenirEffectif(eid); as eff) {
+          <div class="effectif-card" draggable="true" (dragstart)="onDragStart($event, eff.id, 'intervention-' + i)"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+          }
+        </div>
+        @if (inter.effectifs.length === 0) {
+        <div class="drop-placeholder">Déposer ici</div>
+        }
+      </div>
+    </div>
+    }
+
+    <button class="btn-ajouter" (click)="ajouterIntervention()">+ Intervention</button>
+  </section>
+
+  <!-- ===== COL 2: STATUTS ===== -->
+  <section class="column column-patate">
+    <div class="section-header section-header--status">
+      <div class="section-header-tools">
+        <div class="section-header-radios" aria-label="Fréquences radio">
+          <div class="freq-group freq-group--inline freq-group--bces">
+            <label>BCES:</label>
+            <input type="text" [ngModel]="etat().radio_lses" (ngModelChange)="majRadioLses($event)" placeholder="--"
+              class="freq-input freq-input--inline" [attr.aria-label]="'Radio BCES'" />
+          </div>
+          <div class="freq-group freq-group--inline freq-group--commune">
+            <label>Commune:</label>
+            <input type="text" [ngModel]="etat().radio_commune" (ngModelChange)="majRadioCommune($event)"
+              placeholder="--" class="freq-input freq-input--inline" [attr.aria-label]="'Radio commune'" />
+          </div>
+        </div>
+        <div class="section-header-hospital">
+          <div class="freq-group freq-group--chip freq-group--chip-clickable service-chip service-chip--bces"
+            [style.--hopital-color]="couleurStatutHopital()" (click)="ouvrirSelectHopital(hopitalSelect, $event)">
+            <span class="service-chip__badge">BCES</span>
+            <div class="service-chip__value">
+              <select #hopitalSelect [ngModel]="etat().statut_hopital" (ngModelChange)="majStatutHopital($event)"
+                (click)="$event.stopPropagation()" class="hopital-select">
+                @for (s of statutsHopital; track s.id) {
+                <option [value]="s.id">{{ s.label }}</option>
+                }
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="section-header-service section-header-service--safd">
+          <div class="freq-group freq-group--chip service-chip service-chip--safd" aria-label="Statut service SAFD"
+            [style.--hopital-color]="couleurBordSafd()">
+            <span class="service-chip__badge">SAFD</span>
+            <span class="service-chip__value">{{ statutSafd() }}</span>
+          </div>
+        </div>
+        <div class="section-header-service section-header-service--lses">
+          <div class="freq-group freq-group--chip service-chip service-chip--lses" aria-label="Statut service LSES"
+            [style.--hopital-color]="couleurBordLses()">
+            <span class="service-chip__badge">LSES</span>
+            <span class="service-chip__value">{{ statutLses() }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-grid">
+      <div class="status-zone status-en-service" (dragover)="onDragOver($event)"
+        (drop)="onDropPatate($event, 'en_service')">
+        <div class="zone-header" [style.border-color]="categories[0].couleur">
+          <span class="zone-header__label">🟢 En service</span>
+          <span class="zone-header__count">{{ nombreEnServiceTotal() }}</span>
+        </div>
+        <div class="effectif-cards-grid">
+          @for (p of effectifsEnService(); track p.id) {
+          @if (obtenirEffectif(p.id); as eff) {
+          <div class="effectif-card" draggable="true" (dragstart)="onDragStart($event, eff.id, 'patate')"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+          }
+        </div>
+      </div>
+
+      <div class="status-zone status-hors-service" (dragover)="onDragOver($event)" (drop)="onDropHorsService($event)">
+        <div class="zone-header" [style.border-color]="'#6b7280'">
+          <span class="zone-header__label">Hors service</span>
+          <span class="zone-header__count">{{ nombreHorsService() }}</span>
+        </div>
+        <div class="effectif-cards-grid">
+          @for (eff of effectifsHorsService(); track eff.id) {
+          <div class="effectif-card" draggable="true" (dragstart)="onDragStart($event, eff.id, 'hors-service')"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+        </div>
+      </div>
+
+      <div class="status-zone status-pause" (dragover)="onDragOver($event)" (drop)="onDropPatate($event, 'pause')">
+        <div class="zone-header-small" [style.border-color]="'#f59f00'">
+          <span class="zone-header__label">⏸️ En Pause</span>
+          <span class="zone-header__count">{{ effectifsParCategorie()['pause'].length }}</span>
+        </div>
+        <div class="effectif-cards-grid">
+          @for (p of effectifsParCategorie()['pause']; track p.id) {
+          @if (obtenirEffectif(p.id); as eff) {
+          <div class="effectif-card small" draggable="true" (dragstart)="onDragStart($event, eff.id, 'patate-pause')"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+          }
+        </div>
+      </div>
+
+      <div class="status-zone status-astreinte" (dragover)="onDragOver($event)"
+        (drop)="onDropPatate($event, 'astreinte')">
+        <div class="zone-header-small" [style.border-color]="'#e65100'">
+          <span class="zone-header__label">⏰ Astreinte</span>
+          <span class="zone-header__count">{{ effectifsParCategorie()['astreinte'].length }}</span>
+        </div>
+        <div class="effectif-cards-grid">
+          @for (p of effectifsParCategorie()['astreinte']; track p.id) {
+          @if (obtenirEffectif(p.id); as eff) {
+          <div class="effectif-card small" draggable="true"
+            (dragstart)="onDragStart($event, eff.id, 'patate-astreinte')"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+          }
+        </div>
+      </div>
+
+      <div class="status-zone status-conges" (dragover)="onDragOver($event)" (drop)="onDropPatate($event, 'conges')">
+        <div class="zone-header-small conges-header">
+          <span class="zone-header__label">🏖️ Congés</span>
+          <span class="zone-header__count">{{ effectifsParCategorie()['conges'].length }}</span>
+        </div>
+        <div class="effectif-cards-grid">
+          @for (p of effectifsParCategorie()['conges']; track p.id) {
+          @if (obtenirEffectif(p.id); as eff) {
+          <div class="effectif-card small" draggable="true" (dragstart)="onDragStart($event, eff.id, 'patate-conges')"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+          }
+        </div>
+      </div>
+
+      <div class="status-zone status-ipt" (dragover)="onDragOver($event)" (drop)="onDropPatate($event, 'ipt')">
+        <div class="zone-header-small" [style.border-color]="'#455a64'">
+          <span class="zone-header__label">🚶 IPT</span>
+          <span class="zone-header__count">{{ effectifsParCategorie()['ipt'].length }}</span>
+        </div>
+        <div class="effectif-cards-grid">
+          @for (p of effectifsParCategorie()['ipt']; track p.id) {
+          @if (obtenirEffectif(p.id); as eff) {
+          <div class="effectif-card small" draggable="true" (dragstart)="onDragStart($event, eff.id, 'patate-ipt')"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+          }
+        </div>
+      </div>
+
+      <div class="status-zone status-fin-service" (dragover)="onDragOver($event)"
+        (drop)="onDropPatate($event, 'fin_service')">
+        <div class="zone-header-small" [style.border-color]="'#c62828'">
+          <span class="zone-header__label">🔴 Fin de service</span>
+          <span class="zone-header__count">{{ effectifsParCategorie()['fin_service'].length }}</span>
+        </div>
+        <div class="effectif-cards-grid">
+          @for (p of effectifsParCategorie()['fin_service']; track p.id) {
+          @if (obtenirEffectif(p.id); as eff) {
+          <div class="effectif-card small" draggable="true"
+            (dragstart)="onDragStart($event, eff.id, 'patate-fin_service')"
+            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
+            [class.effectif-card--helico]="eff.formation_helicoptere"
+            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            <div class="effectif-card__top">
+              <span class="effectif-grip" aria-hidden="true">⠿</span>
+              <span class="effectif-emoji">{{ eff.emoji }}</span>
+              <span class="effectif-nom">{{ eff.prenom }}</span>
+            </div>
+            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (obtenirSpecialites(eff).length > 0) {
+            <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
+            }
+            @if (obtenirValidations(eff).length > 0) {
+            <div class="effectif-card__validations">@for (v of obtenirValidations(eff); track v) {<span>{{ v }}</span>}
+            </div>
+            }
+            <div class="effectif-card__meta">
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
+                obtenirNomRole(eff.grade_id) }}</span>
+              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+            </div>
+          </div>
+          }
+          }
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== COL 3: RADIOS & NOTES ===== -->
+  <section class="column column-radios">
+    <div class="section-header">
+      <span>📻 Radios & Notes</span>
+      <button class="btn-reset-dispatch btn-reset-dispatch--header" type="button" (click)="resetAffectations()">
+        RESET
+      </button>
+    </div>
+    <div class="radios-stock-zone">
+      <div class="notes-label-row">
+        <label class="notes-label">Stock Radios</label>
+        <span class="stock-count zone-header__count" aria-label="Radios standard utilisées sur le total hors direction">
+          {{ nombreRadiosUtilisees(radiosStandards()) }}/{{ radiosStandards().length }}
+        </span>
+      </div>
+
+      <div class="radios-stock-group">
+        <div class="radios-stock-group-title">DIRECTION</div>
+        @if (radiosDirectes().length === 0) {
+        <div class="radio-stock-empty">Aucune radio direction</div>
+        }
+        @for (radio of radiosDirectes(); track radio.id) {
+        <div class="radio-stock-row">
+          <span class="radio-stock-serie">{{ radio.serie }}</span>
+          <span class="radio-stock-owner">{{ nomEffectifRadio(radio.effectif_id) }}</span>
+          <span class="radio-stock-state" [class.radio-stock-state--on]="radio.actif"
+            [class.radio-stock-state--off]="!radio.actif">
+            {{ radio.actif ? 'ON' : 'OFF' }}
+          </span>
+        </div>
+        }
+      </div>
+
+      <div class="radios-stock-group">
+        <div class="radios-stock-group-title">STANDARD</div>
+        @if (radiosStandards().length === 0) {
+        <div class="radio-stock-empty">Aucune radio standard</div>
+        }
+        @for (radio of radiosStandards(); track radio.id) {
+        <div class="radio-stock-row">
+          <span class="radio-stock-serie">{{ radio.serie }}</span>
+          <span class="radio-stock-owner">{{ nomEffectifRadio(radio.effectif_id) }}</span>
+          <span class="radio-stock-state" [class.radio-stock-state--on]="radio.actif"
+            [class.radio-stock-state--off]="!radio.actif">
+            {{ radio.actif ? 'ON' : 'OFF' }}
+          </span>
+        </div>
+        }
+      </div>
+    </div>
+    <div class="notes-zone">
+      <label class="notes-label">Bloc-notes</label>
+      <textarea class="bloc-notes" [ngModel]="etat().bloc_notes" (ngModelChange)="majBlocNotes($event)"
+        placeholder="Notes..."></textarea>
+    </div>
+  </section>
+</div>
+
+<!-- ===== SECTION CRISES ===== -->
+<section class="section-expandable">
+  <button class="section-toggle" (click)="sectionCriseOuverte.set(!sectionCriseOuverte())">
+    <span class="crise-toggle-main">🚨 Gestion de Crise ({{ etat().crises.length }})</span>
+    <span class="crise-toggle-zip" (click)="$event.stopPropagation()">
+      <input id="zip-crise" class="zip-crise-input" type="text" maxlength="8" [ngModel]="etat().zip_crise"
+        (ngModelChange)="majZipCrise($event)" (click)="$event.stopPropagation()" (keydown)="$event.stopPropagation()"
+        placeholder="ZIP" />
+    </span>
+    <span class="toggle-icon">{{ sectionCriseOuverte() ? '▼' : '▶' }}</span>
+  </button>
+  @if (sectionCriseOuverte()) {
+  <div class="crise-content">
+    <label class="lses-toggle" for="inclure-lses-crise">
+      <input id="inclure-lses-crise" type="checkbox" [ngModel]="inclureLsesCrise()"
+        (ngModelChange)="inclureLsesCrise.set($event)" />
+      Inclure LSES dans les médecins
+    </label>
+    <div class="table-wrapper">
+      <table class="crise-table">
+        <thead>
+          <tr>
+            <th class="col-check col-ajout-canal">Ajout canal</th>
+            <th>Chambre</th>
+            <th>Nom Prénom (PRIMO)</th>
+            <th>Groupe</th>
+            <th class="col-check col-coma">Coma</th>
+            <th class="col-check col-blessure">Blessure Lourde</th>
+            <th class="col-check col-inconscient">Inconscient</th>
+            <th>Commentaires (type de balle? localisation blessures? Vérif allergie?...)</th>
+            <th>Médecin Rapatrie</th>
+            <th>Médecin Soignant</th>
+            <th class="col-check col-soins">Soins</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of etat().crises; track $index; let i = $index) {
+          <tr [class.crise-row-soins]="c.soins" [class.crise-row-blessure]="!c.soins && c.blessure_lourde"
+            [class.crise-row-canal]="!c.soins && !c.blessure_lourde && c.ajout_canal">
+            <td class="col-check col-ajout-canal"><input type="checkbox" [ngModel]="c.ajout_canal"
+                (ngModelChange)="majCriseChamp(i, 'ajout_canal', $event)" /></td>
+            <td>
+              <select [ngModel]="c.chambre" (ngModelChange)="majCriseChamp(i, 'chambre', $event)">
+                <option value="">-</option>
+                @for (chambre of chambresCrise; track chambre) {
+                <option [value]="chambre">{{ chambre }}</option>
+                }
+              </select>
+            </td>
+            <td><input type="text" [ngModel]="c.nom_prenom_primo"
+                (ngModelChange)="majCriseChamp(i, 'nom_prenom_primo', $event)" /></td>
+            <td>
+              <select [ngModel]="c.groupe" (ngModelChange)="majCriseChamp(i, 'groupe', $event)">
+                <option value="">-</option>
+                @for (a of appartenances; track a.id) {
+                <option [value]="a.id">{{ a.label }}</option>
+                }
+              </select>
+            </td>
+            <td class="col-check col-coma"><input type="checkbox" [ngModel]="c.coma"
+                (ngModelChange)="majCriseChamp(i, 'coma', $event)" /></td>
+            <td class="col-check col-blessure"><input type="checkbox" [ngModel]="c.blessure_lourde"
+                (ngModelChange)="majCriseChamp(i, 'blessure_lourde', $event)" /></td>
+            <td class="col-check col-inconscient"><input type="checkbox" [ngModel]="c.inconscient"
+                (ngModelChange)="majCriseChamp(i, 'inconscient', $event)" /></td>
+            <td><input type="text" [ngModel]="c.commentaires"
+                (ngModelChange)="majCriseChamp(i, 'commentaires', $event)" /></td>
+            <td>
+              <select [ngModel]="c.medecin_rapatrie" (ngModelChange)="majCriseChamp(i, 'medecin_rapatrie', $event)">
+                <option value="">-</option>
+                @for (medecin of medecinsCrise(); track medecin) {
+                <option [value]="medecin">{{ medecin }}</option>
+                }
+              </select>
+            </td>
+            <td>
+              <select [ngModel]="c.medecin_soignant" (ngModelChange)="majCriseChamp(i, 'medecin_soignant', $event)">
+                <option value="">-</option>
+                @for (medecin of medecinsCrise(); track medecin) {
+                <option [value]="medecin">{{ medecin }}</option>
+                }
+              </select>
+            </td>
+            <td class="col-check col-soins"><input type="checkbox" [ngModel]="c.soins"
+                (ngModelChange)="majCriseChamp(i, 'soins', $event)" /></td>
+            <td style="text-align: center"><button class="btn-suppr" (click)="supprimerCrise(i)"
+                aria-label="Supprimer crise">✕</button></td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <button class="btn-ajouter" (click)="ajouterCrise()">+ Patient</button>
+  </div>
+  }
+</section>

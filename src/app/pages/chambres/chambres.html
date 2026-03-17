@@ -1,0 +1,579 @@
+<div class="chambres-page">
+    <section class="sheet-block">
+        <div class="sheet-grid sheet-grid--6">
+            <div class="corner-cell corner-cell--double" aria-hidden="true"></div>
+            <div class="group-head group-head--span-3">Emergency Room</div>
+            <div class="group-head group-head--span-3">Josiah Room</div>
+
+            <div class="column-head">
+                <span>Lit G</span>
+                @if (litRempli('emergency_room', 'lit_g')) {
+                <button class="btn-clear" (click)="viderLit('emergency_room', 'lit_g')" type="button"
+                    aria-label="Vider Emergency Lit G">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>Lit M</span>
+                @if (litRempli('emergency_room', 'lit_m')) {
+                <button class="btn-clear" (click)="viderLit('emergency_room', 'lit_m')" type="button"
+                    aria-label="Vider Emergency Lit M">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>Lit D</span>
+                @if (litRempli('emergency_room', 'lit_d')) {
+                <button class="btn-clear" (click)="viderLit('emergency_room', 'lit_d')" type="button"
+                    aria-label="Vider Emergency Lit D">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>Lit G</span>
+                @if (litRempli('josiah_room', 'lit_g')) {
+                <button class="btn-clear" (click)="viderLit('josiah_room', 'lit_g')" type="button"
+                    aria-label="Vider Josiah Lit G">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>Lit M</span>
+                @if (litRempli('josiah_room', 'lit_m')) {
+                <button class="btn-clear" (click)="viderLit('josiah_room', 'lit_m')" type="button"
+                    aria-label="Vider Josiah Lit M">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>Lit D</span>
+                @if (litRempli('josiah_room', 'lit_d')) {
+                <button class="btn-clear" (click)="viderLit('josiah_room', 'lit_d')" type="button"
+                    aria-label="Vider Josiah Lit D">✕</button>
+                }
+            </div>
+
+            <div class="row-label">Patient (Nom Prénom)</div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_g')"><input type="text"
+                    [ngModel]="chambres().emergency_room.lit_g.patient"
+                    (ngModelChange)="majLit('emergency_room', 'lit_g', 'patient', $event)" /></div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_m')"><input type="text"
+                    [ngModel]="chambres().emergency_room.lit_m.patient"
+                    (ngModelChange)="majLit('emergency_room', 'lit_m', 'patient', $event)" /></div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_d')"><input type="text"
+                    [ngModel]="chambres().emergency_room.lit_d.patient"
+                    (ngModelChange)="majLit('emergency_room', 'lit_d', 'patient', $event)" /></div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_g')">
+                <input type="text" [ngModel]="chambres().josiah_room.lit_g.patient"
+                    (ngModelChange)="majLit('josiah_room', 'lit_g', 'patient', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_m')">
+                <input type="text" [ngModel]="chambres().josiah_room.lit_m.patient"
+                    (ngModelChange)="majLit('josiah_room', 'lit_m', 'patient', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_d')">
+                <input type="text" [ngModel]="chambres().josiah_room.lit_d.patient"
+                    (ngModelChange)="majLit('josiah_room', 'lit_d', 'patient', $event)" />
+            </div>
+
+            <div class="row-label">Date d'admission / Médecin(s)</div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_g')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('emergency_room', 'lit_g')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('emergency_room', 'lit_g')"
+                            (ngModelChange)="majAdmissionMedecins('emergency_room', 'lit_g', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_m')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('emergency_room', 'lit_m')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('emergency_room', 'lit_m')"
+                            (ngModelChange)="majAdmissionMedecins('emergency_room', 'lit_m', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_d')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('emergency_room', 'lit_d')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('emergency_room', 'lit_d')"
+                            (ngModelChange)="majAdmissionMedecins('emergency_room', 'lit_d', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_g')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('josiah_room', 'lit_g')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('josiah_room', 'lit_g')"
+                            (ngModelChange)="majAdmissionMedecins('josiah_room', 'lit_g', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_m')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('josiah_room', 'lit_m')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('josiah_room', 'lit_m')"
+                            (ngModelChange)="majAdmissionMedecins('josiah_room', 'lit_m', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_d')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('josiah_room', 'lit_d')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('josiah_room', 'lit_d')"
+                            (ngModelChange)="majAdmissionMedecins('josiah_room', 'lit_d', $event)" /></div>
+                </div>
+            </div>
+
+            <div class="row-label">Type de prise en charge</div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_g')"><input type="text"
+                    [ngModel]="chambres().emergency_room.lit_g.type_prise_en_charge"
+                    (ngModelChange)="majLit('emergency_room', 'lit_g', 'type_prise_en_charge', $event)" /></div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_m')"><input type="text"
+                    [ngModel]="chambres().emergency_room.lit_m.type_prise_en_charge"
+                    (ngModelChange)="majLit('emergency_room', 'lit_m', 'type_prise_en_charge', $event)" /></div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_d')"><input type="text"
+                    [ngModel]="chambres().emergency_room.lit_d.type_prise_en_charge"
+                    (ngModelChange)="majLit('emergency_room', 'lit_d', 'type_prise_en_charge', $event)" /></div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_g')">
+                <input type="text" [ngModel]="chambres().josiah_room.lit_g.type_prise_en_charge"
+                    (ngModelChange)="majLit('josiah_room', 'lit_g', 'type_prise_en_charge', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_m')">
+                <input type="text" [ngModel]="chambres().josiah_room.lit_m.type_prise_en_charge"
+                    (ngModelChange)="majLit('josiah_room', 'lit_m', 'type_prise_en_charge', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_d')">
+                <input type="text" [ngModel]="chambres().josiah_room.lit_d.type_prise_en_charge"
+                    (ngModelChange)="majLit('josiah_room', 'lit_d', 'type_prise_en_charge', $event)" />
+            </div>
+
+            <div class="row-label">FdO / Soins</div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_g')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().emergency_room.lit_g.fdo"><input
+                            type="checkbox" [ngModel]="chambres().emergency_room.lit_g.fdo"
+                            (ngModelChange)="majLit('emergency_room', 'lit_g', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().emergency_room.lit_g.soins"
+                        [class.check-block--soins-alert]="!chambres().emergency_room.lit_g.soins && litRempli('emergency_room', 'lit_g')">
+                        <input type="checkbox" [ngModel]="chambres().emergency_room.lit_g.soins"
+                            (ngModelChange)="majLit('emergency_room', 'lit_g', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_m')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().emergency_room.lit_m.fdo"><input
+                            type="checkbox" [ngModel]="chambres().emergency_room.lit_m.fdo"
+                            (ngModelChange)="majLit('emergency_room', 'lit_m', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().emergency_room.lit_m.soins"
+                        [class.check-block--soins-alert]="!chambres().emergency_room.lit_m.soins && litRempli('emergency_room', 'lit_m')">
+                        <input type="checkbox" [ngModel]="chambres().emergency_room.lit_m.soins"
+                            (ngModelChange)="majLit('emergency_room', 'lit_m', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_d')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().emergency_room.lit_d.fdo"><input
+                            type="checkbox" [ngModel]="chambres().emergency_room.lit_d.fdo"
+                            (ngModelChange)="majLit('emergency_room', 'lit_d', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().emergency_room.lit_d.soins"
+                        [class.check-block--soins-alert]="!chambres().emergency_room.lit_d.soins && litRempli('emergency_room', 'lit_d')">
+                        <input type="checkbox" [ngModel]="chambres().emergency_room.lit_d.soins"
+                            (ngModelChange)="majLit('emergency_room', 'lit_d', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_g')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().josiah_room.lit_g.fdo"><input
+                            type="checkbox" [ngModel]="chambres().josiah_room.lit_g.fdo"
+                            (ngModelChange)="majLit('josiah_room', 'lit_g', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().josiah_room.lit_g.soins"
+                        [class.check-block--soins-alert]="!chambres().josiah_room.lit_g.soins && litRempli('josiah_room', 'lit_g')">
+                        <input type="checkbox" [ngModel]="chambres().josiah_room.lit_g.soins"
+                            (ngModelChange)="majLit('josiah_room', 'lit_g', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_m')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().josiah_room.lit_m.fdo"><input
+                            type="checkbox" [ngModel]="chambres().josiah_room.lit_m.fdo"
+                            (ngModelChange)="majLit('josiah_room', 'lit_m', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().josiah_room.lit_m.soins"
+                        [class.check-block--soins-alert]="!chambres().josiah_room.lit_m.soins && litRempli('josiah_room', 'lit_m')">
+                        <input type="checkbox" [ngModel]="chambres().josiah_room.lit_m.soins"
+                            (ngModelChange)="majLit('josiah_room', 'lit_m', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_d')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().josiah_room.lit_d.fdo"><input
+                            type="checkbox" [ngModel]="chambres().josiah_room.lit_d.fdo"
+                            (ngModelChange)="majLit('josiah_room', 'lit_d', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().josiah_room.lit_d.soins"
+                        [class.check-block--soins-alert]="!chambres().josiah_room.lit_d.soins && litRempli('josiah_room', 'lit_d')">
+                        <input type="checkbox" [ngModel]="chambres().josiah_room.lit_d.soins"
+                            (ngModelChange)="majLit('josiah_room', 'lit_d', 'soins', $event)" /></div>
+                </div>
+            </div>
+
+            <div class="row-label">Statut</div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_g')"><select
+                    class="statut-chambre-select" [ngModel]="chambres().emergency_room.lit_g.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().emergency_room.lit_g.statut)"
+                    (ngModelChange)="majLit('emergency_room', 'lit_g', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select></div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_m')"><select
+                    class="statut-chambre-select" [ngModel]="chambres().emergency_room.lit_m.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().emergency_room.lit_m.statut)"
+                    (ngModelChange)="majLit('emergency_room', 'lit_m', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select></div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutLit('emergency_room', 'lit_d')"><select
+                    class="statut-chambre-select" [ngModel]="chambres().emergency_room.lit_d.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().emergency_room.lit_d.statut)"
+                    (ngModelChange)="majLit('emergency_room', 'lit_d', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select></div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_g')">
+                <select class="statut-chambre-select" [ngModel]="chambres().josiah_room.lit_g.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().josiah_room.lit_g.statut)"
+                    (ngModelChange)="majLit('josiah_room', 'lit_g', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_m')">
+                <select class="statut-chambre-select" [ngModel]="chambres().josiah_room.lit_m.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().josiah_room.lit_m.statut)"
+                    (ngModelChange)="majLit('josiah_room', 'lit_m', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('josiah_room', 'lit_d')">
+                <select class="statut-chambre-select" [ngModel]="chambres().josiah_room.lit_d.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().josiah_room.lit_d.statut)"
+                    (ngModelChange)="majLit('josiah_room', 'lit_d', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select>
+            </div>
+        </div>
+    </section>
+
+    <section class="sheet-block">
+        <div class="sheet-grid sheet-grid--5">
+            <div class="corner-cell corner-cell--double" aria-hidden="true"></div>
+            <div class="group-head group-head--span-3">Chiliad Room</div>
+            <div class="corner-cell corner-cell--span-2" aria-hidden="true"></div>
+
+            <div class="column-head">
+                <span>Lit G</span>
+                @if (litRempli('chiliad_room', 'lit_g')) {
+                <button class="btn-clear" (click)="viderLit('chiliad_room', 'lit_g')" type="button"
+                    aria-label="Vider Chiliad Lit G">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>Lit M</span>
+                @if (litRempli('chiliad_room', 'lit_m')) {
+                <button class="btn-clear" (click)="viderLit('chiliad_room', 'lit_m')" type="button"
+                    aria-label="Vider Chiliad Lit M">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>Lit D</span>
+                @if (litRempli('chiliad_room', 'lit_d')) {
+                <button class="btn-clear" (click)="viderLit('chiliad_room', 'lit_d')" type="button"
+                    aria-label="Vider Chiliad Lit D">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>Gordo Room</span>
+                @if (salleSimpleRemplie('gordo_room')) {
+                <button class="btn-clear" (click)="viderSalleSimple('gordo_room')" type="button"
+                    aria-label="Vider Gordo Room">✕</button>
+                }
+            </div>
+            <div class="column-head">
+                <span>San Chianki Room</span>
+                @if (salleSimpleRemplie('san_chianki_room')) {
+                <button class="btn-clear" (click)="viderSalleSimple('san_chianki_room')" type="button"
+                    aria-label="Vider San Chianki Room">✕</button>
+                }
+            </div>
+
+            <div class="row-label">Patient (Nom Prénom)</div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_g')">
+                <input type="text" [ngModel]="chambres().chiliad_room.lit_g.patient"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_g', 'patient', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_m')">
+                <input type="text" [ngModel]="chambres().chiliad_room.lit_m.patient"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_m', 'patient', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_d')">
+                <input type="text" [ngModel]="chambres().chiliad_room.lit_d.patient"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_d', 'patient', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutSalleSimple('gordo_room')">
+                <input type="text" [ngModel]="chambres().gordo_room.patient"
+                    (ngModelChange)="majSalleSimple('gordo_room', 'patient', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutSalleSimple('san_chianki_room')"><input type="text"
+                    [ngModel]="chambres().san_chianki_room.patient"
+                    (ngModelChange)="majSalleSimple('san_chianki_room', 'patient', $event)" /></div>
+
+            <div class="row-label">Date d'admission / Médecin(s)</div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_g')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('chiliad_room', 'lit_g')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('chiliad_room', 'lit_g')"
+                            (ngModelChange)="majAdmissionMedecins('chiliad_room', 'lit_g', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_m')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('chiliad_room', 'lit_m')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('chiliad_room', 'lit_m')"
+                            (ngModelChange)="majAdmissionMedecins('chiliad_room', 'lit_m', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_d')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatage('chiliad_room', 'lit_d')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecins('chiliad_room', 'lit_d')"
+                            (ngModelChange)="majAdmissionMedecins('chiliad_room', 'lit_d', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutSalleSimple('gordo_room')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatageSalleSimple('gordo_room')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecinsSalleSimple('gordo_room')"
+                            (ngModelChange)="majAdmissionMedecinsSalleSimple('gordo_room', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutSalleSimple('san_chianki_room')">
+                <div class="admission-split">
+                    <div class="admission-block admission-block--stamp"><input class="stamp-input" type="text"
+                            [value]="admissionHorodatageSalleSimple('san_chianki_room')" readonly /></div>
+                    <div class="admission-block"><input type="text" placeholder="Médecin(s)"
+                            [ngModel]="admissionMedecinsSalleSimple('san_chianki_room')"
+                            (ngModelChange)="majAdmissionMedecinsSalleSimple('san_chianki_room', $event)" /></div>
+                </div>
+            </div>
+
+            <div class="row-label">Type de prise en charge</div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_g')">
+                <input type="text" [ngModel]="chambres().chiliad_room.lit_g.type_prise_en_charge"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_g', 'type_prise_en_charge', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_m')">
+                <input type="text" [ngModel]="chambres().chiliad_room.lit_m.type_prise_en_charge"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_m', 'type_prise_en_charge', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_d')">
+                <input type="text" [ngModel]="chambres().chiliad_room.lit_d.type_prise_en_charge"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_d', 'type_prise_en_charge', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutSalleSimple('gordo_room')">
+                <input type="text" [ngModel]="chambres().gordo_room.type_prise_en_charge"
+                    (ngModelChange)="majSalleSimple('gordo_room', 'type_prise_en_charge', $event)" />
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutSalleSimple('san_chianki_room')"><input type="text"
+                    [ngModel]="chambres().san_chianki_room.type_prise_en_charge"
+                    (ngModelChange)="majSalleSimple('san_chianki_room', 'type_prise_en_charge', $event)" /></div>
+
+            <div class="row-label">FdO / Soins</div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_g')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().chiliad_room.lit_g.fdo"><input
+                            type="checkbox" [ngModel]="chambres().chiliad_room.lit_g.fdo"
+                            (ngModelChange)="majLit('chiliad_room', 'lit_g', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().chiliad_room.lit_g.soins"
+                        [class.check-block--soins-alert]="!chambres().chiliad_room.lit_g.soins && litRempli('chiliad_room', 'lit_g')">
+                        <input type="checkbox" [ngModel]="chambres().chiliad_room.lit_g.soins"
+                            (ngModelChange)="majLit('chiliad_room', 'lit_g', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_m')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().chiliad_room.lit_m.fdo"><input
+                            type="checkbox" [ngModel]="chambres().chiliad_room.lit_m.fdo"
+                            (ngModelChange)="majLit('chiliad_room', 'lit_m', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().chiliad_room.lit_m.soins"
+                        [class.check-block--soins-alert]="!chambres().chiliad_room.lit_m.soins && litRempli('chiliad_room', 'lit_m')">
+                        <input type="checkbox" [ngModel]="chambres().chiliad_room.lit_m.soins"
+                            (ngModelChange)="majLit('chiliad_room', 'lit_m', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_d')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().chiliad_room.lit_d.fdo"><input
+                            type="checkbox" [ngModel]="chambres().chiliad_room.lit_d.fdo"
+                            (ngModelChange)="majLit('chiliad_room', 'lit_d', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().chiliad_room.lit_d.soins"
+                        [class.check-block--soins-alert]="!chambres().chiliad_room.lit_d.soins && litRempli('chiliad_room', 'lit_d')">
+                        <input type="checkbox" [ngModel]="chambres().chiliad_room.lit_d.soins"
+                            (ngModelChange)="majLit('chiliad_room', 'lit_d', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutSalleSimple('gordo_room')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().gordo_room.fdo"><input type="checkbox"
+                            [ngModel]="chambres().gordo_room.fdo"
+                            (ngModelChange)="majSalleSimple('gordo_room', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().gordo_room.soins"
+                        [class.check-block--soins-alert]="!chambres().gordo_room.soins && salleSimpleRemplie('gordo_room')">
+                        <input type="checkbox" [ngModel]="chambres().gordo_room.soins"
+                            (ngModelChange)="majSalleSimple('gordo_room', 'soins', $event)" /></div>
+                </div>
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutSalleSimple('san_chianki_room')">
+                <div class="checks">
+                    <div class="check-block" [class.check-block--fdo]="chambres().san_chianki_room.fdo"><input
+                            type="checkbox" [ngModel]="chambres().san_chianki_room.fdo"
+                            (ngModelChange)="majSalleSimple('san_chianki_room', 'fdo', $event)" /></div>
+                    <div class="check-block" [class.check-block--soins-ok]="chambres().san_chianki_room.soins"
+                        [class.check-block--soins-alert]="!chambres().san_chianki_room.soins && salleSimpleRemplie('san_chianki_room')">
+                        <input type="checkbox" [ngModel]="chambres().san_chianki_room.soins"
+                            (ngModelChange)="majSalleSimple('san_chianki_room', 'soins', $event)" /></div>
+                </div>
+            </div>
+
+            <div class="row-label">Statut</div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_g')">
+                <select class="statut-chambre-select" [ngModel]="chambres().chiliad_room.lit_g.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().chiliad_room.lit_g.statut)"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_g', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_m')">
+                <select class="statut-chambre-select" [ngModel]="chambres().chiliad_room.lit_m.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().chiliad_room.lit_m.statut)"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_m', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutLit('chiliad_room', 'lit_d')">
+                <select class="statut-chambre-select" [ngModel]="chambres().chiliad_room.lit_d.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().chiliad_room.lit_d.statut)"
+                    (ngModelChange)="majLit('chiliad_room', 'lit_d', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select>
+            </div>
+            <div class="sheet-cell chambre-tone" [style.--chambre-couleur]="couleurStatutSalleSimple('gordo_room')">
+                <select class="statut-chambre-select" [ngModel]="chambres().gordo_room.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().gordo_room.statut)"
+                    (ngModelChange)="majSalleSimple('gordo_room', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select>
+            </div>
+            <div class="sheet-cell chambre-tone"
+                [style.--chambre-couleur]="couleurStatutSalleSimple('san_chianki_room')"><select
+                    class="statut-chambre-select" [ngModel]="chambres().san_chianki_room.statut"
+                    [style.--statut-couleur]="couleurStatutChambre(chambres().san_chianki_room.statut)"
+                    (ngModelChange)="majSalleSimple('san_chianki_room', 'statut', $event)">
+                    <option value=""></option>@for (statut of statutsChambre; track statut) {<option [value]="statut">{{
+                        statut }}</option>}
+                </select></div>
+        </div>
+    </section>
+
+    <section class="sheet-block operations-block">
+        <div class="sheet-grid sheet-grid--3 sheet-grid--ops">
+            <div class="corner-cell" aria-hidden="true"></div>
+            <div class="column-head column-head--top">
+                <span>Salle d'opé 01</span>
+                @if (salleOperationRemplie('op_1')) {
+                <button class="btn-clear" (click)="viderSalleOperation('op_1')" type="button"
+                    aria-label="Vider Salle d'opé 01">✕</button>
+                }
+            </div>
+            <div class="column-head column-head--top">
+                <span>Salle d'opé 02</span>
+                @if (salleOperationRemplie('op_2')) {
+                <button class="btn-clear" (click)="viderSalleOperation('op_2')" type="button"
+                    aria-label="Vider Salle d'opé 02">✕</button>
+                }
+            </div>
+            <div class="column-head column-head--top">
+                <span>Salle d'opé 03</span>
+                @if (salleOperationRemplie('op_3')) {
+                <button class="btn-clear" (click)="viderSalleOperation('op_3')" type="button"
+                    aria-label="Vider Salle d'opé 03">✕</button>
+                }
+            </div>
+
+            <div class="row-label">Patient</div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_1.patient"
+                    (ngModelChange)="majOperation('op_1', 'patient', $event)" /></div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_2.patient"
+                    (ngModelChange)="majOperation('op_2', 'patient', $event)" /></div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_3.patient"
+                    (ngModelChange)="majOperation('op_3', 'patient', $event)" /></div>
+
+            <div class="row-label">Médecins</div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_1.medecins"
+                    (ngModelChange)="majOperation('op_1', 'medecins', $event)" /></div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_2.medecins"
+                    (ngModelChange)="majOperation('op_2', 'medecins', $event)" /></div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_3.medecins"
+                    (ngModelChange)="majOperation('op_3', 'medecins', $event)" /></div>
+
+            <div class="row-label">Statut</div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_1.statut"
+                    (ngModelChange)="majOperation('op_1', 'statut', $event)" /></div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_2.statut"
+                    (ngModelChange)="majOperation('op_2', 'statut', $event)" /></div>
+            <div class="sheet-cell"><input type="text" [ngModel]="chambres().operations.op_3.statut"
+                    (ngModelChange)="majOperation('op_3', 'statut', $event)" /></div>
+
+            <div class="row-label">Description</div>
+            <div class="sheet-cell"><textarea rows="2" [ngModel]="chambres().operations.op_1.description"
+                    (ngModelChange)="majOperation('op_1', 'description', $event)"></textarea></div>
+            <div class="sheet-cell"><textarea rows="2" [ngModel]="chambres().operations.op_2.description"
+                    (ngModelChange)="majOperation('op_2', 'description', $event)"></textarea></div>
+            <div class="sheet-cell"><textarea rows="2" [ngModel]="chambres().operations.op_3.description"
+                    (ngModelChange)="majOperation('op_3', 'description', $event)"></textarea></div>
+        </div>
+    </section>
+</div>

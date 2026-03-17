@@ -1,0 +1,39 @@
+<div class="rapports-page">
+    <div class="page-header">
+        <h1>⚰️ Rapports d'autopsie</h1>
+        <button class="btn-primary" (click)="nouveauRapport()">+ Nouveau rapport</button>
+    </div>
+
+    @if (chargement()) {
+    <div class="loading">Chargement...</div>
+    } @else {
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Patient</th>
+                    <th>Date d'autopsie</th>
+                    <th>Légiste</th>
+                    <th>Diagnostic</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (r of rapports(); track r.id) {
+                <tr>
+                    <td>{{ r.name }}</td>
+                    <td>{{ r.autopsyDate }}</td>
+                    <td>{{ r.legist }}</td>
+                    <td>{{ r.diagnostic }}</td>
+                    <td><button class="btn-small" (click)="voirRapport(r.id)">Voir</button></td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="5" class="empty">Aucun rapport</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+</div>

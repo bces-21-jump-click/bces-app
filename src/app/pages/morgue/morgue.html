@@ -1,0 +1,52 @@
+<div class="morgue-page">
+    <header class="page-header">
+        <h1>⚰️ Morgue</h1>
+        <span class="connexion-badge" [class.connecte]="connecte()">
+            {{ connecte() ? 'En ligne' : 'Hors ligne' }}
+        </span>
+    </header>
+
+    <div class="morgue-content">
+        <!-- Casiers mortuaires -->
+        <section class="morgue-section">
+            <h3 class="section-titre">Casiers mortuaires</h3>
+            <div class="morgue-grid">
+                @for (i of range(morgueConfig.nombreCasiers); track i) {
+                <div class="morgue-slot" [class.occupe]="etat().morgue.casiers['' + i]">
+                    <label>C-{{ i + 1 }}</label>
+                    <input type="text" [ngModel]="etat().morgue.casiers['' + i]"
+                        (ngModelChange)="majMorgue('casiers', '' + i, $event)" placeholder="..." />
+                </div>
+                }
+            </div>
+        </section>
+
+        <!-- Urnes -->
+        <section class="morgue-section">
+            <h3 class="section-titre">Urnes</h3>
+            <div class="morgue-grid">
+                @for (i of range(morgueConfig.nombreUrnes); track i) {
+                <div class="morgue-slot" [class.occupe]="etat().morgue.urnes['' + i]">
+                    <label>U-{{ i + 1 }}</label>
+                    <input type="text" [ngModel]="etat().morgue.urnes['' + i]"
+                        (ngModelChange)="majMorgue('urnes', '' + i, $event)" placeholder="..." />
+                </div>
+                }
+            </div>
+        </section>
+
+        <!-- Enterrements -->
+        <section class="morgue-section">
+            <h3 class="section-titre">Enterrements</h3>
+            <div class="morgue-grid">
+                @for (i of range(morgueConfig.nombreEnterrements); track i) {
+                <div class="morgue-slot" [class.occupe]="etat().morgue.enterrements['' + i]">
+                    <label>E-{{ i + 1 }}</label>
+                    <input type="text" [ngModel]="etat().morgue.enterrements['' + i]"
+                        (ngModelChange)="majMorgue('enterrements', '' + i, $event)" placeholder="..." />
+                </div>
+                }
+            </div>
+        </section>
+    </div>
+</div>

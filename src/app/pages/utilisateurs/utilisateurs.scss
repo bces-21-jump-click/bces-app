@@ -1,0 +1,223 @@
+.utilisateurs-page {
+  padding: 1.5rem;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  h1 {
+    font-size: 1.3rem;
+  }
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.search-input {
+  padding: 0.4rem 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.85rem;
+  width: 200px;
+}
+
+.tabs {
+  display: flex;
+  gap: 0.25rem;
+  border-bottom: 2px solid var(--border);
+
+  button {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-bottom: -2px;
+
+    &.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+      font-weight: 600;
+    }
+  }
+
+  .badge {
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    font-size: 0.65rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.tab-content {
+  margin-top: 0.5rem;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+  .empty {
+    text-align: center;
+    color: var(--text-muted);
+    padding: 2rem;
+  }
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.perm-tag {
+  display: inline-block;
+  padding: 0.1rem 0.35rem;
+  background: var(--surface-elevated);
+  border-radius: 4px;
+  font-size: 0.7rem;
+  margin-right: 0.2rem;
+}
+
+.statut-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  margin-right: 0.3rem;
+
+  &.actif {
+    background: #10b981;
+  }
+}
+
+.statut-badge {
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  &[data-statut='en_attente'] {
+    background: #f59e0b;
+    color: #fff;
+  }
+  &[data-statut='approuvee'] {
+    background: #10b981;
+    color: #fff;
+  }
+  &[data-statut='refusee'] {
+    background: #ef4444;
+    color: #fff;
+  }
+}
+
+.ligne-actions {
+  display: inline-flex;
+  gap: 0.35rem;
+}
+
+.btn-action {
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.3rem 0.5rem;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--surface-hover);
+  }
+
+  &.danger {
+    color: var(--danger);
+    border-color: color-mix(in srgb, var(--danger) 35%, transparent 65%);
+  }
+}
+
+.role-select {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface-elevated);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  max-width: 180px;
+
+  &:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 1px;
+  }
+}
+
+.btn-supprimer {
+  border: 1px solid color-mix(in srgb, var(--danger) 40%, transparent 60%);
+  border-radius: 6px;
+  background: none;
+  color: var(--danger);
+  font-size: 0.74rem;
+  font-weight: 700;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in srgb, var(--danger) 12%, transparent 88%);
+  }
+}
+
+.soi-meme {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
+}
+
+.erreur-message {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, transparent 90%);
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent 70%);
+  border-radius: 6px;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}

@@ -1,0 +1,224 @@
+<div class="commandes-page">
+    <!-- Tabs -->
+    <div class="tabs">
+        <button [class.active]="onglet() === 'orders'" (click)="onglet.set('orders')">
+            En cours
+            @if (orders().length) { <span class="tab-badge">{{ orders().length }}</span> }
+        </button>
+        <button [class.active]="onglet() === 'alert'" (click)="onglet.set('alert')">
+            Préparation
+            @if (alerts().length) { <span class="tab-badge">{{ alerts().length }}</span> }
+        </button>
+        @if (canViewHistory()) {
+        <button [class.active]="onglet() === 'history'" (click)="onglet.set('history')">Historique</button>
+        }
+    </div>
+
+    <!-- ===== ORDERS TAB ===== -->
+    @if (onglet() === 'orders') {
+    <div class="orders-list">
+        @for (order of orders(); track order.id) {
+        <div class="order-card" [class]="'border-' + getStatusColor(order.status)">
+            <div class="order-header">
+                <select [ngModel]="order.status" (ngModelChange)="updateStatus(order, $event)" class="status-select">
+                    @for (opt of statusOptions; track opt.value) {
+                    <option [value]="opt.value">{{ opt.label }}</option>
+                    }
+                </select>
+                <span class="order-company">{{ getCompanyName(order.company) }}</span>
+                <div class="order-actions">
+                    <button class="btn-icon" (click)="copyMessage(order)" title="Copier">📋</button>
+                    <button class="btn-icon" (click)="openEditOrder(order)" title="Modifier">✏️</button>
+                    <button class="btn-icon" (click)="openPriceDialog(order)" title="Prix">💲</button>
+                    <button class="btn-icon" (click)="deleteOrder(order)" title="Annuler">❌</button>
+                    <button class="btn accent" (click)="payOrder(order)">✅ Valider</button>
+                </div>
+            </div>
+            <div class="order-summary">
+                <span>{{ order.items.length }} article(s)</span>
+                <span>⚖️ {{ (order.weight * 100 | number:'1.0-2') }} kg</span>
+                <span>💰 @if (order.price !== null) { {{ order.price }} $ } @else { <em>Inconnue</em> }</span>
+                @if (order.updatedAt) { <span>🕐 {{ formatDate(order.updatedAt) }}</span> }
+            </div>
+            <details class="order-details">
+                <summary>Détails</summary>
+                <div class="order-items">
+                    @for (oi of order.items; track oi.id) {
+                    @if (oi.amount > 0 && getItemInfo(oi.id); as info) {
+                    <div class="order-item-row">
+                        <span>{{ info.icon }} {{ info.name }}</span>
+                        <span>× {{ oi.amount }}</span>
+                    </div>
+                    }
+                    }
+                    @if (order.destroy > 0) {
+                    <div class="order-item-row text-danger">
+                        <span>🗑️ Destruction</span>
+                        <span>× {{ order.destroy }}</span>
+                    </div>
+                    }
+                </div>
+            </details>
+        </div>
+        } @empty {
+        <p class="empty">Aucune commande en cours</p>
+        }
+    </div>
+    }
+
+    <!-- ===== ALERT TAB ===== -->
+    @if (onglet() === 'alert') {
+    <div class="alerts-list">
+        @for (alert of alerts(); track alert.company.id) {
+        @if (!alert.company.isGarage) {
+        <div class="alert-card"
+            [class]="alert.maxAlertLevel >= 2 ? 'alert-critical' : alert.maxAlertLevel >= 1 ? 'alert-warning' : 'alert-ok'">
+            <div class="alert-header">
+                <span>{{ alert.company.icon }} {{ alert.company.name }} : {{ alert.totalItemCount }} item(s) ({{
+                    (alert.totalWeight * 100 | number:'1.0-2') }} kg)</span>
+                @if (!companyOrders().includes(alert.company.id)) {
+                <button class="btn accent" (click)="openOrderCreation(alert.company)">🛒 Commander</button>
+                } @else {
+                <span class="chip">Commande en cours</span>
+                }
+            </div>
+            <div class="alert-items">
+                @for (ai of alert.items; track ai.item.id) {
+                <div [class]="ai.alertLevel >= 2 ? 'text-danger' : ai.alertLevel >= 1 ? 'text-warning' : ''">
+                    {{ ai.item.icon }} {{ ai.item.name }} - {{ ai.orderNeeded }} ({{ ai.item.amount }}/{{ ai.item.wanted
+                    }})
+                </div>
+                }
+            </div>
+        </div>
+        }
+        } @empty {
+        <p class="empty">Aucune alerte</p>
+        }
+    </div>
+    }
+
+    <!-- ===== HISTORY TAB ===== -->
+    @if (onglet() === 'history') {
+    <div class="history-list">
+        @for (key of monthKeys(); track key) {
+        <details class="month-panel" open>
+            <summary class="month-title">
+                {{ monthGrouped()[key].month }} {{ monthGrouped()[key].year }}
+                ({{ monthGrouped()[key].histories.length }} commande(s) : {{ formatMoney(monthGrouped()[key].totalPaid)
+                }})
+            </summary>
+            @for (h of monthGrouped()[key].histories; track h.id) {
+            <details class="history-entry">
+                <summary class="history-header">
+                    Le {{ formatDate(h.payDate!) }} | {{ getCompanyName(h.company) }} | ({{ h.weight }} kg - {{
+                    formatMoney(h.price) }})
+                    @if (canViewHistory()) {
+                    <button class="btn-icon danger" (click)="deleteHistory(h); $event.stopPropagation()">🗑️</button>
+                    }
+                </summary>
+                <div class="history-items">
+                    @for (hi of h.items; track hi.id) {
+                    @if (hi.amount > 0 && getItemInfo(hi.id); as info) {
+                    <div>{{ info.icon }} {{ info.name }} - {{ hi.amount }}</div>
+                    }
+                    }
+                    @if (h.destroy > 0) {
+                    <div class="text-danger">🗑️ Destruction - {{ h.destroy }}</div>
+                    }
+                </div>
+            </details>
+            }
+        </details>
+        } @empty {
+        <p class="empty">Aucun historique</p>
+        }
+    </div>
+    }
+
+    <!-- Price dialog -->
+    @if (dialogPrice()) {
+    <div class="overlay" (click)="dialogPrice.set(false)">
+        <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
+            <h3 class="dialog-title">Modifier le prix</h3>
+            <input type="number" class="field" placeholder="Prix ($)" [ngModel]="priceValue()"
+                (ngModelChange)="priceValue.set(+$event)" />
+            <div class="dialog-actions">
+                <button class="btn accent" (click)="savePriceDialog()">Valider</button>
+                <button class="btn danger" (click)="dialogPrice.set(false)">Annuler</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Edit dialog -->
+    @if (dialogEdit() && editOrder(); as eo) {
+    <div class="overlay" (click)="dialogEdit.set(false)">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <h3 class="dialog-title">Modifier la commande ({{ (editWeight() * 100 | number:'1.0-2') }} kg)</h3>
+            <table class="data-table">
+                <tbody>
+                    @for (oi of eo.items; track oi.id) {
+                    @if (getItemInfo(oi.id); as info) {
+                    <tr>
+                        <td>{{ info.icon }} {{ info.name }} ({{ (info.wanted - info.amount > 0) ? info.wanted -
+                            info.amount : 0 }})</td>
+                        <td style="width:100px">
+                            <input type="number" class="inline-input" [(ngModel)]="oi.amount" />
+                        </td>
+                        <td>{{ (oi.amount * info.weight * 100 | number:'1.0-2') }} kg</td>
+                    </tr>
+                    }
+                    }
+                </tbody>
+            </table>
+            <div class="dialog-actions">
+                <button class="btn accent" (click)="saveEditOrder()">Valider</button>
+                <button class="btn danger" (click)="dialogEdit.set(false)">Annuler</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Order creation mode dialog -->
+    @if (dialogCreationMode()) {
+    <div class="overlay" (click)="dialogCreationMode.set(false)">
+        <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
+            <h3 class="dialog-title">Mode de commande</h3>
+            <div class="mode-buttons">
+                <button class="btn" (click)="openOrderDialog(0)">Vide</button>
+                <button class="btn" (click)="openOrderDialog(200)">200 Kg max</button>
+                <button class="btn" (click)="openOrderDialog(600)">600 Kg max</button>
+                <button class="btn" (click)="openOrderDialog(null)">Illimité</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Order dialog -->
+    @if (dialogOrder() && orderData(); as od) {
+    <div class="overlay" (click)="dialogOrder.set(false)">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <h3 class="dialog-title">Commande ({{ (orderWeight() * 100 | number:'1.0-2') }} kg)</h3>
+            <table class="data-table">
+                <tbody>
+                    @for (ai of od.items; track ai.item.id) {
+                    <tr>
+                        <td>{{ ai.item.icon }} {{ ai.item.name }} ({{ (ai.item.wanted - ai.item.amount > 0) ?
+                            ai.item.wanted - ai.item.amount : 0 }})</td>
+                        <td style="width:100px">
+                            <input type="number" class="inline-input" [(ngModel)]="ai.orderNeeded" />
+                        </td>
+                        <td>{{ (ai.orderNeeded * ai.item.weight * 100 | number:'1.0-2') }} kg</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="dialog-actions">
+                <button class="btn accent" (click)="saveOrder()">Valider</button>
+                <button class="btn danger" (click)="dialogOrder.set(false)">Annuler</button>
+            </div>
+        </div>
+    </div>
+    }
+</div>

@@ -1,0 +1,289 @@
+export interface CategorieConfig {
+  id: string;
+  label: string;
+  emoji: string;
+  couleur: string;
+}
+
+export const CATEGORIES: CategorieConfig[] = [
+  { id: 'en_service', label: 'En service', emoji: '🟢', couleur: '#2e7d32' },
+  { id: 'astreinte', label: 'Astreinte', emoji: '⏰', couleur: '#e65100' },
+  { id: 'pause', label: 'En Pause', emoji: '⏸️', couleur: '#f59f00' },
+  { id: 'fin_service', label: 'Fin de service', emoji: '🔴', couleur: '#c62828' },
+  { id: 'ipt', label: 'IPT', emoji: '🚶', couleur: '#455a64' },
+  { id: 'conges', label: 'Congés', emoji: '🏖️', couleur: '#1565c0' },
+];
+
+export interface TypeInterventionConfig {
+  id: string;
+  label: string;
+  emoji: string;
+}
+
+export const TYPES_INTERVENTION: TypeInterventionConfig[] = [
+  { id: 'intervention', label: 'Intervention', emoji: '🚑' },
+  { id: 'primo_inter', label: 'Primo Inter', emoji: '🔥' },
+  { id: 'patrouille', label: 'Patrouille', emoji: '🚔' },
+  { id: 'event', label: 'Événement', emoji: '🎪' },
+  { id: 'rdv', label: 'Rendez-vous', emoji: '📅' },
+  { id: 'psy', label: 'Psychologue', emoji: '🧠' },
+  { id: 'otage', label: 'Otage', emoji: '💰' },
+  { id: 'bureau_admin', label: 'Bureau Admin', emoji: '🖥️' },
+  { id: 'formation', label: 'Formation', emoji: '📚' },
+  { id: 'operation', label: 'Opération', emoji: '⚙️' },
+  { id: 'vm', label: 'Visite Médicale', emoji: '🩺' },
+  { id: 'hopital', label: 'Hôpital', emoji: '🏥' },
+];
+
+export interface StatutRetourConfig {
+  id: string;
+  label: string;
+  emoji: string;
+}
+
+export const STATUTS_RETOUR: StatutRetourConfig[] = [
+  { id: 'pat', label: 'PAT', emoji: '🦶' },
+  { id: 'retour_0', label: 'Retour 0', emoji: '' },
+  { id: 'retour_1', label: 'Retour 1', emoji: '' },
+  { id: 'retour_2', label: 'Retour 2', emoji: '' },
+  { id: 'retour_3', label: 'Retour 3', emoji: '' },
+  { id: 'bennys', label: "Benny's", emoji: '🔧' },
+  { id: 'zombie_car', label: 'Zombie Car', emoji: '🚗' },
+  { id: 'airbaged', label: 'Airbagé', emoji: '🛢️' },
+];
+
+export interface RoleCentralConfig {
+  id: string;
+  label: string;
+  emoji: string;
+}
+
+export const ROLES_CENTRAL: RoleCentralConfig[] = [
+  { id: 'radio_2', label: '2e Radio', emoji: '📻' },
+  { id: 'formateur', label: 'Formateur Central', emoji: '🎓' },
+  { id: 'avec_central', label: 'Avec Central', emoji: '👥' },
+];
+
+export interface StatutHopitalConfig {
+  id: string;
+  label: string;
+  couleur: string;
+}
+
+export const STATUTS_HOPITAL: StatutHopitalConfig[] = [
+  { id: 'gestion_normale', label: 'Gestion Normale', couleur: '#4caf50' },
+  { id: 'hopital_ferme', label: 'Hôpital Fermé', couleur: '#f44336' },
+  { id: 'coups_de_feu', label: 'Coups de feu', couleur: '#ff9800' },
+  { id: 'gestion_bagarre', label: 'Gestion Bagarre', couleur: '#ff5722' },
+  { id: 'gestion_fusillade', label: 'Gestion Fusillade', couleur: '#d32f2f' },
+  { id: 'mode_nuit', label: 'Mode Nuit', couleur: '#311b92' },
+];
+
+export const STATUTS_MEDICAUX_CRISE: string[] = [
+  'Indemne',
+  'Blessé léger',
+  'Blessé moyen',
+  'Blessé grave',
+  'Urgence vitale',
+  'Inconscient',
+  'Soins intensifs',
+  'En chirurgie',
+  'Stabilisé',
+  'Critique',
+  'Décédé',
+  'Évacué',
+];
+
+export const APPARTENANCES_CRISE: { id: string; label: string }[] = [
+  { id: 'fdo', label: 'FDO' },
+  { id: 'ems', label: 'EMS' },
+  { id: 'civil', label: 'Civil' },
+  { id: 'ballas', label: 'Ballas' },
+  { id: 'vagos', label: 'Vagos' },
+  { id: 'aztecas', label: 'Aztecas' },
+  { id: 'ghost', label: 'Ghost' },
+  { id: 'locura', label: 'Locura' },
+  { id: 'madz', label: 'Madz' },
+  { id: 'lost', label: 'Lost' },
+  { id: 'forsaken', label: 'Forsaken' },
+  { id: 'autre1', label: 'Autre 1' },
+  { id: 'autre2', label: 'Autre 2' },
+];
+
+export const CHAMBRES_CRISE: string[] = [
+  'Emergency G',
+  'Emergency M',
+  'Emergency D',
+  'Josiah G',
+  'Josiah M',
+  'Josiah D',
+  'Chiliad G',
+  'Chiliad M',
+  'Chiliad D',
+  'Gordo Room',
+  'Chianki Room',
+  'OP-1',
+  'OP-2',
+  'OP-3',
+  'Consult 1',
+  'Consult 2',
+  'Consult 3',
+  'Consult 4',
+];
+
+export interface SalleAvecLitsConfig {
+  id: 'emergency_room' | 'josiah_room' | 'chiliad_room';
+  label: string;
+  lits: Array<{ id: 'lit_g' | 'lit_m' | 'lit_d'; label: string }>;
+}
+
+export const SALLES_AVEC_LITS: SalleAvecLitsConfig[] = [
+  {
+    id: 'emergency_room',
+    label: 'Emergency Room',
+    lits: [
+      { id: 'lit_g', label: 'Lit G' },
+      { id: 'lit_m', label: 'Lit M' },
+      { id: 'lit_d', label: 'Lit D' },
+    ],
+  },
+  {
+    id: 'josiah_room',
+    label: 'Josiah Room',
+    lits: [
+      { id: 'lit_g', label: 'Lit G' },
+      { id: 'lit_m', label: 'Lit M' },
+      { id: 'lit_d', label: 'Lit D' },
+    ],
+  },
+  {
+    id: 'chiliad_room',
+    label: 'Chiliad Room',
+    lits: [
+      { id: 'lit_g', label: 'Lit G' },
+      { id: 'lit_m', label: 'Lit M' },
+      { id: 'lit_d', label: 'Lit D' },
+    ],
+  },
+];
+
+export interface SalleSimpleConfig {
+  id: 'gordo_room' | 'san_chianki_room';
+  label: string;
+}
+
+export const SALLES_SIMPLES: SalleSimpleConfig[] = [
+  { id: 'gordo_room', label: 'Gordo Room' },
+  { id: 'san_chianki_room', label: 'San Chianki Room' },
+];
+
+export interface SalleOperationConfig {
+  id: 'op_1' | 'op_2' | 'op_3';
+  label: string;
+}
+
+export const SALLES_OPERATION: SalleOperationConfig[] = [
+  { id: 'op_1', label: "Salle d'opé 01" },
+  { id: 'op_2', label: "Salle d'opé 02" },
+  { id: 'op_3', label: "Salle d'opé 03" },
+];
+
+export const STATUTS_CHAMBRE: string[] = [
+  "En attente d'opé",
+  'Opé sur place',
+  'Réveil après opé',
+  'Nuit en chambre',
+  'Constantes stables',
+  'Constantes faibles',
+  'Coma artificiel',
+  'Décès',
+];
+
+export const COULEURS_STATUTS_CHAMBRE: Record<string, string> = {
+  "En attente d'opé": '#d32f2f',
+  'Opé sur place': '#1976d2',
+  'Réveil après opé': '#fbc02d',
+  'Nuit en chambre': '#00acc1',
+  'Constantes stables': '#2e7d32',
+  'Constantes faibles': '#c9b79c',
+  'Coma artificiel': '#bfa88a',
+  Décès: '#7a7f86',
+  "⚠️ En attente d'opé": '#d32f2f',
+  '😷 Opé sur place': '#1976d2',
+};
+
+export const STATUTS_OPERATION: string[] = ['Libre', 'En préparation', 'En cours', 'Terminée'];
+
+export interface GroupeLitsConfig {
+  id: string;
+  label: string;
+  lits: string[];
+}
+
+export const GROUPES_LITS: GroupeLitsConfig[] = [
+  { id: 'soins_intensifs', label: 'Soins Intensifs', lits: ['SI-1', 'SI-2', 'SI-3', 'SI-4'] },
+  { id: 'salles_op', label: "Salles d'OP", lits: ['OP-1', 'OP-2', 'OP-3'] },
+  { id: 'imagerie', label: 'Imagerie', lits: ['IRM', 'Scanner', 'Radio'] },
+  { id: 'consultations', label: 'Consultations', lits: ['C-1', 'C-2', 'C-3', 'C-4'] },
+  {
+    id: 'chambres_individuelles',
+    label: 'Chambres individuelles',
+    lits: ['CH-1', 'CH-2', 'CH-3', 'CH-4'],
+  },
+  { id: 'chambre_commune', label: 'Chambre commune', lits: ['CC-1', 'CC-2', 'CC-3', 'CC-4'] },
+];
+
+export const MORGUE_CONFIG = {
+  nombreCasiers: 12,
+  nombreUrnes: 12,
+  nombreEnterrements: 4,
+  maxParLigne: 6,
+};
+
+export const COMPLEMENTS: string[] = [
+  'Pillbox',
+  'Sandy',
+  'Paleto',
+  'Cayo',
+  'Zancudo',
+  'Davis',
+  'Mirror Park',
+  'Vinewood',
+  'Rockford',
+  'Del Perro',
+  'Vespucci',
+  'LSIA',
+  'Port',
+  'Chiliad',
+  'Autre',
+];
+
+export interface StatusPillConfig {
+  label: string;
+  couleurs: {
+    dispo: { bg: string; text: string };
+    indispo: { bg: string; text: string };
+    defaut: { bg: string; text: string };
+    nuit: { bg: string; text: string };
+  };
+}
+
+export const SAFD_STATUS: StatusPillConfig = {
+  label: 'SAFD',
+  couleurs: {
+    dispo: { bg: '#c62828', text: '#ffffff' },
+    indispo: { bg: '#4a1a1a', text: '#ef9a9a' },
+    defaut: { bg: '#4a1a1a', text: '#ef9a9a' },
+    nuit: { bg: '#1a0a0a', text: '#ef9a9a' },
+  },
+};
+
+export const LSES_STATUS: StatusPillConfig = {
+  label: 'LSES',
+  couleurs: {
+    dispo: { bg: '#1565c0', text: '#ffffff' },
+    indispo: { bg: '#0d3b6e', text: '#90caf9' },
+    defaut: { bg: '#0d3b6e', text: '#90caf9' },
+    nuit: { bg: '#0a1929', text: '#90caf9' },
+  },
+};

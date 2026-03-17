@@ -1,0 +1,208 @@
+<div class="stocks-page">
+    <div class="card">
+        <div class="tabs">
+            <button [class.active]="activeTab() === 'companies'" (click)="activeTab.set('companies')">
+                Entreprises
+            </button>
+            <button [class.active]="activeTab() === 'storages'" (click)="activeTab.set('storages')">
+                Stockage
+            </button>
+            <button [class.active]="activeTab() === 'items'" (click)="activeTab.set('items')">
+                Items
+            </button>
+        </div>
+
+        <!-- Entreprises -->
+        @if (activeTab() === 'companies') {
+        <div class="tab-content">
+            <h3 class="text-center">Entreprises :</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (company of notif.companies(); track company.id) {
+                    <tr>
+                        <td>{{ company.icon }} {{ company.name }}</td>
+                        <td class="text-end">
+                            <button class="btn-icon" (click)="editCompany(company)" aria-label="Modifier">✏️</button>
+                            <button class="btn-icon danger" (click)="deleteCompany(company)"
+                                aria-label="Supprimer">🗑️</button>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="2" class="text-center text-muted">Aucune entreprise</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="actions-center">
+                <button class="btn btn-accent" (click)="newCompany()">Ajouter une entreprise</button>
+            </div>
+        </div>
+        }
+
+        <!-- Stockages -->
+        @if (activeTab() === 'storages') {
+        <div class="tab-content">
+            <h3 class="text-center">Stockages :</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Poids max</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (storage of notif.storages(); track storage.id) {
+                    <tr>
+                        <td>{{ storage.icon }} {{ storage.name }}</td>
+                        <td>{{ storage.maxWeight }} Kg</td>
+                        <td class="text-end">
+                            <button class="btn-icon" (click)="editStorage(storage)" aria-label="Modifier">✏️</button>
+                            <button class="btn-icon danger" (click)="deleteStorage(storage)"
+                                aria-label="Supprimer">🗑️</button>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="3" class="text-center text-muted">Aucun stockage</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="actions-center">
+                <button class="btn btn-accent" (click)="newStorage()">Ajouter un stockage</button>
+            </div>
+        </div>
+        }
+
+        <!-- Items -->
+        @if (activeTab() === 'items') {
+        <div class="tab-content">
+            <h3 class="text-center">Items :</h3>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Poids</th>
+                        <th>Stockage</th>
+                        <th>Vendeur</th>
+                        <th>Stock souhaité</th>
+                        <th>Commande max</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (item of sortedItems(); track item.id) {
+                    <tr>
+                        <td>
+                            {{ item.icon }} {{ item.name }}
+                            @if (item.isSecure) { <span class="badge-secure">🔒</span> }
+                        </td>
+                        <td>{{ item.weight }} Kg</td>
+                        <td>{{ getStorageName(item.storage) }}</td>
+                        <td>{{ getCompanyName(item.seller) }}</td>
+                        <td>{{ item.wanted }}</td>
+                        <td>{{ item.maxOrder === 0 ? '♾️' : item.maxOrder }}</td>
+                        <td class="text-end">
+                            <button class="btn-icon" (click)="editItem(item)" aria-label="Modifier">✏️</button>
+                            <button class="btn-icon danger" (click)="deleteItem(item)"
+                                aria-label="Supprimer">🗑️</button>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Aucun item</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="actions-center">
+                <button class="btn btn-accent" (click)="newItem()">Ajouter un item</button>
+            </div>
+        </div>
+        }
+    </div>
+
+    <!-- Dialog Entreprise -->
+    @if (companyDialog()) {
+    <div class="overlay" (click)="companyDialog.set(false)">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <h3>{{ editingCompany()?.id ? 'Modifier' : 'Ajouter' }} une entreprise</h3>
+            <label>Icone <input [(ngModel)]="editingCompany()!.icon" /></label>
+            <label>Nom <input [(ngModel)]="editingCompany()!.name" /></label>
+            <label class="toggle"><input type="checkbox" [(ngModel)]="editingCompany()!.canDestroy" /> Peut détruire le
+                sang</label>
+            <label class="toggle"><input type="checkbox" [(ngModel)]="editingCompany()!.canExpenseNote" /> Notes de
+                frais</label>
+            <label class="toggle"><input type="checkbox" [(ngModel)]="editingCompany()!.isGarage" /> Garage auto</label>
+            <div class="dialog-actions">
+                <button class="btn btn-primary" (click)="saveCompany()">Valider</button>
+                <button class="btn btn-danger" (click)="companyDialog.set(false)">Annuler</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Dialog Stockage -->
+    @if (storageDialog()) {
+    <div class="overlay" (click)="storageDialog.set(false)">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <h3>{{ editingStorage()?.id ? 'Modifier' : 'Ajouter' }} un stockage</h3>
+            <label>Icone <input [(ngModel)]="editingStorage()!.icon" /></label>
+            <label>Nom <input [(ngModel)]="editingStorage()!.name" /></label>
+            <label>Poids max (Kg) <input type="number" [(ngModel)]="editingStorage()!.maxWeight" /></label>
+            <div class="dialog-actions">
+                <button class="btn btn-primary" (click)="saveStorage()">Valider</button>
+                <button class="btn btn-danger" (click)="storageDialog.set(false)">Annuler</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Dialog Item -->
+    @if (itemDialog()) {
+    <div class="overlay" (click)="itemDialog.set(false)">
+        <div class="dialog dialog-large" (click)="$event.stopPropagation()">
+            <h3>{{ editingItem()?.id ? 'Modifier' : 'Ajouter' }} un item</h3>
+            <label>Icone <input [(ngModel)]="editingItem()!.icon" /></label>
+            <label>Nom <input [(ngModel)]="editingItem()!.name" /></label>
+            <label>Poids (Kg) <input type="number" [(ngModel)]="editingItem()!.weight" /></label>
+            <label>Stockage
+                <select [(ngModel)]="editingItem()!.storage">
+                    @for (s of notif.storages(); track s.id) {
+                    <option [value]="s.id">{{ s.icon }} {{ s.name }}</option>
+                    }
+                </select>
+            </label>
+            <label>Vendeur
+                <select [(ngModel)]="editingItem()!.seller">
+                    @for (c of notif.companies(); track c.id) {
+                    <option [value]="c.id">{{ c.icon }} {{ c.name }}</option>
+                    }
+                </select>
+            </label>
+            <label>Stock souhaité <input type="number" [(ngModel)]="editingItem()!.wanted" /></label>
+            <label>Commande max (0 = illimité) <input type="number" [(ngModel)]="editingItem()!.maxOrder" /></label>
+            <label class="toggle"><input type="checkbox" [(ngModel)]="editingItem()!.isSecure" /> Commande
+                sécurisée</label>
+            <label class="toggle"><input type="checkbox" [(ngModel)]="editingItem()!.isInstantiated" /> Contient des
+                instances</label>
+            @if (editingItem()!.isInstantiated) {
+            <label class="toggle"><input type="checkbox" [(ngModel)]="editingItem()!.instanceByDate" /> Instances par
+                date</label>
+            }
+            <div class="dialog-actions">
+                <button class="btn btn-primary" (click)="saveItem()">Valider</button>
+                <button class="btn btn-danger" (click)="itemDialog.set(false)">Annuler</button>
+            </div>
+        </div>
+    </div>
+    }
+</div>

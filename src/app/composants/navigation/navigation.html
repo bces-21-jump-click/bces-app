@@ -1,0 +1,54 @@
+<!-- Top bar -->
+<header class="topbar">
+  <a routerLink="/" class="brand-link">
+    <img class="brand-logo" src="assets/images/logo.png" alt="" aria-hidden="true" />
+    <span class="brand-text">BCES {{ nomPageActive() }}</span>
+  </a>
+
+  <div class="topbar-actions">
+    <span class="topbar-status" [class.connecte]="connecteDispatch()">
+      {{ connecteDispatch() ? 'En ligne' : 'Hors ligne' }}
+    </span>
+    <button class="theme-btn" (click)="toggleTheme()" [attr.aria-label]="themeNuit() ? 'Mode jour' : 'Mode nuit'">
+      {{ themeNuit() ? '☀️' : '🌙' }}
+    </button>
+    <button class="menu-btn" (click)="toggleMenu()" aria-label="Ouvrir le menu">☰</button>
+  </div>
+</header>
+
+<!-- Drawer -->
+@if (menuOuvert()) {
+<div class="backdrop" (click)="fermerMenu()"></div>
+<nav class="drawer" role="navigation" aria-label="Navigation principale">
+  <div class="drawer-header">
+    <img class="brand-logo" src="assets/images/logo.png" alt="" aria-hidden="true" />
+    <span class="brand-text">BCES</span>
+    <button class="close-btn" (click)="fermerMenu()" aria-label="Fermer le menu">✕</button>
+  </div>
+  <div class="drawer-nav">
+    @for (groupe of navGroupesFiltres(); track $index) {
+    @if ($index > 0) {
+    <div class="nav-divider"></div>
+    }
+    @for (item of groupe; track item.lien) {
+    <a class="nav-link" [routerLink]="item.lien" routerLinkActive="active"
+      [routerLinkActiveOptions]="{exact: item.lien === '/'}" (click)="fermerMenu()">
+      <span class="nav-icon">{{ item.emoji }}</span>
+      <span class="nav-text">{{ item.titre }}</span>
+      @if (getBadge(item) > 0) {
+      <span class="nav-badge">{{ getBadge(item) }}</span>
+      }
+    </a>
+    }
+    }
+  </div>
+
+  <div class="drawer-account">
+    @if (utilisateur()) {
+    <div class="drawer-account__identity">{{ utilisateur()?.name }}</div>
+    <button class="account-btn" (click)="changerMotDePasse()">Changer de mot de passe</button>
+    <button class="account-btn danger" (click)="deconnexion()">Se déconnecter</button>
+    }
+  </div>
+</nav>
+}

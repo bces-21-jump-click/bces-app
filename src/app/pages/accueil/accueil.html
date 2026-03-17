@@ -1,0 +1,172 @@
+<div class="accueil-page">
+
+    <!-- Profil -->
+    @if (profile()) {
+    <section class="profile-card">
+        <h2 class="profile-name">{{ profile()!.name }}</h2>
+
+        <!-- Dispatch info -->
+        @if (myDispatchPosition()) {
+        <div class="dispatch-info">
+            <span class="dispatch-chip" [attr.data-color]="myDispatchPosition()!.color">
+                {{ myDispatchPosition()!.emoji }} {{ myDispatchPosition()!.label }}
+            </span>
+            @if (myRadio()) {
+            <span class="dispatch-chip" [attr.data-color]="myRadio()!.actif ? 'green' : 'red'">
+                📻 Radio {{ myRadio()!.serie || '—' }} · {{ myRadio()!.actif ? 'ON' : 'OFF' }}
+            </span>
+            } @else {
+            <span class="dispatch-chip" data-color="grey">📻 Pas de radio</span>
+            }
+        </div>
+        }
+
+        <div class="profile-permissions">
+            <span class="permissions-label">Permissions :</span>
+            @if (profile()!.permissions && profile()!.permissions.length > 0) {
+            @for (perm of profile()!.permissions; track perm) {
+            <span class="permission-icon" [title]="permissionName(perm)">{{ permissionIcon(perm) }}</span>
+            }
+            } @else {
+            <span class="vide">Aucune</span>
+            }
+        </div>
+    </section>
+    }
+
+    <!-- Accès rapide -->
+    @if (filteredNavItems().length > 0) {
+    <section class="quick-access">
+        <h2 class="section-label">⚡ Accès rapide</h2>
+        <div class="cards-grid">
+            @for (item of filteredNavItems(); track item.lien) {
+            <button class="quick-card" (click)="naviguer(item.lien)">
+                @if (item.notif > 0) {
+                <span class="card-badge">{{ item.notif }}</span>
+                }
+                <span class="quick-card-emoji">{{ item.emoji }}</span>
+                <span class="quick-card-label">{{ item.titre }}</span>
+            </button>
+            }
+        </div>
+    </section>
+    }
+
+    <!-- Actions -->
+    @if (canAction()) {
+    <section class="actions-section">
+        <h2 class="section-label">🖱️ Actions</h2>
+        <div class="actions-row">
+            <button class="btn-action primary" (click)="openFormationDialog()">🎓 Demande de formation</button>
+            <button class="btn-action purple" (click)="openCandidatureDialog()">👤 Candidature</button>
+            <button class="btn-action amber" (click)="openPromotionDialog()">🏅 Demande de promotion</button>
+        </div>
+    </section>
+    }
+
+    <!-- Dialog Formation -->
+    @if (dialogFormation()) {
+    <div class="overlay" (click)="dialogFormation.set(false)">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <h3 class="dialog-title primary">Demande de formation</h3>
+            <div class="dialog-body">
+                <p>Demandeur : <strong>{{ profile()!.name }}</strong></p>
+                <div class="form-group">
+                    <label for="training-select">Formation demandée</label>
+                    <select id="training-select" [ngModel]="selectedTraining()"
+                        (ngModelChange)="selectedTraining.set($event)">
+                        @for (t of availableTrainings(); track t) {
+                        <option [value]="t">{{ t }}</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary" (click)="dialogFormation.set(false)">Annuler</button>
+                <button class="btn-primary" (click)="saveFormation()">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Dialog Promotion -->
+    @if (dialogPromotion()) {
+    <div class="overlay" (click)="dialogPromotion.set(false)">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <h3 class="dialog-title amber">Demande de promotion</h3>
+            <div class="dialog-body">
+                <p>Demandeur : <strong>{{ profile()!.name }}</strong></p>
+                <div class="form-group">
+                    <label>Type</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="promo-type" value="specialist"
+                                [checked]="promotionType() === 'specialist'" (change)="promotionType.set('specialist')">
+                            Devenir Responsable de pôle</label>
+                        <label><input type="radio" name="promo-type" value="rh" [checked]="promotionType() === 'rh'"
+                                (change)="promotionType.set('rh')"> Intégrer les RH</label>
+                    </div>
+                </div>
+                @if (promotionType() === 'specialist') {
+                <div class="form-group">
+                    <label for="specialty-select">Spécialité visée</label>
+                    <select id="specialty-select" [ngModel]="promotionSpecialty()"
+                        (ngModelChange)="promotionSpecialty.set($event)">
+                        <option [ngValue]="null">-- Sélectionner --</option>
+                        @for (s of specialties(); track s.value) {
+                        <option [value]="s.value">{{ s.icon }} {{ s.name }}</option>
+                        }
+                    </select>
+                </div>
+                }
+                <div class="form-group">
+                    <label for="motivation-ta">Motivations</label>
+                    <textarea id="motivation-ta" rows="3" [ngModel]="promotionMotivation()"
+                        (ngModelChange)="promotionMotivation.set($event)"></textarea>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary" (click)="dialogPromotion.set(false)">Annuler</button>
+                <button class="btn-primary amber" (click)="savePromotion()">Envoyer</button>
+            </div>
+        </div>
+    </div>
+    }
+
+    <!-- Dialog Candidature -->
+    @if (dialogCandidature()) {
+    <div class="overlay" (click)="dialogCandidature.set(false)">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <h3 class="dialog-title purple">Nouvelle Candidature</h3>
+            <div class="dialog-body">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="cand-name">Nom complet</label>
+                        <input id="cand-name" type="text" [ngModel]="candidatureName()"
+                            (ngModelChange)="candidatureName.set($event)">
+                    </div>
+                    <div class="form-group">
+                        <label for="cand-phone">Téléphone</label>
+                        <input id="cand-phone" type="text" [ngModel]="candidaturePhone()"
+                            (ngModelChange)="candidaturePhone.set($event)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="cand-email">Email (&#64;discord.gg)</label>
+                    <input id="cand-email" type="text" [ngModel]="candidatureEmail()"
+                        (ngModelChange)="candidatureEmail.set($event)">
+                </div>
+                <div class="form-group">
+                    <label for="cand-avail">Disponibilités</label>
+                    <textarea id="cand-avail" rows="3" [ngModel]="candidatureAvailabilities()"
+                        (ngModelChange)="candidatureAvailabilities.set($event)"></textarea>
+                </div>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn-secondary" (click)="dialogCandidature.set(false)">Annuler</button>
+                <button class="btn-primary purple" (click)="saveCandidature()">Sauvegarder</button>
+            </div>
+        </div>
+    </div>
+    }
+
+</div>

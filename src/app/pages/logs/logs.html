@@ -1,0 +1,60 @@
+<div class="logs-page">
+    <div class="page-header">
+        <h1>📋 Logs</h1>
+        <div class="filtres">
+            <select [ngModel]="filtreType()" (ngModelChange)="filtreType.set($event)" aria-label="Filtrer par type">
+                <option value="">Tous les types</option>
+                @for (t of typesLog; track t) {
+                <option [value]="t">{{ t }}</option>
+                }
+            </select>
+            <select [ngModel]="filtreUtilisateur()" (ngModelChange)="filtreUtilisateur.set($event)"
+                aria-label="Filtrer par utilisateur">
+                <option [ngValue]="null">Tous les utilisateurs</option>
+                @for (u of userList(); track u.id) {
+                <option [value]="u.id">{{ u.name }}</option>
+                }
+            </select>
+            <button class="btn-refresh" (click)="fetchLogs()" aria-label="Rafraîchir">🔄</button>
+        </div>
+    </div>
+
+    @if (chargement()) {
+    <div class="loading-dots"><span></span><span></span><span></span></div>
+    } @else {
+    <div class="table-container">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Utilisateur</th>
+                    <th>Type</th>
+                    <th>Description</th>
+                    @if (isDev()) {
+                    <th>Actions</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (l of logsFiltres(); track l.id) {
+                <tr>
+                    <td class="date-cell">{{ formatDate(l.id ?? '') }}</td>
+                    <td>{{ getUserName(l.user) }}</td>
+                    <td><span class="type-badge">{{ l.type }}</span></td>
+                    <td>{{ l.description }}</td>
+                    @if (isDev()) {
+                    <td>
+                        <button class="btn-delete" (click)="deleteLog(l)" aria-label="Supprimer ce log">🗑️</button>
+                    </td>
+                    }
+                </tr>
+                } @empty {
+                <tr>
+                    <td [attr.colspan]="isDev() ? 5 : 4" class="empty">Aucun log</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+</div>

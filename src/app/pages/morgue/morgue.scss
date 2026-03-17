@@ -1,0 +1,113 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg);
+}
+
+.morgue-page {
+  padding: 1rem 1.25rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h1 {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+  }
+}
+
+.connexion-badge {
+  font-size: 0.62rem;
+  padding: 0.18rem 0.6rem;
+  border-radius: 10px;
+  background: var(--danger);
+  color: #fff;
+  font-weight: 800;
+
+  &.connecte {
+    background: var(--success);
+    box-shadow: 0 0 8px rgba(0, 200, 100, 0.45);
+  }
+}
+
+.morgue-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.morgue-section {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-md);
+  padding: 0.85rem;
+}
+
+.section-titre {
+  font-size: 0.82rem;
+  font-weight: 800;
+  padding: 0.35rem 0.75rem;
+  background: var(--dispatch-col-header);
+  color: var(--dispatch-col-header-text);
+  border-radius: var(--radius-sm);
+  margin-bottom: 0.6rem;
+}
+
+.morgue-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.45rem;
+}
+
+.morgue-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 0.4rem;
+  transition: all 0.15s;
+
+  &:focus-within {
+    box-shadow: 0 0 0 2px var(--accent-subtle);
+    border-color: var(--accent);
+  }
+
+  &.occupe {
+    border-left: 3px solid var(--danger);
+    background: var(--danger-subtle);
+  }
+
+  label {
+    font-size: 0.62rem;
+    font-weight: 800;
+    color: var(--text-muted);
+    text-align: center;
+    text-transform: uppercase;
+  }
+
+  input {
+    font-size: 0.72rem;
+    text-align: center;
+    border: none;
+    background: transparent;
+    padding: 0.15rem;
+    color: var(--text-primary);
+    outline: none;
+    box-shadow: none;
+
+    &:focus {
+      box-shadow: none;
+      border: none;
+    }
+  }
+}

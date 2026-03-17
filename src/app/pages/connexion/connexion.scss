@@ -1,0 +1,216 @@
+.connexion-page {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0;
+  background: var(--bg) url('/assets/images/Bg.png') center / cover no-repeat;
+}
+
+.login-card {
+  background: color-mix(in srgb, var(--card-bg) 90%, transparent 10%);
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  padding: 2.25rem;
+  width: 100%;
+  max-width: 430px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.85rem;
+  box-shadow: var(--shadow-lg);
+  animation: scaleIn 0.25s ease;
+}
+
+.auth-subtitle {
+  margin-top: -0.45rem;
+  margin-bottom: 0.35rem;
+  color: var(--text-muted);
+  font-size: 0.8rem;
+}
+
+.auth-tabs {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.3rem;
+  padding: 0.26rem;
+  border-radius: 999px;
+  border: 1px solid var(--border-subtle);
+  background: color-mix(in srgb, var(--surface) 82%, transparent 18%);
+
+  button {
+    border: none;
+    border-radius: 999px;
+    padding: 0.38rem 0.7rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background: transparent;
+    transition: all 0.18s;
+
+    &.active {
+      background: linear-gradient(135deg, var(--accent), var(--accent-hover));
+      color: #fff;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+    }
+  }
+}
+
+.logo {
+  height: 150px;
+  object-fit: contain;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.erreur {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  background: var(--danger-subtle);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--radius-sm);
+  color: var(--danger);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.succes {
+  width: 100%;
+  padding: 0.6rem 0.85rem;
+  background: var(--success-subtle);
+  border: 1px solid color-mix(in srgb, var(--success) 35%, transparent 65%);
+  border-radius: var(--radius-sm);
+  color: var(--success);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  width: 100%;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+
+  input,
+  select {
+    padding: 0.65rem 0.85rem;
+    border: 1px solid var(--input-border);
+    border-radius: var(--radius-sm);
+    background: var(--input-bg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition:
+      border-color 0.2s,
+      box-shadow 0.2s;
+
+    &:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-subtle);
+      outline: none;
+    }
+  }
+}
+
+label input,
+label select {
+  width: 100%;
+}
+
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0.7rem;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 0.25rem;
+  transition: all 0.2s;
+
+  &:hover {
+    background: var(--accent-hover);
+  }
+
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+.separator {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.auth-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  gap: 0.4rem;
+  margin-top: 0.25rem;
+}
+
+.auth-separator {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+.btn-link {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.35rem 0.6rem;
+  border-radius: var(--radius-sm);
+  transition:
+    color 0.2s,
+    background 0.2s;
+
+  &:hover {
+    color: var(--accent);
+    background: var(--accent-subtle);
+  }
+}
+
+.link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 500;
+
+  &:hover {
+    color: var(--accent-hover);
+    text-decoration: underline;
+  }
+}
+
+@media (max-width: 560px) {
+  .connexion-page {
+    padding: 0.9rem;
+  }
+
+  .login-card {
+    padding: 1.4rem 1rem;
+  }
+}

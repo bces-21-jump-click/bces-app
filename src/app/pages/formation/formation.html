@@ -1,0 +1,168 @@
+<div class="formation-page">
+    <div class="page-header">
+        <h1>🎓 Formation</h1>
+        <div class="actions">
+            <button class="btn-small" type="button" (click)="synchroniserEmployes()" [disabled]="chargement()">
+                {{ chargement() ? 'Synchronisation...' : 'Synchroniser employés RH' }}
+            </button>
+            <input type="text" placeholder="Rechercher un employé..." [ngModel]="recherche()"
+                (ngModelChange)="recherche.set($event)" class="search-input" />
+        </div>
+    </div>
+
+    <div class="tabs">
+        <button [class.active]="onglet() === 'suivi'" (click)="onglet.set('suivi')">Suivi</button>
+        <button [class.active]="onglet() === 'guides'" (click)="onglet.set('guides')">Guides</button>
+        <button [class.active]="onglet() === 'competences'" (click)="onglet.set('competences')">Compétences</button>
+        <button [class.active]="onglet() === 'demandes'" (click)="onglet.set('demandes')">Demandes</button>
+    </div>
+
+    @switch (onglet()) {
+    @case ('suivi') {
+    <div class="tab-content">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Rôle</th>
+                    <th>Arrivée</th>
+                    <th>Compétences</th>
+                    <th>Dernier suivi</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (e of employesFiltres(); track e.id) {
+                <tr>
+                    <td>{{ e.name }}</td>
+                    <td><span class="role-badge" [style.background]="obtenirCouleurRole(e.role)">{{ e.role }}</span>
+                    </td>
+                    <td>{{ e.arrivalDate ?? '—' }}</td>
+                    <td>
+                        <div class="progress-bar">
+                            <div class="progress-fill" [style.width.%]="progressionTotale(e)"></div>
+                        </div>
+                        <span class="progress-text">{{ progressionTotale(e) }}%</span>
+                    </td>
+                    <td>{{ e.date_dernier_suivi || '—' }}</td>
+                    <td><button class="btn-small" (click)="voirCompetences(e)">Détails</button></td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="6" class="empty">Aucun employé</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+    @case ('guides') {
+    <div class="tab-content">
+        <div class="guides-grid">
+            @for (g of guides(); track g.id) {
+            <div class="guide-card">
+                <h3>📖 {{ g.titre }}</h3>
+                <p>{{ g.description }}</p>
+                <span class="step-count">{{ g.etapes.length }} étapes</span>
+            </div>
+            } @empty {
+            <p class="empty">Aucun guide disponible</p>
+            }
+        </div>
+    </div>
+    }
+    @case ('competences') {
+    <div class="tab-content">
+        <div class="competences-grid">
+            @for (role of rolesEdition; track role) {
+            <div class="competence-card competence-card--role">
+                <div class="competence-card__head">
+                    <h3>
+                        <input class="role-emoji-inline" type="text" [ngModel]="emojiRole(role)"
+                            (ngModelChange)="majEmojiRole(role, $event)" maxlength="3" />
+                        {{ role }}
+                    </h3>
+                    <button type="button" class="btn-small" (click)="ajouterCompetencePourRole(role)">+
+                        Compétence</button>
+                </div>
+                <div class="competence-editor-list">
+                    @for (sc of competencesPourRole(role); track sc.id) {
+                    <div class="competence-editor-item">
+                        <div class="competence-editor-main">
+                            <input type="text" [ngModel]="sc.titre" (ngModelChange)="majTitreCompetence(sc.id, $event)"
+                                placeholder="Nom compétence" />
+                            <input type="text" [ngModel]="sc.emoji" (ngModelChange)="majEmojiCompetence(sc.id, $event)"
+                                maxlength="3" class="emoji-input" />
+                            <button type="button" class="btn-danger"
+                                (click)="supprimerCompetence(sc.id)">Suppr.</button>
+                        </div>
+                    </div>
+                    } @empty {
+                    <p class="empty">Aucune compétence définie pour {{ role }}</p>
+                    }
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+    }
+    @case ('demandes') {
+    <div class="tab-content">
+        <div class="formations-list">
+            @for (f of formations; track f.titre) {
+            <div class="formation-card" [style.border-left-color]="f.couleur">
+                <h3>{{ f.titre }}</h3>
+                <p class="empty">Aucune demande en attente</p>
+            </div>
+            }
+        </div>
+    </div>
+    }
+    }
+
+    @if (employeSelectionne()) {
+    <div class="backdrop" (click)="fermerCompetences()"></div>
+    <div class="dialog" role="dialog" aria-modal="true">
+        <h2>Compétences de {{ employeSelectionne()!.name }}</h2>
+        <p class="dialog-note">
+            @if (peutValiderCompetences()) {
+            Validation activée pour votre rôle.
+            } @else {
+            Lecture seule: votre rôle ne peut pas valider les compétences.
+            }
+        </p>
+        <div class="dialog-section dialog-section--global">
+            <h3>Validation globale</h3>
+            <div class="competence-row">
+                <span>🚁 Validation hélico</span>
+                <label class="competence-check">
+                    <input #helico type="checkbox" [checked]="!!employeSelectionne()!.helicopterTrainingDate"
+                        [disabled]="!peutValiderCompetences()" (change)="basculerValidationHelico(helico.checked)" />
+                    <span class="competence-status" [class.valide]="!!employeSelectionne()!.helicopterTrainingDate">
+                        {{ employeSelectionne()!.helicopterTrainingDate ? 'Validée' : 'À valider' }}
+                    </span>
+                </label>
+            </div>
+        </div>
+        <div class="dialog-section">
+            <h3>{{ emojiRole(employeSelectionne()!.role) }} {{ employeSelectionne()!.role }}</h3>
+            @for (sc of competencesPourRole(employeSelectionne()!.role); track sc.id) {
+            <div class="competence-row">
+                <span>{{ sc.emoji }} {{ sc.titre }}</span>
+                <label class="competence-check">
+                    <input #checkbox type="checkbox" [checked]="estCompetenceValidee(sc.id)"
+                        [disabled]="!peutValiderCompetences()"
+                        (change)="basculerValidationCompetence(sc.id, checkbox.checked)" />
+                    <span class="competence-status" [class.valide]="estCompetenceValidee(sc.id)">
+                        {{ estCompetenceValidee(sc.id) ? 'Validée' : 'À valider' }}
+                    </span>
+                </label>
+            </div>
+            } @empty {
+            <p class="empty">Aucune compétence définie pour ce rôle</p>
+            }
+        </div>
+        <button class="btn-primary" (click)="fermerCompetences()">Fermer</button>
+    </div>
+    }
+</div>
