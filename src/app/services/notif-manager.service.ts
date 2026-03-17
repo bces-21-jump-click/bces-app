@@ -181,137 +181,188 @@ export class NotifManagerService {
     this.initCount++;
     if (this.initCount > 1) return;
 
+    const logErr = (name: string) => (err: Error) =>
+      console.error(`[NotifManager] ${name}:`, err.message);
+
     // Profiles en attente
     const qWaiting = query(collection(db, 'profiles'), where('activated', '==', false));
     this.unsubscribers.push(
-      onSnapshot(qWaiting, (snap) => {
-        const users = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as Profile)
-          .filter((u) => !u.rejected);
-        this.zone.run(() => this.waitingUsers.set(users));
-      }),
+      onSnapshot(
+        qWaiting,
+        (snap) => {
+          const users = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as Profile)
+            .filter((u) => !u.rejected);
+          this.zone.run(() => this.waitingUsers.set(users));
+        },
+        logErr('profiles'),
+      ),
     );
 
     // Notes de frais en attente
     this.unsubscribers.push(
-      onSnapshot(collection(db, 'expenseNotes'), (snap) => {
-        const notes = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as ExpenseNote)
-          .filter((n) => !n.isPaid && !n.isRefused);
-        this.zone.run(() => this.waitingExpenseNotes.set(notes));
-      }),
+      onSnapshot(
+        collection(db, 'expenseNotes'),
+        (snap) => {
+          const notes = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as ExpenseNote)
+            .filter((n) => !n.isPaid && !n.isRefused);
+          this.zone.run(() => this.waitingExpenseNotes.set(notes));
+        },
+        logErr('expenseNotes'),
+      ),
     );
 
     // Candidatures en attente
     this.unsubscribers.push(
-      onSnapshot(collection(db, 'candidatures'), (snap) => {
-        const cands = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as Candidature)
-          .filter((c) => c.status === 'Candidature reçue');
-        this.zone.run(() => this.waitingCandidatures.set(cands));
-      }),
+      onSnapshot(
+        collection(db, 'candidatures'),
+        (snap) => {
+          const cands = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as Candidature)
+            .filter((c) => c.status === 'Candidature reçue');
+          this.zone.run(() => this.waitingCandidatures.set(cands));
+        },
+        logErr('candidatures'),
+      ),
     );
 
     // SaveDates
     this.unsubscribers.push(
-      onSnapshot(collection(db, 'savedates'), (snap) => {
-        const map: Record<string, SaveDate> = {};
-        snap.docs.forEach((d) => {
-          map[d.id] = { id: d.id, ...d.data() } as SaveDate;
-        });
-        this.zone.run(() => this.saveDates.set(map));
-      }),
+      onSnapshot(
+        collection(db, 'savedates'),
+        (snap) => {
+          const map: Record<string, SaveDate> = {};
+          snap.docs.forEach((d) => {
+            map[d.id] = { id: d.id, ...d.data() } as SaveDate;
+          });
+          this.zone.run(() => this.saveDates.set(map));
+        },
+        logErr('savedates'),
+      ),
     );
 
     // SaveDate véhicules
     this.unsubscribers.push(
-      onSnapshot(doc(db, 'savedates', 'repa_flotte'), (snap) => {
-        if (snap.exists()) {
-          this.zone.run(() =>
-            this.lastVehicleSaveDate.set({ id: snap.id, ...snap.data() } as SaveDate),
-          );
-        }
-      }),
+      onSnapshot(
+        doc(db, 'savedates', 'repa_flotte'),
+        (snap) => {
+          if (snap.exists()) {
+            this.zone.run(() =>
+              this.lastVehicleSaveDate.set({ id: snap.id, ...snap.data() } as SaveDate),
+            );
+          }
+        },
+        logErr('savedates/repa_flotte'),
+      ),
     );
 
     // Véhicules
     this.unsubscribers.push(
-      onSnapshot(collection(db, 'vehicles'), (snap) => {
-        const list = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as Vehicule)
-          .filter((v) => v.where !== 'dead')
-          .sort((a, b) => a.name.localeCompare(b.name));
-        this.zone.run(() => this.vehicles.set(list));
-      }),
+      onSnapshot(
+        collection(db, 'vehicles'),
+        (snap) => {
+          const list = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as Vehicule)
+            .filter((v) => v.where !== 'dead')
+            .sort((a, b) => a.name.localeCompare(b.name));
+          this.zone.run(() => this.vehicles.set(list));
+        },
+        logErr('vehicles'),
+      ),
     );
 
     // Stockages
     this.unsubscribers.push(
-      onSnapshot(collection(db, 'storages'), (snap) => {
-        const list = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as Stockage)
-          .sort((a, b) => a.name.localeCompare(b.name));
-        this.zone.run(() => this.storages.set(list));
-      }),
+      onSnapshot(
+        collection(db, 'storages'),
+        (snap) => {
+          const list = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as Stockage)
+            .sort((a, b) => a.name.localeCompare(b.name));
+          this.zone.run(() => this.storages.set(list));
+        },
+        logErr('storages'),
+      ),
     );
 
     // Entreprises
     this.unsubscribers.push(
-      onSnapshot(collection(db, 'companies'), (snap) => {
-        const list = snap.docs
-          .map((d) => ({ id: d.id, ...d.data() }) as Entreprise)
-          .sort((a, b) => a.name.localeCompare(b.name));
-        this.zone.run(() => this.companies.set(list));
-      }),
+      onSnapshot(
+        collection(db, 'companies'),
+        (snap) => {
+          const list = snap.docs
+            .map((d) => ({ id: d.id, ...d.data() }) as Entreprise)
+            .sort((a, b) => a.name.localeCompare(b.name));
+          this.zone.run(() => this.companies.set(list));
+        },
+        logErr('companies'),
+      ),
     );
 
     // Items
     this.unsubscribers.push(
-      onSnapshot(collection(db, 'items'), (snap) => {
-        const newItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Stock);
-        const currentItems = this.items();
-        const existingMap = new Map(currentItems.map((i) => [i.id, i]));
+      onSnapshot(
+        collection(db, 'items'),
+        (snap) => {
+          const newItems = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Stock);
+          const currentItems = this.items();
+          const existingMap = new Map(currentItems.map((i) => [i.id, i]));
 
-        const merged: Stock[] = [];
-        for (const item of newItems) {
-          const existing = existingMap.get(item.id);
-          if (existing && this.editingItemIds.has(item.id)) {
-            merged.push({ ...item, amount: existing.amount });
-          } else {
-            merged.push(item);
+          const merged: Stock[] = [];
+          for (const item of newItems) {
+            const existing = existingMap.get(item.id);
+            if (existing && this.editingItemIds.has(item.id)) {
+              merged.push({ ...item, amount: existing.amount });
+            } else {
+              merged.push(item);
+            }
           }
-        }
-        merged.sort((a, b) => a.id.localeCompare(b.id));
-        this.zone.run(() => this.items.set(merged));
-      }),
+          merged.sort((a, b) => a.id.localeCompare(b.id));
+          this.zone.run(() => this.items.set(merged));
+        },
+        logErr('items'),
+      ),
     );
 
     // Commandes
     this.unsubscribers.push(
-      onSnapshot(collection(db, 'orders'), (snap) => {
-        const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
-        this.zone.run(() => this.orders.set(list));
-      }),
+      onSnapshot(
+        collection(db, 'orders'),
+        (snap) => {
+          const list = snap.docs.map((d) => ({ id: d.id, ...d.data() }) as Order);
+          this.zone.run(() => this.orders.set(list));
+        },
+        logErr('orders'),
+      ),
     );
 
     // SharedChecklist weekly
     this.unsubscribers.push(
-      onSnapshot(doc(db, 'settings', 'weekly_rh'), (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          this.zone.run(() => this.rhWeeklyTasks.set((data['tasks'] as ChecklistTask[]) ?? []));
-        }
-      }),
+      onSnapshot(
+        doc(db, 'settings', 'weekly_rh'),
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            this.zone.run(() => this.rhWeeklyTasks.set((data['tasks'] as ChecklistTask[]) ?? []));
+          }
+        },
+        logErr('settings/weekly_rh'),
+      ),
     );
 
     // SharedChecklist monthly
     this.unsubscribers.push(
-      onSnapshot(doc(db, 'settings', 'monthly_rh'), (snap) => {
-        if (snap.exists()) {
-          const data = snap.data();
-          this.zone.run(() => this.rhMonthlyTasks.set((data['tasks'] as ChecklistTask[]) ?? []));
-        }
-      }),
+      onSnapshot(
+        doc(db, 'settings', 'monthly_rh'),
+        (snap) => {
+          if (snap.exists()) {
+            const data = snap.data();
+            this.zone.run(() => this.rhMonthlyTasks.set((data['tasks'] as ChecklistTask[]) ?? []));
+          }
+        },
+        logErr('settings/monthly_rh'),
+      ),
     );
   }
 

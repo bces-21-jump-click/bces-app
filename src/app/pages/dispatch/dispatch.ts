@@ -13,34 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { DispatchService } from '../../services/dispatch.service';
 import { ApiService } from '../../services/api.service';
 import { FormationService } from '../../services/formation.service';
-/**
- * Le Dispatch utilise les anciens noms de champs (prenom, nom, grade_id, etc.)
- * car il n'a pas été adapté à BCES-21JC.
- * Types locaux pour éviter la dépendance au modèle DispatchEffectif adapté.
- */
-interface DispatchEffectif {
-  id: string;
-  prenom: string;
-  nom: string;
-  grade_id: number | null;
-  email: string;
-  telephone: string;
-  sexe: string | null;
-  emoji: string;
-  specialites: string;
-  afficher_dispatch: boolean;
-  numero_service: string;
-  formation_helicoptere: boolean;
-  date_arrivee: string | null;
-  est_central: boolean;
-}
-
-interface DispatchGrade {
-  id: number;
-  nom: string;
-  niveau: number;
-  couleur: string;
-}
+import { Effectif } from '../../modeles/effectif';
 import {
   EtatDispatch,
   SlotIntervention,
@@ -94,8 +67,7 @@ export class DispatchPage implements OnInit, OnDestroy {
   readonly rolesConfig = ROLES_CONFIG;
 
   // Data
-  readonly effectifs = signal<DispatchEffectif[]>([]);
-  readonly grades = signal<DispatchGrade[]>([]);
+  readonly effectifs = signal<Effectif[]>([]);
   readonly progressionsFormation = signal<Record<string, Record<string, number>>>({});
   readonly competencesFormation = signal<Record<string, { emoji: string; roles: string[] }>>({});
   readonly roleEmojisFormation = signal<Record<string, string>>({});
@@ -110,13 +82,11 @@ export class DispatchPage implements OnInit, OnDestroy {
 
   // Computed: effectifs en service (in the "patate")
   readonly effectifsVisibles = computed(() =>
-    this.effectifs().filter((DispatchEffectif) => this.estVisibleSurDispatch(DispatchEffectif)),
+    this.effectifs().filter((eff) => this.estVisibleSurDispatch(eff)),
   );
 
   readonly effectifsEnService = computed(() => {
-    const idsVisibles = new Set(
-      this.effectifsVisibles().map((DispatchEffectif) => DispatchEffectif.id),
-    );
+    const idsVisibles = new Set(this.effectifsVisibles().map((eff) => eff.id));
     const patates = this.etat().patates;
     return this.trierPatatesParEffectif(
       patates.filter((p) => p.categorie === 'en_service' && idsVisibles.has(p.id)),
@@ -144,9 +114,7 @@ export class DispatchPage implements OnInit, OnDestroy {
 
   // Computed: effectifs par catégorie
   readonly effectifsParCategorie = computed(() => {
-    const idsVisibles = new Set(
-      this.effectifsVisibles().map((DispatchEffectif) => DispatchEffectif.id),
-    );
+    const idsVisibles = new Set(this.effectifsVisibles().map((eff) => eff.id));
     const patates = this.etat().patates;
     const map: Record<string, EffectifPatate[]> = {};
     for (const cat of this.categories) {
@@ -178,10 +146,9 @@ export class DispatchPage implements OnInit, OnDestroy {
     rolesAutorises.delete('LSES');
 
     for (const eff of this.effectifs()) {
-      const role = this.obtenirNomRole(eff.grade_id);
+      const role = eff.role;
       if (!role || !rolesAutorises.has(role)) continue;
-      const nomComplet = `${eff.prenom} ${eff.nom}`.trim();
-      if (nomComplet) set.add(nomComplet);
+      if (eff.name) set.add(eff.name);
     }
 
     if (this.inclureLsesCrise()) {
@@ -371,18 +338,13 @@ export class DispatchPage implements OnInit, OnDestroy {
     return this.statutsHopital.find((s) => s.id === 'mode_nuit')?.couleur ?? '#311b92';
   }
 
-  obtenirSpecialites(effectif: DispatchEffectif): string[] {
-    try {
-      const parsed = JSON.parse(effectif.specialites || '[]');
-      return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
+  obtenirSpecialites(effectif: Effectif): string[] {
+    return Array.isArray(effectif.specialties) ? effectif.specialties : [];
   }
 
-  obtenirValidations(effectif: DispatchEffectif): string[] {
+  obtenirValidations(effectif: Effectif): string[] {
     const validations = new Set<string>();
-    const role = this.obtenirNomRole(effectif.grade_id);
+    const role = effectif.role;
 
     const progression = this.progressionsFormation()[effectif.id] ?? {};
     const definitions = this.competencesFormation();
@@ -437,39 +399,23 @@ export class DispatchPage implements OnInit, OnDestroy {
   }
 
   private async chargerReferentielsDispatch(): Promise<void> {
-    const [effectifs, grades] = await Promise.all([
-      this.api.lister<DispatchEffectif>('effectifs').catch(() => [] as DispatchEffectif[]),
-      this.api.lister<DispatchGrade>('grades').catch(() => [] as DispatchGrade[]),
-    ]);
-
+    const effectifs = await this.api.lister<Effectif>('employees').catch(() => [] as Effectif[]);
     this.effectifs.set(effectifs);
-    this.grades.set(grades);
     await this.chargerEtatFormation();
   }
 
-  obtenirEffectif(id: string): DispatchEffectif | undefined {
+  obtenirEffectif(id: string): Effectif | undefined {
     return this.effectifsVisibles().find((e) => e.id === id);
   }
 
-  obtenirGrade(gradeId: number | null): DispatchGrade | undefined {
-    if (!gradeId) return undefined;
-    return this.grades().find((g) => g.id === gradeId);
-  }
-
-  obtenirNomRole(gradeId: number | null): string {
-    const grade = this.obtenirGrade(gradeId);
-    return grade?.nom ?? '';
-  }
-
-  obtenirCouleurRole(gradeId: number | null): string {
-    const nom = this.obtenirNomRole(gradeId);
-    return ROLES_CONFIG[nom]?.color ?? '#757575';
+  obtenirCouleurRole(role: string): string {
+    return ROLES_CONFIG[role]?.color ?? '#757575';
   }
 
   nomEffectifRadio(effectifId: string | null): string {
     if (effectifId == null) return 'Assigner';
     const eff = this.obtenirEffectif(effectifId);
-    return eff ? `${eff.prenom} ${eff.nom}`.trim() : 'Assigner';
+    return eff?.name || 'Assigner';
   }
 
   trierIdsEffectifs(ids: readonly string[]): string[] {
@@ -492,22 +438,15 @@ export class DispatchPage implements OnInit, OnDestroy {
     return normalisee.includes('direction') || normalisee.includes('direct');
   }
 
-  private estVisibleSurDispatch(effectif: DispatchEffectif): boolean {
-    const role = this.obtenirNomRole(effectif.grade_id);
-    const roleConnu = ORDRE_ROLES.includes(role);
-
-    if (!role || !roleConnu || role === 'Non assigné' || role === 'Temporaire') {
+  private estVisibleSurDispatch(effectif: Effectif): boolean {
+    const role = effectif.role;
+    if (!role || !ORDRE_ROLES.includes(role) || role === 'Non assigné') {
       return false;
     }
-
-    if (role === 'LSES') {
-      return effectif.afficher_dispatch !== false;
-    }
-
     return true;
   }
 
-  private trierEffectifs(effectifs: readonly DispatchEffectif[]): DispatchEffectif[] {
+  private trierEffectifs(effectifs: readonly Effectif[]): Effectif[] {
     return [...effectifs].sort((a, b) => this.comparerEffectifs(a, b));
   }
 
@@ -522,19 +461,15 @@ export class DispatchPage implements OnInit, OnDestroy {
     });
   }
 
-  private comparerEffectifs(a: DispatchEffectif, b: DispatchEffectif): number {
-    const roleA = this.obtenirNomRole(a.grade_id);
-    const roleB = this.obtenirNomRole(b.grade_id);
-    const ordreRoleA = this.ordreRole(roleA);
-    const ordreRoleB = this.ordreRole(roleB);
+  private comparerEffectifs(a: Effectif, b: Effectif): number {
+    const ordreRoleA = this.ordreRole(a.role);
+    const ordreRoleB = this.ordreRole(b.role);
 
     if (ordreRoleA !== ordreRoleB) {
       return ordreRoleA - ordreRoleB;
     }
 
-    const nomA = `${a.nom} ${a.prenom}`.trim();
-    const nomB = `${b.nom} ${b.prenom}`.trim();
-    return this.triTexte.compare(nomA, nomB);
+    return this.triTexte.compare(a.name || '', b.name || '');
   }
 
   private ordreRole(role: string): number {

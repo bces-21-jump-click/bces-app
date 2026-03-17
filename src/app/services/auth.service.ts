@@ -24,6 +24,8 @@ const PROFILES_COLLECTION = 'profiles';
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private readonly zone = inject(NgZone);
+  private _resolveReady!: () => void;
+  readonly authReady = new Promise<void>((r) => (this._resolveReady = r));
 
   readonly profile = signal<Profile | null>(null);
   readonly uid = signal<string | null>(null);
@@ -37,25 +39,30 @@ export class AuthService {
     onAuthStateChanged(auth, async (user) => {
       if (user) {
         this.uid.set(user.uid);
-        const profDoc = await getDoc(doc(db, PROFILES_COLLECTION, user.uid));
-        if (profDoc.exists()) {
-          const data = profDoc.data();
-          const p: Profile = {
-            id: profDoc.id,
-            name: data['name'] ?? '',
-            email: data['email'] ?? '',
-            role: data['role'] ?? 'User',
-            permissions: data['permissions'] ?? [],
-            activated: data['activated'] ?? false,
-            rejected: data['rejected'] ?? false,
-          };
-          this.zone.run(() => this.profile.set(p));
+        try {
+          const profDoc = await getDoc(doc(db, PROFILES_COLLECTION, user.uid));
+          if (profDoc.exists()) {
+            const data = profDoc.data();
+            const p: Profile = {
+              id: profDoc.id,
+              name: data['name'] ?? '',
+              email: data['email'] ?? '',
+              role: data['role'] ?? 'User',
+              permissions: data['permissions'] ?? [],
+              activated: data['activated'] ?? false,
+              rejected: data['rejected'] ?? false,
+            };
+            this.zone.run(() => this.profile.set(p));
+          }
+        } finally {
+          this._resolveReady();
         }
       } else {
         this.zone.run(() => {
           this.profile.set(null);
           this.uid.set(null);
         });
+        this._resolveReady();
       }
     });
   }

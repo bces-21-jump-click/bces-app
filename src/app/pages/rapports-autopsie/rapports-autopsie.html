@@ -1,39 +1,96 @@
 <div class="rapports-page">
     <div class="page-header">
         <h1>⚰️ Rapports d'autopsie</h1>
-        <button class="btn-primary" (click)="nouveauRapport()">+ Nouveau rapport</button>
+        <div class="header-actions">
+            <input type="text" class="field search-field" placeholder="🔍 Rechercher" [ngModel]="search()"
+                (ngModelChange)="search.set($event)" />
+            <button class="btn accent" (click)="openRandomizer()">🎰 Randomizer</button>
+            <button class="btn success" (click)="nouveauRapport()">➕ Nouvelle autopsie</button>
+        </div>
     </div>
 
-    @if (chargement()) {
-    <div class="loading">Chargement...</div>
-    } @else {
     <div class="table-container">
         <table class="data-table">
             <thead>
                 <tr>
-                    <th>Patient</th>
-                    <th>Date d'autopsie</th>
-                    <th>Légiste</th>
-                    <th>Diagnostic</th>
-                    <th>Actions</th>
+                    <th>Date</th>
+                    <th>Nom</th>
+                    <th>CID</th>
+                    <th>Médecin intervenant</th>
+                    <th>Médecin légiste</th>
+                    <th></th>
                 </tr>
             </thead>
             <tbody>
-                @for (r of rapports(); track r.id) {
+                @for (r of filteredReports(); track r.id) {
                 <tr>
+                    <td>{{ formatDate(r.autopsyDate) }}</td>
                     <td>{{ r.name }}</td>
-                    <td>{{ r.autopsyDate }}</td>
+                    <td>{{ r.cid }}</td>
+                    <td>{{ r.doctor }}</td>
                     <td>{{ r.legist }}</td>
-                    <td>{{ r.diagnostic }}</td>
-                    <td><button class="btn-small" (click)="voirRapport(r.id)">Voir</button></td>
+                    <td class="actions-cell">
+                        <button class="btn-icon" (click)="voirRapport(r)" title="Consulter">✏️</button>
+                        <button class="btn-icon" (click)="downloadPdf(r)" title="Télécharger">📥</button>
+                        <button class="btn-icon danger" (click)="deleteReport(r)" title="Supprimer">🗑️</button>
+                    </td>
                 </tr>
                 } @empty {
                 <tr>
-                    <td colspan="5" class="empty">Aucun rapport</td>
+                    <td colspan="6" class="empty">Aucun rapport</td>
                 </tr>
                 }
             </tbody>
         </table>
+    </div>
+
+    <!-- Randomizer dialog -->
+    @if (randomizerOpen()) {
+    <div class="overlay" (click)="closeRandomizer()">
+        <div class="dialog dialog-randomizer" (click)="$event.stopPropagation()">
+            <h3 class="dialog-title">🎰 Randomizer Légiste</h3>
+
+            @if (randomizerStep() === 1) {
+            <!-- Step 1: Select legistes -->
+            <p class="dialog-desc">Sélectionnez les légistes à inclure dans la roue :</p>
+            @if (legistesLoading()) {
+            <p class="loading">Chargement...</p>
+            } @else {
+            <div class="legiste-list">
+                @for (l of legistes(); track l.id) {
+                <label class="legiste-item">
+                    <input type="checkbox" [checked]="selectedLegistes().includes(l.id)"
+                        (change)="toggleLegiste(l.id)" />
+                    {{ l.name }}
+                </label>
+                } @empty {
+                <p class="empty">Aucun légiste trouvé.</p>
+                }
+            </div>
+            <div class="dialog-actions">
+                <button class="btn" (click)="closeRandomizer()">Annuler</button>
+                <button class="btn accent" [disabled]="selectedLegistes().length === 0" (click)="goToWheel()">
+                    Lancer la roue →
+                </button>
+            </div>
+            }
+            } @else {
+            <!-- Step 2: Wheel -->
+            <div class="wheel-wrapper">
+                <div class="wheel-pointer"></div>
+                <canvas #wheelCanvas width="420" height="420"></canvas>
+            </div>
+            @if (wheelResult(); as result) {
+            <p class="wheel-result">🎉 {{ result }}</p>
+            }
+            <div class="dialog-actions">
+                <button class="btn" [disabled]="isSpinning()" (click)="randomizerStep.set(1)">Retour</button>
+                <button class="btn accent" [disabled]="isSpinning()" (click)="spinWheel()">
+                    {{ isSpinning() ? 'En cours...' : '🔄 Tourner !' }}
+                </button>
+            </div>
+            }
+        </div>
     </div>
     }
 </div>

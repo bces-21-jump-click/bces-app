@@ -1,104 +1,100 @@
 <div class="autopsie-page">
   <div class="page-header">
     <button class="btn-back" (click)="retour()">← Retour</button>
-    <h1>🔬 {{ autopsie().id ? 'Rapport #' + autopsie().id : 'Nouvelle autopsie' }}</h1>
+    <h1>🔬 {{ reportId() !== null ? 'Modifier le rapport' : 'Nouvelle autopsie' }}</h1>
   </div>
 
   @if (chargement()) {
   <div class="loading">Chargement...</div>
   } @else {
-  <div class="form-grid">
-    <section class="form-section">
-      <h2>Informations générales</h2>
-      <div class="form-row">
-        <label>
-          Nom du patient
-          <input type="text" [ngModel]="autopsie().name"
-            (ngModelChange)="autopsie.update(a => ({...a, name: $event}))" />
-        </label>
-        <label>
-          CID
-          <input type="text" [ngModel]="autopsie().cid" (ngModelChange)="autopsie.update(a => ({...a, cid: $event}))" />
-        </label>
-      </div>
-      <div class="form-row">
-        <label>
-          Médecin
-          <input type="text" [ngModel]="autopsie().doctor"
-            (ngModelChange)="autopsie.update(a => ({...a, doctor: $event}))" />
-        </label>
-        <label>
-          Légiste
-          <input type="text" [ngModel]="autopsie().legist"
-            (ngModelChange)="autopsie.update(a => ({...a, legist: $event}))" />
-        </label>
-      </div>
-      <div class="form-row">
-        <label>
-          Date d'autopsie
-          <input type="date" [ngModel]="autopsie().autopsyDate"
-            (ngModelChange)="autopsie.update(a => ({...a, autopsyDate: $event}))" />
-        </label>
-      </div>
-    </section>
+  <div class="top-info">
+    <div class="form-row">
+      <label>Nom du patient
+        <input type="text" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+      </label>
+      <label>CID
+        <input type="text" [ngModel]="cid()" (ngModelChange)="cid.set($event)" />
+      </label>
+      <label>Médecin intervenant
+        <input type="text" [ngModel]="doctor()" (ngModelChange)="doctor.set($event)" />
+      </label>
+      <label>Médecin légiste
+        <input type="text" [ngModel]="legist()" (ngModelChange)="legist.set($event)" />
+      </label>
+    </div>
+    <div class="gender-toggle">
+      <button [class.active]="!genderIsMale()" (click)="onGenderChange(false)">♀ Femme</button>
+      <button [class.active]="genderIsMale()" (click)="onGenderChange(true)">♂ Homme</button>
+    </div>
+  </div>
 
-    <section class="form-section">
-      <div class="section-header">
+  <div class="main-layout">
+    <!-- Injuries panel -->
+    <div class="injuries-panel">
+      <div class="injuries-header">
         <h2>Blessures</h2>
-        <button class="btn-small" (click)="ajouterBlessure()">+ Ajouter</button>
+        <button class="btn-small" (click)="addInjury()">+ Ajouter</button>
       </div>
-      @for (b of autopsie().injuries; track $index; let i = $index) {
-      <div class="blessure-card">
-        <div class="form-row">
-          <label>
-            Zone
-            <select [ngModel]="b.zone" (ngModelChange)="majBlessure(i, 'zone', $event)">
-              <option value="">Sélectionner</option>
-              @for (z of zonesCorps; track z) {
-              <option [value]="z">{{ z }}</option>
-              }
-            </select>
-          </label>
-          <label>
-            Type
-            <select [ngModel]="b.type" (ngModelChange)="majBlessure(i, 'type', $event)">
-              <option value="">Sélectionner</option>
-              @for (t of typesBlessure; track t) {
-              <option [value]="t">{{ t }}</option>
-              }
-            </select>
-          </label>
-          <button class="btn-delete" (click)="supprimerBlessure(i)" aria-label="Supprimer la blessure">✕</button>
+      @for (inj of injuries(); track $index; let i = $index) {
+      <div class="injury-card" [style.border-left-color]="colorHex(i)" [class.selected]="selectedInjury() === i"
+        (click)="selectedInjury.set(i)">
+        <div class="injury-header">
+          <span class="injury-color" [style.background]="colorHex(i)">{{ i + 1 }}</span>
+          <span>Blessure {{ i + 1 }}</span>
+          <button class="btn-delete" (click)="deleteInjury(i); $event.stopPropagation()"
+            aria-label="Supprimer la blessure">✕</button>
         </div>
-        <label>
-          Description
-          <textarea rows="2" [ngModel]="b.description"
-            (ngModelChange)="majBlessure(i, 'description', $event)"></textarea>
+        <label>Analyse externe
+          <textarea rows="2" [ngModel]="inj.externalAnalysis"
+            (ngModelChange)="updateInjuryField(i, 'externalAnalysis', $event)"></textarea>
+        </label>
+        <label>Analyse interne
+          <textarea rows="2" [ngModel]="inj.internalAnalysis"
+            (ngModelChange)="updateInjuryField(i, 'internalAnalysis', $event)"></textarea>
         </label>
       </div>
-      } @empty {
-      <p class="empty">Aucune blessure enregistrée</p>
       }
-    </section>
+    </div>
 
+    <!-- Canvas + Tools -->
+    <div class="canvas-zone">
+      <div class="tool-bar">
+        <button [class.active]="tool() === 'add'" (click)="tool.set('add')">➕ Ajouter</button>
+        <button [class.active]="tool() === 'move'" (click)="tool.set('move')">✋ Déplacer</button>
+        <button [class.active]="tool() === 'delete'" (click)="tool.set('delete')">🗑️ Supprimer</button>
+      </div>
+      <canvas #canvasElement width="350" height="600" (mousedown)="useTool($event)" (mousemove)="useTool($event)"
+        (mouseup)="useTool($event)"></canvas>
+    </div>
+  </div>
+
+  <!-- Bottom sections -->
+  <div class="bottom-sections">
     <section class="form-section">
-      <h2>Conclusions</h2>
-      <label>
-        Diagnostic
-        <input type="text" [ngModel]="autopsie().diagnostic"
-          (ngModelChange)="autopsie.update(a => ({...a, diagnostic: $event}))" />
-      </label>
-      <label>
-        Bilan sanguin
-        <textarea rows="3" [ngModel]="autopsie().bloodBilan"
-          (ngModelChange)="autopsie.update(a => ({...a, bloodBilan: $event}))"></textarea>
-      </label>
-      <label>
-        Résumé d'autopsie
-        <textarea rows="4" [ngModel]="autopsie().autopsySummary"
-          (ngModelChange)="autopsie.update(a => ({...a, autopsySummary: $event}))"></textarea>
-      </label>
+      <h2>Bilan sanguin</h2>
+      <textarea rows="3" [ngModel]="bloodBilan()" (ngModelChange)="bloodBilan.set($event)"></textarea>
     </section>
+    <section class="form-section">
+      <h2>Diagnostic</h2>
+      <textarea rows="3" [ngModel]="diagnostic()" (ngModelChange)="diagnostic.set($event)"></textarea>
+    </section>
+    <section class="form-section">
+      <h2>Rapport d'intervention</h2>
+      <textarea rows="3" [ngModel]="interventionReport()" (ngModelChange)="interventionReport.set($event)"></textarea>
+    </section>
+    <section class="form-section">
+      <h2>Chronologie des événements</h2>
+      <textarea rows="3" [ngModel]="eventChronology()" (ngModelChange)="eventChronology.set($event)"></textarea>
+    </section>
+    <section class="form-section">
+      <h2>Résumé d'autopsie</h2>
+      <textarea rows="4" [ngModel]="autopsySummary()" (ngModelChange)="autopsySummary.set($event)"></textarea>
+    </section>
+  </div>
+
+  <div class="actions-bar">
+    <button class="btn-save" (click)="saveReport()">💾 Sauvegarder</button>
+    <button class="btn-pdf" (click)="genererPdf()">📄 Générer PDF</button>
   </div>
   }
 </div>

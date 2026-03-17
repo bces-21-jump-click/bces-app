@@ -34,25 +34,25 @@ export const routes: Routes = [
     path: 'inventaire',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/inventaire/inventaire').then((m) => m.InventairePage),
-    data: { permissions: ['lses'] },
+    data: { permissions: ['bces'] },
   },
   {
     path: 'commandes',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/commandes/commandes').then((m) => m.CommandesPage),
-    data: { permissions: ['lses'] },
+    data: { permissions: ['bces'] },
   },
   {
     path: 'notes-frais',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/notes-frais/notes-frais').then((m) => m.NotesFraisPage),
-    data: { permissions: ['lses'] },
+    data: { permissions: ['bces'] },
   },
   {
     path: 'garage',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/garage/garage').then((m) => m.GaragePage),
-    data: { permissions: ['lses'] },
+    data: { permissions: ['bces'] },
   },
   {
     path: 'rapports-autopsie',
@@ -108,7 +108,7 @@ export const routes: Routes = [
     path: 'rendez-vous',
     canActivate: [authGuard],
     loadComponent: () => import('./pages/rendez-vous/rendez-vous').then((m) => m.RendezVousPage),
-    data: { permissions: ['lses'] },
+    data: { permissions: ['bces'] },
   },
   {
     path: 'maintenance',

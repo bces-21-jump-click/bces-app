@@ -10,7 +10,7 @@ function makePermissions(raw: { icon: string; name: string; value: string }[]): 
 }
 
 export const PERMISSIONS: Permission[] = makePermissions([
-  { icon: '🛡️', name: 'LSES', value: 'lses' },
+  { icon: '🛡️', name: 'BCES', value: 'bces' },
   { icon: '📦', name: 'Gestion des stocks', value: 'stock' },
   { icon: '🔐', name: 'Stocks sensibles', value: 'security' },
   { icon: '🚑', name: 'Gestion des vehicules', value: 'vehicles' },

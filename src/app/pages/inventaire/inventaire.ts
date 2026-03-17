@@ -151,9 +151,9 @@ export class InventairePage implements OnDestroy {
     const storageId = item.storage;
     const sd = this.saveDates()[storageId];
     if (sd?.id) {
-      await this.api.modifier('saveDates', sd.id, { date: Date.now() });
+      await this.api.modifier('savedates', sd.id, { date: Date.now() });
     } else {
-      await this.api.creer('saveDates', { date: Date.now() }, storageId);
+      await this.api.creer('savedates', { date: Date.now() }, storageId);
     }
 
     const storage = this.storages().find((s) => s.id === storageId);

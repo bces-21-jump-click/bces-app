@@ -10,46 +10,25 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.75rem;
 
   h1 {
     font-size: 1.3rem;
   }
 }
 
-.btn-primary {
-  padding: 0.5rem 1rem;
-  background: var(--accent);
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--accent-light);
-  }
+.header-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
-.btn-small {
-  padding: 0.25rem 0.5rem;
-  background: var(--surface-elevated);
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  color: var(--accent);
-  font-size: 0.8rem;
-  cursor: pointer;
-
-  &:hover {
-    background: var(--surface-hover);
-  }
+.search-field {
+  min-width: 200px;
 }
 
-.loading {
-  text-align: center;
-  padding: 2rem;
-  color: var(--text-muted);
-}
 .table-container {
   flex: 1;
   overflow: auto;
@@ -80,9 +59,90 @@
   tr:hover {
     background: var(--surface-hover);
   }
+
   .empty {
     text-align: center;
     color: var(--text-muted);
     padding: 2rem;
   }
+}
+
+.actions-cell {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.loading {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+}
+
+// Randomizer
+.dialog-randomizer {
+  max-width: 520px;
+  width: 100%;
+}
+
+.dialog-desc {
+  margin-bottom: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.legiste-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 260px;
+  overflow-y: auto;
+  margin-bottom: 1rem;
+}
+
+.legiste-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--surface-hover);
+  }
+
+  input[type='checkbox'] {
+    accent-color: var(--accent);
+  }
+}
+
+.wheel-wrapper {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 1rem 0;
+}
+
+.wheel-pointer {
+  position: absolute;
+  top: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 13px solid transparent;
+  border-right: 13px solid transparent;
+  border-top: 26px solid #d32f2f;
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+
+.wheel-result {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #7b1fa2;
+  margin: 0.5rem 0;
 }

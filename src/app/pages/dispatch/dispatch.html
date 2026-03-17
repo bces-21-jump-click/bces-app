@@ -42,15 +42,15 @@
           @for (eid of trierIdsEffectifs(etat().centrale.effectifs); track eid) {
           @if (obtenirEffectif(eid); as eff) {
           <div class="effectif-card" draggable="true" (dragstart)="onDragStart($event, eff.id, 'centrale')"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -59,9 +59,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
@@ -110,15 +109,15 @@
           @for (eid of trierIdsEffectifs(inter.effectifs); track eid) {
           @if (obtenirEffectif(eid); as eff) {
           <div class="effectif-card" draggable="true" (dragstart)="onDragStart($event, eff.id, 'intervention-' + i)"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -127,9 +126,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
@@ -203,15 +201,15 @@
           @for (p of effectifsEnService(); track p.id) {
           @if (obtenirEffectif(p.id); as eff) {
           <div class="effectif-card" draggable="true" (dragstart)="onDragStart($event, eff.id, 'patate')"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -220,9 +218,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
@@ -238,15 +235,15 @@
         <div class="effectif-cards-grid">
           @for (eff of effectifsHorsService(); track eff.id) {
           <div class="effectif-card" draggable="true" (dragstart)="onDragStart($event, eff.id, 'hors-service')"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -255,9 +252,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
@@ -273,15 +269,15 @@
           @for (p of effectifsParCategorie()['pause']; track p.id) {
           @if (obtenirEffectif(p.id); as eff) {
           <div class="effectif-card small" draggable="true" (dragstart)="onDragStart($event, eff.id, 'patate-pause')"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -290,9 +286,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
@@ -311,15 +306,15 @@
           @if (obtenirEffectif(p.id); as eff) {
           <div class="effectif-card small" draggable="true"
             (dragstart)="onDragStart($event, eff.id, 'patate-astreinte')"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -328,9 +323,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
@@ -347,15 +341,15 @@
           @for (p of effectifsParCategorie()['conges']; track p.id) {
           @if (obtenirEffectif(p.id); as eff) {
           <div class="effectif-card small" draggable="true" (dragstart)="onDragStart($event, eff.id, 'patate-conges')"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -364,9 +358,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
@@ -383,15 +376,15 @@
           @for (p of effectifsParCategorie()['ipt']; track p.id) {
           @if (obtenirEffectif(p.id); as eff) {
           <div class="effectif-card small" draggable="true" (dragstart)="onDragStart($event, eff.id, 'patate-ipt')"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -400,9 +393,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
@@ -421,15 +413,15 @@
           @if (obtenirEffectif(p.id); as eff) {
           <div class="effectif-card small" draggable="true"
             (dragstart)="onDragStart($event, eff.id, 'patate-fin_service')"
-            [style.border-left-color]="obtenirCouleurRole(eff.grade_id)"
-            [class.effectif-card--helico]="eff.formation_helicoptere"
-            [style.--role-color]="obtenirCouleurRole(eff.grade_id)">
+            [style.border-left-color]="obtenirCouleurRole(eff.role)"
+            [class.effectif-card--helico]="eff.helicopterTrainingDate"
+            [style.--role-color]="obtenirCouleurRole(eff.role)">
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.prenom }}</span>
+              <span class="effectif-nom">{{ eff.name }}</span>
             </div>
-            @if (eff.telephone) {<div class="effectif-card__tel">{{ eff.telephone }}</div>}
+            @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
             <div class="effectif-card__specs">@for (s of obtenirSpecialites(eff); track s) {<span>{{ s }}</span>}</div>
             }
@@ -438,9 +430,8 @@
             </div>
             }
             <div class="effectif-card__meta">
-              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.grade_id)">{{
-                obtenirNomRole(eff.grade_id) }}</span>
-              @if (eff.est_central) {<span class="effectif-central">📡 Centrale</span>}
+              <span class="effectif-badge" [style.color]="obtenirCouleurRole(eff.role)">{{
+                eff.role }}</span>
             </div>
           </div>
           }
