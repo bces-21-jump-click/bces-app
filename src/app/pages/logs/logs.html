@@ -2,17 +2,18 @@
     <div class="page-header">
         <h1>📋 Logs</h1>
         <div class="filtres">
-            <select [ngModel]="filtreType()" (ngModelChange)="filtreType.set($event)" aria-label="Filtrer par type">
-                <option value="">Tous les types</option>
-                @for (t of typesLog; track t) {
-                <option [value]="t">{{ t }}</option>
-                }
-            </select>
-            <select [ngModel]="filtreUtilisateur()" (ngModelChange)="filtreUtilisateur.set($event)"
+            <select [ngModel]="filtreUtilisateur()" (ngModelChange)="filtreUtilisateur.set($event); onFilterChange()"
                 aria-label="Filtrer par utilisateur">
                 <option [ngValue]="null">Tous les utilisateurs</option>
                 @for (u of userList(); track u.id) {
                 <option [value]="u.id">{{ u.name }}</option>
+                }
+            </select>
+            <select [ngModel]="filtreType()" (ngModelChange)="filtreType.set($event); onFilterChange()"
+                aria-label="Filtrer par type">
+                <option value="">Tous les types</option>
+                @for (t of typesLog; track t) {
+                <option [value]="t">{{ t }}</option>
                 }
             </select>
             <button class="btn-refresh" (click)="fetchLogs()" aria-label="Rafraîchir">🔄</button>
@@ -36,7 +37,7 @@
                 </tr>
             </thead>
             <tbody>
-                @for (l of logsFiltres(); track l.id) {
+                @for (l of logsPagines(); track l.id) {
                 <tr>
                     <td class="date-cell">{{ formatDate(l.id ?? '') }}</td>
                     <td>{{ getUserName(l.user) }}</td>
@@ -56,5 +57,15 @@
             </tbody>
         </table>
     </div>
+
+    @if (totalPages() > 1) {
+    <div class="pagination">
+        @for (p of [].constructor(totalPages()); track $index) {
+        <button class="page-btn" [class.active]="page() === $index + 1" (click)="page.set($index + 1)">
+            {{ $index + 1 }}
+        </button>
+        }
+    </div>
+    }
     }
 </div>

@@ -36,7 +36,7 @@
             </div>
             <div class="order-summary">
                 <span>{{ order.items.length }} article(s)</span>
-                <span>⚖️ {{ (order.weight * 100 | number:'1.0-2') }} kg</span>
+                <span>⚖️ {{ order.weight | number:'1.0-2' }} kg</span>
                 <span>💰 @if (order.price !== null) { {{ order.price }} $ } @else { <em>Inconnue</em> }</span>
                 @if (order.updatedAt) { <span>🕐 {{ formatDate(order.updatedAt) }}</span> }
             </div>
@@ -75,7 +75,7 @@
             [class]="alert.maxAlertLevel >= 2 ? 'alert-critical' : alert.maxAlertLevel >= 1 ? 'alert-warning' : 'alert-ok'">
             <div class="alert-header">
                 <span>{{ alert.company.icon }} {{ alert.company.name }} : {{ alert.totalItemCount }} item(s) ({{
-                    (alert.totalWeight * 100 | number:'1.0-2') }} kg)</span>
+                    alert.totalWeight | number:'1.0-2' }} kg)</span>
                 @if (!companyOrders().includes(alert.company.id)) {
                 <button class="btn accent" (click)="openOrderCreation(alert.company)">🛒 Commander</button>
                 } @else {
@@ -155,7 +155,7 @@
     @if (dialogEdit() && editOrder(); as eo) {
     <div class="overlay" (click)="dialogEdit.set(false)">
         <div class="dialog" (click)="$event.stopPropagation()">
-            <h3 class="dialog-title">Modifier la commande ({{ (editWeight() * 100 | number:'1.0-2') }} kg)</h3>
+            <h3 class="dialog-title">Modifier la commande ({{ editWeight() | number:'1.0-2' }} kg)</h3>
             <table class="data-table">
                 <tbody>
                     @for (oi of eo.items; track oi.id) {
@@ -166,7 +166,7 @@
                         <td style="width:100px">
                             <input type="number" class="inline-input" [(ngModel)]="oi.amount" />
                         </td>
-                        <td>{{ (oi.amount * info.weight * 100 | number:'1.0-2') }} kg</td>
+                        <td>{{ oi.amount * info.weight | number:'1.0-2' }} kg</td>
                     </tr>
                     }
                     }
@@ -199,7 +199,7 @@
     @if (dialogOrder() && orderData(); as od) {
     <div class="overlay" (click)="dialogOrder.set(false)">
         <div class="dialog" (click)="$event.stopPropagation()">
-            <h3 class="dialog-title">Commande ({{ (orderWeight() * 100 | number:'1.0-2') }} kg)</h3>
+            <h3 class="dialog-title">Commande ({{ orderWeight() | number:'1.0-2' }} kg)</h3>
             <table class="data-table">
                 <tbody>
                     @for (ai of od.items; track ai.item.id) {
@@ -209,7 +209,7 @@
                         <td style="width:100px">
                             <input type="number" class="inline-input" [(ngModel)]="ai.orderNeeded" />
                         </td>
-                        <td>{{ (ai.orderNeeded * ai.item.weight * 100 | number:'1.0-2') }} kg</td>
+                        <td>{{ ai.orderNeeded * ai.item.weight | number:'1.0-2' }} kg</td>
                     </tr>
                     }
                 </tbody>

@@ -8,6 +8,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
+import Swal from 'sweetalert2';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { LoggerService } from '../../services/logger.service';
@@ -254,9 +255,16 @@ export class CommandesPage implements OnDestroy {
   async payOrder(order: Order): Promise<void> {
     let price = order.price ?? 0;
     if (price <= 0) {
-      const input = prompt('Montant total de la commande ($)');
-      if (!input) return;
-      price = parseFloat(input);
+      const { value, isConfirmed } = await Swal.fire({
+        title: 'Montant total de la commande ($)',
+        input: 'number',
+        inputPlaceholder: 'Montant',
+        showCancelButton: true,
+        confirmButtonText: 'Valider',
+        cancelButtonText: 'Annuler',
+      });
+      if (!isConfirmed || !value) return;
+      price = parseFloat(value);
       if (isNaN(price) || price < 0) return;
     }
 
@@ -292,7 +300,14 @@ export class CommandesPage implements OnDestroy {
 
   // --- Delete ---
   async deleteOrder(order: Order): Promise<void> {
-    if (!confirm('Annuler cette commande ?')) return;
+    const { isConfirmed } = await Swal.fire({
+      title: 'Annuler cette commande ?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Non',
+    });
+    if (!isConfirmed) return;
     const company = this.companies().find((c) => c.id === order.company);
     await this.logger.log(
       this.auth.profile()?.id ?? '',
@@ -424,7 +439,14 @@ export class CommandesPage implements OnDestroy {
 
   // --- History deletion ---
   async deleteHistory(h: OrderHistory): Promise<void> {
-    if (!confirm('Supprimer cet historique ?')) return;
+    const { isConfirmed } = await Swal.fire({
+      title: 'Supprimer cet historique ?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Non',
+    });
+    if (!isConfirmed) return;
     const company = this.companies().find((c) => c.id === h.company);
     await this.logger.log(
       this.auth.profile()?.id ?? '',

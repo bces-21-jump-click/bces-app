@@ -7,11 +7,15 @@ import {
   computed,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { KeyValuePipe } from '@angular/common';
 import { ApiService } from '../../services/api.service';
+import { LoggerService } from '../../services/logger.service';
 import { ORDRE_ROLES, obtenirCouleurRole } from '../../config/roles.config';
+import { TRAININGS_CONFIG } from '../../config/trainings.config';
 import { Effectif } from '../../modeles/effectif';
 import { AuthService } from '../../services/auth.service';
 import { FormationService, FormationEtat } from '../../services/formation.service';
+import Swal from 'sweetalert2';
 
 const ROLES_COMPETENCES = ORDRE_ROLES.filter((role) => role !== 'Temporaire');
 
@@ -21,15 +25,18 @@ interface Employe {
   role: string;
   helicopterTrainingDate: string | null;
   arrivalDate: string | null;
+  lastPromotionDate: string | null;
+  lastFollowUpDate: string | null;
+  trainingRequests: string[];
+  validatedTrainings: string[];
   progression_competences: Record<string, number>;
-  date_dernier_suivi: string;
 }
 
 interface Guide {
-  id: number;
-  titre: string;
+  id: string;
+  title: string;
   description: string;
-  etapes: { titre: string; description: string }[];
+  steps: { header?: string; title: string; description: string }[];
 }
 
 interface Competence {
@@ -105,13 +112,6 @@ const CATEGORIES_COMPETENCES_PAR_DEFAUT: Competence[] = [
   },
 ];
 
-const FORMATIONS_CONFIG = [
-  { titre: 'Formation Grenouille', couleur: '#0d9488' },
-  { titre: 'Formation Conduite', couleur: '#16a34a' },
-  { titre: 'Formation Off Road', couleur: '#78350f' },
-  { titre: 'Formation Médicoptère', couleur: '#4338ca' },
-];
-
 const ROLES_VALIDATION_COMPETENCES = new Set([
   'Directeur',
   'Directeur Adjoint',
@@ -136,12 +136,13 @@ const ROLE_EMOJIS_PAR_DEFAUT: Record<string, string> = {
   templateUrl: './formation.html',
   styleUrl: './formation.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  imports: [FormsModule],
+  imports: [FormsModule, KeyValuePipe],
 })
 export class FormationPage implements OnInit {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
   private readonly formationSvc = inject(FormationService);
+  private readonly logger = inject(LoggerService);
 
   readonly employes = signal<Employe[]>([]);
   readonly guides = signal<Guide[]>([]);
@@ -152,9 +153,13 @@ export class FormationPage implements OnInit {
   readonly categories = signal<Competence[]>(CATEGORIES_COMPETENCES_PAR_DEFAUT);
   readonly roleEmojis = signal<Record<string, string>>({ ...ROLE_EMOJIS_PAR_DEFAUT });
 
+  /** Guide dialog */
+  readonly guideOuvert = signal<Guide | null>(null);
+  readonly guideChecks = signal<boolean[]>([]);
+
   readonly roles = ORDRE_ROLES;
   readonly rolesEdition = [...ROLES_COMPETENCES].reverse();
-  readonly formations = FORMATIONS_CONFIG;
+  readonly formations = TRAININGS_CONFIG;
   readonly obtenirCouleurRole = obtenirCouleurRole;
   readonly peutValiderCompetences = computed(() => {
     const role = this.auth.profile()?.role;
@@ -172,6 +177,20 @@ export class FormationPage implements OnInit {
       });
   });
 
+  /** Training requests grouped by training name */
+  readonly demandesGroupees = computed(() => {
+    const groups: Record<string, { id: string; name: string; training: string }[]> = {};
+    for (const e of this.employes()) {
+      for (const req of e.trainingRequests ?? []) {
+        if (!groups[req]) groups[req] = [];
+        groups[req].push({ id: e.id, name: e.name, training: req });
+      }
+    }
+    return groups;
+  });
+
+  readonly aDesDemandes = computed(() => Object.keys(this.demandesGroupees()).length > 0);
+
   ngOnInit(): void {
     this.charger();
   }
@@ -180,7 +199,14 @@ export class FormationPage implements OnInit {
     this.chargement.set(true);
     const [effectifs, guides, etatFormationCharge] = await Promise.all([
       this.api.lister<Effectif>('employees').catch(() => [] as Effectif[]),
-      this.api.lister<Guide>('guides').catch(() => [] as Guide[]),
+      this.api
+        .lister<{
+          id: string;
+          title: string;
+          description: string;
+          steps: { header?: string; title: string; description: string }[];
+        }>('guides')
+        .catch(() => []),
       this.formationSvc.chargerEtat().catch(() => null),
     ]);
 
@@ -213,8 +239,11 @@ export class FormationPage implements OnInit {
         role: e.role || 'Non assigné',
         helicopterTrainingDate: e.helicopterTrainingDate ?? null,
         arrivalDate: e.arrivalDate ?? null,
+        lastPromotionDate: e.lastPromotionDate ?? null,
+        lastFollowUpDate: e.lastFollowUpDate ?? null,
+        trainingRequests: e.trainingRequests ?? [],
+        validatedTrainings: e.validatedTrainings ?? [],
         progression_competences: progressions[e.id] ?? {},
-        date_dernier_suivi: '—',
       })),
     );
     this.guides.set(guides);
@@ -225,6 +254,256 @@ export class FormationPage implements OnInit {
     await this.charger();
   }
 
+  // ─── Days / Date helpers ──────────────────────
+  joursDepuis(dateStr: string | null): number | null {
+    if (!dateStr) return null;
+    const d = new Date(dateStr + 'T00:00:00');
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+    return Math.round(Math.abs((now.getTime() - d.getTime()) / 86400000));
+  }
+
+  couleurJours(jours: number | null): string {
+    if (jours == null) return '';
+    if (jours >= 28) return '#ef4444';
+    if (jours >= 21) return '#f97316';
+    if (jours >= 14) return '#eab308';
+    return '';
+  }
+
+  labelJours(jours: number | null): string {
+    if (jours == null) return '';
+    if (jours >= 28) return 'Critique';
+    if (jours >= 21) return 'Attention';
+    if (jours >= 14) return 'A surveiller';
+    return '';
+  }
+
+  // ─── Follow-up date editing ──────────────────
+  async modifierDateSuivi(e: Employe): Promise<void> {
+    const { value } = await Swal.fire({
+      title: 'Date du dernier suivi',
+      input: 'date',
+      inputValue: e.lastFollowUpDate ?? new Date().toISOString().split('T')[0],
+      showCancelButton: true,
+      confirmButtonText: 'Enregistrer',
+      cancelButtonText: 'Annuler',
+      showDenyButton: true,
+      denyButtonText: 'Supprimer la date',
+    });
+
+    if (value !== undefined) {
+      const newDate = value || null;
+      await this.api.modifier('employees', e.id, { lastFollowUpDate: newDate });
+      this.employes.update((list) =>
+        list.map((emp) => (emp.id === e.id ? { ...emp, lastFollowUpDate: newDate } : emp)),
+      );
+    }
+  }
+
+  async supprimerDateSuivi(e: Employe): Promise<void> {
+    await this.api.modifier('employees', e.id, { lastFollowUpDate: null });
+    this.employes.update((list) =>
+      list.map((emp) => (emp.id === e.id ? { ...emp, lastFollowUpDate: null } : emp)),
+    );
+  }
+
+  // ─── Training Requests (Demandes) ────────────
+  async ajouterDemande(): Promise<void> {
+    const employes = this.employes();
+    const { value: empId } = await Swal.fire({
+      title: 'Employé demandeur',
+      input: 'select',
+      inputOptions: Object.fromEntries(
+        employes.sort((a, b) => a.name.localeCompare(b.name)).map((e) => [e.id, e.name]),
+      ),
+      showCancelButton: true,
+      confirmButtonText: 'Suivant',
+      cancelButtonText: 'Annuler',
+      inputPlaceholder: 'Sélectionner un employé',
+    });
+    if (!empId) return;
+
+    const emp = employes.find((e) => e.id === empId);
+    if (!emp) return;
+
+    const available = TRAININGS_CONFIG.filter(
+      (f) => !(emp.trainingRequests ?? []).includes(f.title),
+    );
+    if (available.length === 0) {
+      await Swal.fire({ icon: 'info', title: 'Cet employé a déjà demandé toutes les formations' });
+      return;
+    }
+
+    const { value: training } = await Swal.fire({
+      title: 'Formation demandée',
+      input: 'select',
+      inputOptions: Object.fromEntries(available.map((f) => [f.title, f.title])),
+      showCancelButton: true,
+      confirmButtonText: 'Enregistrer',
+      cancelButtonText: 'Annuler',
+    });
+    if (!training) return;
+
+    const newRequests = [...(emp.trainingRequests ?? []), training];
+    await this.api.modifier('employees', emp.id, { trainingRequests: newRequests });
+    this.employes.update((list) =>
+      list.map((e) => (e.id === emp.id ? { ...e, trainingRequests: newRequests } : e)),
+    );
+
+    this.logger.log(
+      this.auth.profile()?.name ?? '?',
+      'FORMATION',
+      `Ajout demande "${training}" pour ${emp.name}`,
+    );
+    Swal.fire({
+      icon: 'success',
+      title: 'Demande enregistrée',
+      showConfirmButton: false,
+      timer: 1500,
+    });
+  }
+
+  async traiterDemande(empId: string, training: string): Promise<void> {
+    const emp = this.employes().find((e) => e.id === empId);
+    if (!emp) return;
+
+    const validableTrainings = ['Formation Grenouille', 'Formation Conduite'];
+    const isValidable = validableTrainings.includes(training);
+
+    let result;
+    if (isValidable) {
+      result = await Swal.fire({
+        title: 'Traiter la demande',
+        text: `Voulez-vous valider la formation "${training}" pour ${emp.name} ou simplement la supprimer ?`,
+        icon: 'question',
+        showCancelButton: true,
+        showDenyButton: true,
+        confirmButtonText: 'Valider',
+        denyButtonText: 'Refuser / Supprimer',
+        cancelButtonText: 'Annuler',
+      });
+    } else {
+      result = await Swal.fire({
+        title: 'Supprimer la demande ?',
+        text: `Supprimer la demande "${training}" pour ${emp.name} ?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Supprimer',
+        cancelButtonText: 'Annuler',
+        confirmButtonColor: '#d33',
+      });
+      if (result.isConfirmed) {
+        result = { ...result, isConfirmed: false, isDenied: true };
+      }
+    }
+
+    if (result.isDismissed) return;
+
+    const newRequests = (emp.trainingRequests ?? []).filter((r: string) => r !== training);
+    const updates: Record<string, unknown> = { trainingRequests: newRequests };
+
+    if (result.isConfirmed) {
+      const newValidated = [...(emp.validatedTrainings ?? [])];
+      if (!newValidated.includes(training)) newValidated.push(training);
+      updates['validatedTrainings'] = newValidated;
+
+      await this.api.modifier('employees', emp.id, updates);
+      this.employes.update((list) =>
+        list.map((e) =>
+          e.id === emp.id
+            ? { ...e, trainingRequests: newRequests, validatedTrainings: newValidated }
+            : e,
+        ),
+      );
+      this.logger.log(
+        this.auth.profile()?.name ?? '?',
+        'FORMATION',
+        `Validation "${training}" pour ${emp.name}`,
+      );
+      Swal.fire({
+        icon: 'success',
+        title: 'Formation validée',
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } else if (result.isDenied) {
+      await this.api.modifier('employees', emp.id, updates);
+      this.employes.update((list) =>
+        list.map((e) => (e.id === emp.id ? { ...e, trainingRequests: newRequests } : e)),
+      );
+      this.logger.log(
+        this.auth.profile()?.name ?? '?',
+        'FORMATION',
+        `Suppression demande "${training}" pour ${emp.name}`,
+      );
+      Swal.fire({
+        icon: 'info',
+        title: 'Demande supprimée',
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    }
+  }
+
+  // ─── Validated Trainings ─────────────────────
+  getTrainingEmoji(title: string): string {
+    if (title === 'Formation Grenouille') return '🐸';
+    if (title === 'Formation Conduite') return '🚗';
+    if (title === 'Formation Off Road') return '⛰️';
+    if (title === 'Formation Médicoptère') return '🚁';
+    return '🎓';
+  }
+
+  getTrainingColor(title: string): string {
+    const config = TRAININGS_CONFIG.find((f) => f.title === title);
+    return config?.color ?? '#6366f1';
+  }
+
+  async retirerFormationValidee(emp: Employe, training: string): Promise<void> {
+    const result = await Swal.fire({
+      title: 'Retirer la formation ?',
+      text: `Retirer "${training}" à ${emp.name} ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui, retirer',
+      cancelButtonText: 'Annuler',
+      confirmButtonColor: '#d33',
+    });
+    if (!result.isConfirmed) return;
+
+    const newValidated = (emp.validatedTrainings ?? []).filter((t: string) => t !== training);
+    await this.api.modifier('employees', emp.id, { validatedTrainings: newValidated });
+    this.employes.update((list) =>
+      list.map((e) => (e.id === emp.id ? { ...e, validatedTrainings: newValidated } : e)),
+    );
+    Swal.fire({
+      icon: 'success',
+      title: 'Formation retirée',
+      showConfirmButton: false,
+      timer: 1500,
+    });
+  }
+
+  // ─── Guide dialog ───────────────────────────
+  ouvrirGuide(guide: Guide): void {
+    this.guideOuvert.set(guide);
+    this.guideChecks.set(new Array(guide.steps?.length ?? 0).fill(false));
+  }
+
+  fermerGuide(): void {
+    this.guideOuvert.set(null);
+  }
+
+  basculerCheckGuide(index: number): void {
+    this.guideChecks.update((arr) => {
+      const copy = [...arr];
+      copy[index] = !copy[index];
+      return copy;
+    });
+  }
+
+  // ─── Competences (Emoji / Role editor) — KEPT AS-IS ───
   majEmojiRole(role: string, emoji: string): void {
     this.roleEmojis.update((courants) => ({
       ...courants,

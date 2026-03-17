@@ -7,6 +7,7 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { LoggerService } from '../../services/logger.service';
@@ -270,11 +271,26 @@ export class NotesFraisPage implements OnDestroy {
     );
     await this.api.creer('expenseNotes', note);
     this.dialogCreate.set(false);
+    Swal.fire({
+      icon: 'success',
+      title: 'Note de frais envoyée !',
+      showConfirmButton: false,
+      timer: 1500,
+    });
   }
 
   // Pay
   async payNote(note: ExpenseNote): Promise<void> {
     if (!note.id) return;
+    const { isConfirmed } = await Swal.fire({
+      title: 'Confirmer le paiement',
+      text: 'Êtes-vous sûr de vouloir marquer cette note de frais comme payée ?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui, payer !',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     const reasonLabel = this.reasonList.find((r) => r.value === note.reason)?.title ?? note.reason;
     this.logger.log(
       this.auth.profile()?.id ?? '',

@@ -1,9 +1,29 @@
 <div class="formation-page">
+    <!-- Training Requests Banner -->
+    @if (aDesDemandes()) {
+    <div class="demandes-banner">
+        <h3>📋 Demandes de formation en cours</h3>
+        @for (entry of demandesGroupees() | keyvalue; track entry.key) {
+        <div class="demande-group">
+            <span class="demande-group-label">{{ entry.key }}</span>
+            <div class="demande-chips">
+                @for (req of entry.value; track req.id + req.training) {
+                <span class="chip chip--training" [style.background]="getTrainingColor(req.training)"
+                    (click)="traiterDemande(req.id, req.training)" title="Cliquer pour traiter">
+                    {{ req.name }} ✕
+                </span>
+                }
+            </div>
+        </div>
+        }
+    </div>
+    }
+
     <div class="page-header">
         <h1>🎓 Formation</h1>
         <div class="actions">
             <button class="btn-small" type="button" (click)="synchroniserEmployes()" [disabled]="chargement()">
-                {{ chargement() ? 'Synchronisation...' : 'Synchroniser employés RH' }}
+                {{ chargement() ? 'Synchronisation...' : '🔄 Synchroniser' }}
             </button>
             <input type="text" placeholder="Rechercher un employé..." [ngModel]="recherche()"
                 (ngModelChange)="recherche.set($event)" class="search-input" />
@@ -26,6 +46,8 @@
                     <th>Nom</th>
                     <th>Rôle</th>
                     <th>Arrivée</th>
+                    <th>Jours au grade</th>
+                    <th>Formations</th>
                     <th>Compétences</th>
                     <th>Dernier suivi</th>
                     <th>Actions</th>
@@ -39,17 +61,55 @@
                     </td>
                     <td>{{ e.arrivalDate ?? '—' }}</td>
                     <td>
+                        @if (joursDepuis(e.lastPromotionDate) != null) {
+                        <span>{{ joursDepuis(e.lastPromotionDate) }} j</span>
+                        @if (labelJours(joursDepuis(e.lastPromotionDate))) {
+                        <span class="chip chip--small"
+                            [style.background]="couleurJours(joursDepuis(e.lastPromotionDate))">
+                            {{ labelJours(joursDepuis(e.lastPromotionDate)) }}
+                        </span>
+                        }
+                        } @else {
+                        <span class="text-muted">—</span>
+                        }
+                    </td>
+                    <td>
+                        <div class="training-badges">
+                            @for (t of e.validatedTrainings; track t) {
+                            <span class="chip chip--training chip--small" [style.background]="getTrainingColor(t)"
+                                title="{{ t }} (clic pour retirer)" (click)="retirerFormationValidee(e, t)">
+                                {{ getTrainingEmoji(t) }}
+                            </span>
+                            }
+                            @if (e.validatedTrainings.length === 0) {
+                            <span class="text-muted">—</span>
+                            }
+                        </div>
+                    </td>
+                    <td>
                         <div class="progress-bar">
                             <div class="progress-fill" [style.width.%]="progressionTotale(e)"></div>
                         </div>
                         <span class="progress-text">{{ progressionTotale(e) }}%</span>
                     </td>
-                    <td>{{ e.date_dernier_suivi || '—' }}</td>
+                    <td>
+                        @if (joursDepuis(e.lastFollowUpDate) != null) {
+                        <span>{{ joursDepuis(e.lastFollowUpDate) }} j</span>
+                        @if (joursDepuis(e.lastFollowUpDate)! >= 21) {
+                        <span class="chip chip--small"
+                            [style.background]="couleurJours(joursDepuis(e.lastFollowUpDate))">!</span>
+                        }
+                        } @else {
+                        <span class="text-muted italic">Jamais</span>
+                        }
+                        <button class="btn-icon" (click)="modifierDateSuivi(e)"
+                            title="Modifier la date de suivi">✏️</button>
+                    </td>
                     <td><button class="btn-small" (click)="voirCompetences(e)">Détails</button></td>
                 </tr>
                 } @empty {
                 <tr>
-                    <td colspan="6" class="empty">Aucun employé</td>
+                    <td colspan="8" class="empty">Aucun employé</td>
                 </tr>
                 }
             </tbody>
@@ -60,10 +120,10 @@
     <div class="tab-content">
         <div class="guides-grid">
             @for (g of guides(); track g.id) {
-            <div class="guide-card">
-                <h3>📖 {{ g.titre }}</h3>
+            <div class="guide-card" (click)="ouvrirGuide(g)">
+                <h3>📖 {{ g.title }}</h3>
                 <p>{{ g.description }}</p>
-                <span class="step-count">{{ g.etapes.length }} étapes</span>
+                <span class="step-count">{{ g.steps.length }} étapes</span>
             </div>
             } @empty {
             <p class="empty">Aucun guide disponible</p>
@@ -108,11 +168,26 @@
     }
     @case ('demandes') {
     <div class="tab-content">
+        <div class="demandes-header">
+            <h2>Demandes de formation</h2>
+            <button class="btn-small" (click)="ajouterDemande()">+ Nouvelle demande</button>
+        </div>
         <div class="formations-list">
-            @for (f of formations; track f.titre) {
-            <div class="formation-card" [style.border-left-color]="f.couleur">
-                <h3>{{ f.titre }}</h3>
+            @for (f of formations; track f.title) {
+            <div class="formation-card" [style.border-left-color]="f.color">
+                <h3>{{ getTrainingEmoji(f.title) }} {{ f.title }}</h3>
+                @if (demandesGroupees()[f.title]; as reqs) {
+                <div class="demande-chips">
+                    @for (req of reqs; track req.id) {
+                    <span class="chip chip--training" [style.background]="f.color"
+                        (click)="traiterDemande(req.id, req.training)" title="Cliquer pour traiter">
+                        {{ req.name }} ✕
+                    </span>
+                    }
+                </div>
+                } @else {
                 <p class="empty">Aucune demande en attente</p>
+                }
             </div>
             }
         </div>
@@ -120,6 +195,39 @@
     }
     }
 
+    <!-- Guide dialog -->
+    @if (guideOuvert()) {
+    <div class="backdrop" (click)="fermerGuide()"></div>
+    <div class="dialog dialog--wide" role="dialog" aria-modal="true">
+        <h2>📖 {{ guideOuvert()!.title }}</h2>
+        <p class="dialog-note">{{ guideOuvert()!.description }}</p>
+        @if (guideOuvert()!.steps.length) {
+        <div class="guide-steps">
+            @for (step of guideOuvert()!.steps; track $index) {
+            <div class="guide-step" [class.checked]="guideChecks()[$index]">
+                <label class="competence-check">
+                    <input type="checkbox" [checked]="guideChecks()[$index]" (change)="basculerCheckGuide($index)" />
+                    <span>
+                        @if (step.header) {
+                        <strong>{{ step.header }} — </strong>
+                        }
+                        {{ step.title }}
+                    </span>
+                </label>
+                @if (step.description) {
+                <p class="guide-step-desc">{{ step.description }}</p>
+                }
+            </div>
+            }
+        </div>
+        } @else {
+        <p class="empty">Aucune étape définie</p>
+        }
+        <button class="btn-primary" (click)="fermerGuide()">Fermer</button>
+    </div>
+    }
+
+    <!-- Employee competencies dialog -->
     @if (employeSelectionne()) {
     <div class="backdrop" (click)="fermerCompetences()"></div>
     <div class="dialog" role="dialog" aria-modal="true">

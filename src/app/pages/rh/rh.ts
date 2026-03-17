@@ -8,6 +8,7 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { LoggerService } from '../../services/logger.service';
@@ -488,7 +489,15 @@ export class RhPage implements OnInit, OnDestroy {
   }
 
   async deleteSpecialty(s: Specialty): Promise<void> {
-    if (!s.id || !confirm(`Supprimer la spécialité ${s.name} ?`)) return;
+    if (!s.id) return;
+    const { isConfirmed } = await Swal.fire({
+      title: `Supprimer la spécialité ${s.name} ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     await this.api.supprimer('specialties', s.id);
   }
 
@@ -511,8 +520,15 @@ export class RhPage implements OnInit, OnDestroy {
   }
 
   async addTask(type: 'weekly' | 'monthly'): Promise<void> {
-    const text = prompt('Nom de la tâche :');
-    if (!text) return;
+    const { value: text, isConfirmed } = await Swal.fire({
+      title: 'Nom de la tâche',
+      input: 'text',
+      inputPlaceholder: 'Nom de la tâche',
+      showCancelButton: true,
+      confirmButtonText: 'Ajouter',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed || !text) return;
     const docId = type === 'weekly' ? 'weekly_rh' : 'monthly_rh';
     const tasks = type === 'weekly' ? [...this.weeklyTasks()] : [...this.monthlyTasks()];
     tasks.push({ id: Date.now().toString(), text, done: false, doneAt: null, link: null });
@@ -520,7 +536,14 @@ export class RhPage implements OnInit, OnDestroy {
   }
 
   async removeTask(type: 'weekly' | 'monthly', taskId: string): Promise<void> {
-    if (!confirm('Supprimer cette tâche ?')) return;
+    const { isConfirmed } = await Swal.fire({
+      title: 'Supprimer cette tâche ?',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     const docId = type === 'weekly' ? 'weekly_rh' : 'monthly_rh';
     const tasks = (type === 'weekly' ? [...this.weeklyTasks()] : [...this.monthlyTasks()]).filter(
       (t) => t.id !== taskId,
@@ -730,18 +753,33 @@ export class RhPage implements OnInit, OnDestroy {
   }
 
   async deleteCandidature(c: Candidature): Promise<void> {
-    if (!c.id || !confirm(`Supprimer la candidature de ${c.name} ?`)) return;
+    if (!c.id) return;
+    const { isConfirmed } = await Swal.fire({
+      title: `Supprimer la candidature de ${c.name} ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     await this.api.supprimer('candidatures', c.id);
   }
 
   async finalizeCandidature(decision: 'accept' | 'reject'): Promise<void> {
     const c = this.editedCandidature();
-    if (!confirm(decision === 'accept' ? `Embaucher ${c.name} ?` : `Refuser ${c.name} ?`)) return;
+    const { isConfirmed } = await Swal.fire({
+      title: decision === 'accept' ? `Embaucher ${c.name} ?` : `Refuser ${c.name} ?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
 
     if (decision === 'accept') {
       const exists = this.employees().some((e) => e.name.toLowerCase() === c.name.toLowerCase());
       if (exists) {
-        alert(`${c.name} est déjà dans la liste des employés !`);
+        Swal.fire('Erreur', `${c.name} est déjà dans la liste des employés !`, 'error');
         return;
       }
       const today = new Date().toISOString().split('T')[0];
@@ -842,7 +880,14 @@ export class RhPage implements OnInit, OnDestroy {
   }
 
   async deleteFault(emp: Effectif): Promise<void> {
-    if (!confirm(`Retirer la faute de ${emp.name} ?`)) return;
+    const { isConfirmed } = await Swal.fire({
+      title: `Retirer la faute de ${emp.name} ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     await this.api.modifier('employees', emp.id, { simpleFault: null });
   }
 
@@ -882,7 +927,14 @@ export class RhPage implements OnInit, OnDestroy {
   }
 
   async deleteSuspension(emp: Effectif): Promise<void> {
-    if (!confirm(`Retirer la mise à pied de ${emp.name} ?`)) return;
+    const { isConfirmed } = await Swal.fire({
+      title: `Retirer la mise à pied de ${emp.name} ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     await this.api.modifier('employees', emp.id, { suspension: null });
     this.logger.log(
       this.auth.profile()?.id ?? 'unknown',
@@ -916,7 +968,14 @@ export class RhPage implements OnInit, OnDestroy {
   }
 
   async confirmReimbursement(emp: Effectif): Promise<void> {
-    if (!confirm(`Confirmer le remboursement hélicoptère de ${emp.name} ?`)) return;
+    const { isConfirmed } = await Swal.fire({
+      title: `Confirmer le remboursement hélicoptère de ${emp.name} ?`,
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     await this.api.modifier('employees', emp.id, { helicopterTrainingReimbursed: true });
   }
 

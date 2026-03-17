@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { NotifManagerService } from '../../services/notif-manager.service';
 import { LoggerService } from '../../services/logger.service';
 import { ApiService } from '../../services/api.service';
@@ -99,13 +100,22 @@ export class StocksPage {
   }
 
   async deleteCompany(company: Entreprise): Promise<void> {
-    if (!confirm(`Voulez-vous vraiment supprimer l'entreprise "${company.name}" ?`)) return;
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: `Voulez-vous vraiment supprimer l'entreprise "${company.name}" ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!result.isConfirmed) return;
     await this.api.supprimer('companies', company.id);
     await this.logger.log(
       this.auth.profile()!.id,
       'ENTREPRISES',
       `Suppression de l'entreprise ${company.icon}${company.name}`,
     );
+    Swal.fire('Supprimé !', `L'entreprise "${company.name}" a bien été supprimée.`, 'success');
   }
 
   // === Stockages ===
@@ -135,13 +145,22 @@ export class StocksPage {
   }
 
   async deleteStorage(storage: Stockage): Promise<void> {
-    if (!confirm(`Voulez-vous vraiment supprimer le stockage "${storage.name}" ?`)) return;
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: `Voulez-vous vraiment supprimer le stockage "${storage.name}" ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!result.isConfirmed) return;
     await this.api.supprimer('storages', storage.id!);
     await this.logger.log(
       this.auth.profile()!.id,
       'STOCKAGES',
       `Suppression du stockage ${storage.icon}${storage.name}`,
     );
+    Swal.fire('Supprimé !', `Le stockage "${storage.name}" a bien été supprimé.`, 'success');
   }
 
   // === Items ===
@@ -198,12 +217,21 @@ export class StocksPage {
   }
 
   async deleteItem(item: Stock): Promise<void> {
-    if (!confirm(`Voulez-vous vraiment supprimer l'item "${item.name}" ?`)) return;
+    const result = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: `Voulez-vous vraiment supprimer l'item "${item.name}" ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!result.isConfirmed) return;
     await this.api.supprimer('items', item.id);
     await this.logger.log(
       this.auth.profile()!.id,
       'ITEMS',
       `Suppression de l'item ${item.icon}${item.name}`,
     );
+    Swal.fire('Supprimé !', `L'item "${item.name}" a bien été supprimé.`, 'success');
   }
 }

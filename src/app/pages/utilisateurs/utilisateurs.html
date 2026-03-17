@@ -1,16 +1,4 @@
 <div class="utilisateurs-page">
-    <div class="page-header">
-        <h1>😊 Utilisateurs</h1>
-        <div class="header-actions">
-            <input type="text" placeholder="Rechercher…" class="search-input" [ngModel]="recherche()"
-                (ngModelChange)="recherche.set($event)" />
-        </div>
-    </div>
-
-    @if (erreur()) {
-    <p class="erreur-message">{{ erreur() }}</p>
-    }
-
     <div class="tabs">
         <button [class.active]="onglet() === 'utilisateurs'" (click)="onglet.set('utilisateurs')">
             Utilisateurs
@@ -23,96 +11,103 @@
 
     @switch (onglet()) {
     @case ('utilisateurs') {
-    <div class="user-grid">
-        @for (u of utilisateursFiltres(); track u.id) {
-        <div class="user-card" (click)="estAdmin() ? ouvrirEdition(u) : null" [class.clickable]="estAdmin()">
-            <div class="user-card__header">
-                <div class="user-card__avatar">{{ u.name.charAt(0).toUpperCase() }}</div>
-                <div class="user-card__info">
-                    <span class="user-card__name">{{ u.name }}</span>
-                    @if (u.id === profileConnecte()?.id) {
-                    <span class="user-card__me">Moi</span>
-                    }
-                </div>
-                @if (estAdmin()) {
-                <button class="btn-icon" type="button" (click)="ouvrirEdition(u); $event.stopPropagation()"
-                    title="Modifier">✏️</button>
+    <div class="tab-content">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Permissions</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (u of utilisateurs(); track u.id) {
+                <tr>
+                    <td>{{ u.name }}</td>
+                    <td>
+                        @if (u.permissions && u.permissions.length > 0) {
+                        @for (perm of u.permissions; track perm) {
+                        <span class="perm-chip" [title]="permissionName(perm)">{{ permissionIcon(perm) }}</span>
+                        }
+                        } @else {
+                        <span class="perm-none">Aucune</span>
+                        }
+                    </td>
+                    <td class="text-end actions-cell">
+                        @if (estAdmin()) {
+                        <button class="btn-icon" (click)="resetPassword(u)"
+                            title="Réinitialiser le mot de passe">🔑</button>
+                        }
+                        <button class="btn-icon" (click)="ouvrirEdition(u)" title="Modifier">✏️</button>
+                    </td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="3" class="empty">Aucun utilisateur</td>
+                </tr>
                 }
-            </div>
-            <div class="user-card__permissions">
-                @if (u.permissions && u.permissions.length > 0) {
-                @for (perm of u.permissions; track perm) {
-                <span class="perm-chip" [title]="permissionName(perm)">{{ permissionIcon(perm) }}</span>
-                }
-                } @else {
-                <span class="perm-none">Aucune permission</span>
-                }
-            </div>
-        </div>
-        } @empty {
-        <div class="empty-state">
-            <span class="empty-icon">😶</span>
-            <p>Aucun utilisateur trouvé</p>
-        </div>
-        }
+            </tbody>
+        </table>
     </div>
     }
 
     @case ('demandes') {
-    <div class="demandes-list">
-        @for (d of demandes(); track d.id) {
-        <div class="demande-card">
-            <div class="demande-card__avatar">{{ d.name.charAt(0).toUpperCase() }}</div>
-            <span class="demande-card__name">{{ d.name }}</span>
-            <div class="demande-card__actions">
-                <button class="btn-accept" type="button" (click)="approuver(d)" title="Accepter">✅ Accepter</button>
-                <button class="btn-reject" type="button" (click)="refuser(d)" title="Refuser">❌ Refuser</button>
-            </div>
-        </div>
-        } @empty {
-        <div class="empty-state">
-            <span class="empty-icon">📭</span>
-            <p>Aucune demande en attente</p>
-        </div>
-        }
+    <div class="tab-content">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th class="text-end"></th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (d of demandes(); track d.id) {
+                <tr>
+                    <td>{{ d.name }}</td>
+                    <td class="text-end actions-cell">
+                        <button class="btn-accept" (click)="approuver(d)" title="Accepter">✅</button>
+                        <button class="btn-reject" (click)="refuser(d)" title="Refuser">❌</button>
+                    </td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="2" class="empty">Aucune demande en attente</td>
+                </tr>
+                }
+            </tbody>
+        </table>
     </div>
     }
     }
 
-    <!-- ── Dialog modifier ─────────────────────── -->
+    <!-- Dialog modifier -->
     @if (dialogOuvert() && utilisateurEdite()) {
-    <div class="overlay" (click)="fermerEdition()"></div>
-    <div class="dialog" role="dialog" aria-modal="true">
-        <div class="dialog-header">
-            <h2>Modifier un utilisateur</h2>
-            <button class="btn-icon" type="button" (click)="fermerEdition()" title="Fermer">✕</button>
-        </div>
+    <div class="overlay" (click)="fermerEdition()">
+        <div class="dialog" (click)="$event.stopPropagation()">
+            <h3>Modifier un utilisateur</h3>
+            <h4 class="dialog-username">{{ utilisateurEdite()!.name }}</h4>
 
-        <div class="dialog-user">
-            <div class="dialog-avatar">{{ utilisateurEdite()!.name.charAt(0).toUpperCase() }}</div>
-            <h3>{{ utilisateurEdite()!.name }}</h3>
-        </div>
-
-        <div class="permissions-section">
-            <h4>Permissions</h4>
-            <div class="permissions-grid">
-                @for (perm of mesPermissions(); track perm.value) {
-                <button type="button" class="perm-toggle" [class.active]="permissionsEditees().includes(perm.value)"
-                    (click)="togglePermission(perm.value)">
-                    <span class="perm-toggle__icon">{{ perm.icon }}</span>
-                    <span class="perm-toggle__label">{{ perm.name }}</span>
-                </button>
-                }
+            <div class="permissions-section">
+                <label>Permissions</label>
+                <div class="permissions-grid">
+                    @for (perm of mesPermissions(); track perm.value) {
+                    <button type="button" class="perm-toggle" [class.active]="permissionsEditees().includes(perm.value)"
+                        (click)="togglePermission(perm.value)">
+                        <span class="perm-toggle__icon">{{ perm.icon }}</span>
+                        <span class="perm-toggle__label">{{ perm.name }}</span>
+                    </button>
+                    }
+                </div>
             </div>
-        </div>
 
-        <button class="btn-delete-user" type="button" (click)="supprimerUtilisateur(utilisateurEdite()!)">
-            🗑️ Supprimer cet utilisateur
-        </button>
+            <button class="btn btn-delete-user" (click)="supprimerUtilisateur(utilisateurEdite()!)">
+                Supprimer cet utilisateur
+            </button>
 
-        <div class="dialog-actions">
-            <button class="btn-secondary" type="button" (click)="fermerEdition()">Annuler</button>
-            <button class="btn-primary" type="button" (click)="enregistrerPermissions()">Enregistrer</button>
+            <div class="dialog-actions">
+                <button class="btn btn-primary" (click)="enregistrerPermissions()">Modifier</button>
+                <button class="btn btn-danger" (click)="fermerEdition()">Annuler</button>
+            </div>
         </div>
     </div>
     }

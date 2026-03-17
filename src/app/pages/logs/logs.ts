@@ -35,11 +35,13 @@ export class LogsPage {
   private readonly api = inject(ApiService);
   private readonly auth = inject(AuthService);
 
-  readonly logs = signal<Log[]>([]);
+  readonly allLogs = signal<Log[]>([]);
   readonly profiles = signal<Record<string, Profile>>({});
   readonly chargement = signal(false);
   readonly filtreType = signal('');
   readonly filtreUtilisateur = signal<string | null>(null);
+  readonly page = signal(1);
+  readonly pageSize = 50;
   readonly typesLog = TYPES_LOG;
 
   readonly isDev = computed(() => this.auth.profile()?.permissions?.includes('dev') ?? false);
@@ -47,7 +49,7 @@ export class LogsPage {
   readonly userList = computed(() => Object.values(this.profiles()));
 
   readonly logsFiltres = computed(() => {
-    let result = this.logs();
+    let result = this.allLogs();
     const type = this.filtreType();
     const user = this.filtreUtilisateur();
     if (type) result = result.filter((l) => l.type === type);
@@ -57,6 +59,16 @@ export class LogsPage {
       const bi = parseInt(b.id ?? '0', 10);
       return bi - ai;
     });
+  });
+
+  readonly totalPages = computed(() => {
+    const pages = Math.ceil(this.logsFiltres().length / this.pageSize) || 1;
+    return Math.min(pages, 10);
+  });
+
+  readonly logsPagines = computed(() => {
+    const start = (this.page() - 1) * this.pageSize;
+    return this.logsFiltres().slice(start, start + this.pageSize);
   });
 
   constructor() {
@@ -73,9 +85,15 @@ export class LogsPage {
 
   async fetchLogs(): Promise<void> {
     this.chargement.set(true);
+    this.page.set(1);
     const list = await this.api.lister<Log>('logs').catch(() => []);
-    this.logs.set(list);
+    this.allLogs.set(list);
     this.chargement.set(false);
+  }
+
+  onFilterChange(): void {
+    this.page.set(1);
+    this.fetchLogs();
   }
 
   getUserName(userId: string): string {

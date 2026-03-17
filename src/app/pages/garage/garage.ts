@@ -7,6 +7,7 @@ import {
   OnDestroy,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import Swal from 'sweetalert2';
 import { ApiService } from '../../services/api.service';
 import { AuthService } from '../../services/auth.service';
 import { LoggerService } from '../../services/logger.service';
@@ -391,6 +392,15 @@ export class GaragePage implements OnDestroy {
   }
 
   async destroyVehicle(v: Vehicule): Promise<void> {
+    const { isConfirmed } = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: `Voulez-vous marquer le véhicule "${v.name}" comme détruit ? Cela le retirera de la liste des véhicules disponibles.`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     this.logger.log(
       this.auth.profile()?.id ?? '',
       'VEHICULES',
@@ -413,6 +423,15 @@ export class GaragePage implements OnDestroy {
   }
 
   async deleteVehicle(v: Vehicule): Promise<void> {
+    const { isConfirmed } = await Swal.fire({
+      title: 'Êtes-vous sûr ?',
+      text: `Voulez-vous vraiment supprimer le véhicule "${v.name}" ?`,
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Oui',
+      cancelButtonText: 'Annuler',
+    });
+    if (!isConfirmed) return;
     this.logger.log(
       this.auth.profile()?.id ?? '',
       'VEHICULES',
