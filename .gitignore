@@ -61,4 +61,10 @@ e2e/*.map
 .history
 .ionide
 
+### Backups ###
+# Backup files
+*.bak
+# Backup folder
+.backup/
+
 # End of https://www.toptal.com/developers/gitignore/api/angular,firebase,visualstudiocode
