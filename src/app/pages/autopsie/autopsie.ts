@@ -120,11 +120,19 @@ export class AutopsiePage implements OnInit, AfterViewInit {
     this.drawCanvas();
   }
 
+  private getCanvasPosition(evt: MouseEvent, canvas: HTMLCanvasElement): { x: number; y: number } {
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    const x = (evt.clientX - rect.left) * scaleX;
+    const y = (evt.clientY - rect.top) * scaleY;
+    return { x, y };
+  }
+
   useTool(evt: MouseEvent): void {
     const canvas = this.canvasRef()?.nativeElement;
     if (!canvas) return;
-    const posX = evt.offsetX;
-    const posY = evt.offsetY;
+    const { x: posX, y: posY } = this.getCanvasPosition(evt, canvas);
 
     switch (this.tool()) {
       case 'add':

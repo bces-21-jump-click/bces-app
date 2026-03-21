@@ -1,289 +1,332 @@
 <div class="garage-page">
-    <!-- Tabs -->
-    <div class="tabs">
-        <button [class.active]="onglet() === 'garage'" (click)="onglet.set('garage')">
-            Garage
-            @if (notif.garageNotif() > 0) { <span class="tab-badge">{{ notif.garageNotif() }}</span> }
-        </button>
-        @if (canViewHistory()) {
-        <button [class.active]="onglet() === 'history'" (click)="onglet.set('history')">Historique</button>
-        }
-        @if (canManageVehicles()) {
-        <button [class.active]="onglet() === 'vehicles'" (click)="onglet.set('vehicles')">Véhicules</button>
-        }
+    <div class="page-header garage-hero">
+        <div class="garage-hero__copy">
+            <span class="garage-kicker">BCES Fleet Control</span>
+            <h1>Garage</h1>
+            <p>Suivi des réparations, gardiennages, assurances et historique des véhicules.</p>
+        </div>
+        <div class="garage-hero__stats">
+            <article class="garage-stat-card">
+                <span class="garage-stat-card__label">Véhicules actifs</span>
+                <strong class="garage-stat-card__value">{{ vehiclesCount() }}</strong>
+            </article>
+            <article class="garage-stat-card garage-stat-card--warn">
+                <span class="garage-stat-card__label">À réparer</span>
+                <strong class="garage-stat-card__value">{{ vehiclesNeedRepairCount() }}</strong>
+            </article>
+            <article class="garage-stat-card garage-stat-card--accent">
+                <span class="garage-stat-card__label">Gardiennage</span>
+                <strong class="garage-stat-card__value">{{ vehiclesUnderGuardCount() }}</strong>
+            </article>
+            <article class="garage-stat-card garage-stat-card--soft">
+                <span class="garage-stat-card__label">Assurances</span>
+                <strong class="garage-stat-card__value">{{ vehiclesInsuranceCount() }}</strong>
+            </article>
+        </div>
     </div>
 
-    <!-- ===== GARAGE TAB ===== -->
-    @if (onglet() === 'garage') {
-    <div class="garage-content">
-        <div class="repa-row">
-            <button class="btn accent" (click)="openRepaDialog()">Faire une répa flotte</button>
-        </div>
-
-        @if (lastSaveDate(); as sd) {
-        <div class="save-date" [class]="deltaTime() < 24 ? 'text-success' : deltaTime() < 36 ? '' : 'text-danger'">
-            🚑 Dernière réparation flotte : {{ formatDate(sd.date) }}
-        </div>
-        }
-
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th style="width:40px"></th>
-                    <th>Nom</th>
-                    <th>Immatriculation</th>
-                    <th>Localisation</th>
-                    <th>Info</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (v of sortedVehicles(); track v.id) {
-                <tr>
-                    <td>
-                        @if (v.needRepair) { <span title="À réparer">⚠️</span> }
-                        @if (v.insurance) { <span title="Assurance en cours">📋</span> }
-                        @if (v.underGuard) { <span title="En gardiennage">🚛</span> }
-                        @if (!v.underGuard && !v.insurance && shouldShowRepairAlert(v)) { <span
-                            title="Non réparé depuis longtemps">🔴</span> }
-                    </td>
-                    <td [class]="'text-' + getVehicleColor(v)">{{ v.icon }} {{ v.name }}</td>
-                    <td [class]="'text-' + getVehicleColor(v)">{{ v.imat }}</td>
-                    <td>{{ getLocationName(v.where) }}</td>
-                    <td>
-                        @if (v.underGuard && v.recupDate && v.recupDate > 0) {
-                        @if (v.recupDate > now()) {
-                        <span class="text-accent">À récupérer le {{ formatDate(v.recupDate) }}</span>
-                        } @else {
-                        <span class="text-success">À récupérer dès que possible</span>
-                        }
-                        } @else if (v.needRepair) {
-                        <span class="text-danger">À réparer avant utilisation</span>
-                        } @else if (v.insurance) {
-                        <span class="text-warning">En attente retour assurance</span>
-                        }
-                    </td>
-                    <td class="action-cell">
-                        @if (!v.underGuard && !v.insurance) {
-                        <button class="btn-icon" title="Vient d'être réparé" (click)="repairNow(v)">🔧</button>
-                        }
-                        @if (!v.underGuard && !v.insurance && !v.needRepair) {
-                        <button class="btn-icon" title="Besoin de réparation" (click)="needRepair(v)">⚠️</button>
-                        }
-                        @if (!v.underGuard && !v.insurance) {
-                        <button class="btn-icon" title="Demande d'assurance" (click)="insurance(v)">📋</button>
-                        }
-                        @if (!v.underGuard) {
-                        <button class="btn-icon" title="Envoyer en gardiennage" (click)="openGuardDialog(v)">🚛</button>
-                        }
-                        @if ((v.underGuard && v.recupDate && v.recupDate < now()) || v.insurance) { <button
-                            class="btn-icon" title="Récupérer" (click)="openRecupDialog(v)">🏠</button>
-                            }
-                    </td>
-                </tr>
-                } @empty {
-                <tr>
-                    <td colspan="6" class="empty">Aucun véhicule</td>
-                </tr>
-                }
-            </tbody>
-        </table>
-    </div>
-    }
-
-    <!-- ===== HISTORY TAB ===== -->
-    @if (onglet() === 'history') {
-    <div class="history-list">
-        @for (key of monthKeys(); track key) {
-        <details class="month-panel" open>
-            <summary class="month-title">
-                {{ monthGrouped()[key].month }} {{ monthGrouped()[key].year }}
-                ({{ monthGrouped()[key].histories.length }} opération(s) : {{ formatMoney(monthGrouped()[key].totalPaid)
-                }})
-            </summary>
-            @for (h of monthGrouped()[key].histories; track h.id) {
-            <details class="history-entry">
-                <summary class="history-header">
-                    @if (h.vehicle === 'all') { <span>🚑</span> }
-                    @else if (h.message.includes('Récupération')) { <span>🔙</span> }
-                    @else if (h.message.includes('envoyé')) { <span>🛠️</span> }
-                    Le {{ formatDate(h.date!) }}
-                    @if (h.vehicle === 'all') { (Répa flotte) }
-                    @else { ({{ getVehicleName(h.vehicle) }}) }
-                    @if (h.price > 0) { <span class="history-price">{{ formatMoney(h.price) }}</span> }
-                </summary>
-                <div class="history-detail">{{ h.message }}</div>
-            </details>
+    <section class="garage-shell">
+        <!-- Tabs -->
+        <div class="tabs garage-tabs">
+            <button [class.active]="onglet() === 'garage'" (click)="onglet.set('garage')">
+                Garage
+                @if (notif.garageNotif() > 0) { <span class="tab-badge">{{ notif.garageNotif() }}</span> }
+            </button>
+            @if (canViewHistory()) {
+            <button [class.active]="onglet() === 'history'" (click)="onglet.set('history')">Historique</button>
             }
-        </details>
-        } @empty {
-        <p class="empty">Aucun historique</p>
+            @if (canManageVehicles()) {
+            <button [class.active]="onglet() === 'vehicles'" (click)="onglet.set('vehicles')">Véhicules</button>
+            }
+        </div>
+
+        <!-- ===== GARAGE TAB ===== -->
+        @if (onglet() === 'garage') {
+        <div class="garage-content garage-panel">
+            <div class="garage-toolbar">
+                <div class="garage-status-banner" [class.text-success]="deltaTime() < 24"
+                    [class.text-danger]="deltaTime() >= 36">
+                    <span class="garage-status-banner__icon">🚑</span>
+                    <div>
+                        <strong>{{ fleetStatusLabel() }}</strong>
+                        @if (lastSaveDate(); as sd) {
+                        <div class="garage-status-banner__meta">Dernière réparation flotte : {{ formatDate(sd.date) }}
+                        </div>
+                        } @else {
+                        <div class="garage-status-banner__meta">Aucune date enregistrée pour la réparation flotte.</div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="repa-row">
+                <button class="btn accent" (click)="openRepaDialog()">Faire une répa flotte</button>
+            </div>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th style="width:40px"></th>
+                        <th>Nom</th>
+                        <th>Immatriculation</th>
+                        <th>Localisation</th>
+                        <th>Info</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (v of sortedVehicles(); track v.id) {
+                    <tr>
+                        <td>
+                            @if (v.needRepair) { <span title="À réparer">⚠️</span> }
+                            @if (v.insurance) { <span title="Assurance en cours">📋</span> }
+                            @if (v.underGuard) { <span title="En gardiennage">🚛</span> }
+                            @if (!v.underGuard && !v.insurance && shouldShowRepairAlert(v)) { <span
+                                title="Non réparé depuis longtemps">🔴</span> }
+                        </td>
+                        <td [class]="'text-' + getVehicleColor(v)">{{ v.icon }} {{ v.name }}</td>
+                        <td [class]="'text-' + getVehicleColor(v)">{{ v.imat }}</td>
+                        <td>{{ getLocationName(v.where) }}</td>
+                        <td>
+                            @if (v.underGuard && v.recupDate && v.recupDate > 0) {
+                            @if (v.recupDate > now()) {
+                            <span class="text-accent">À récupérer le {{ formatDate(v.recupDate) }}</span>
+                            } @else {
+                            <span class="text-success">À récupérer dès que possible</span>
+                            }
+                            } @else if (v.needRepair) {
+                            <span class="text-danger">À réparer avant utilisation</span>
+                            } @else if (v.insurance) {
+                            <span class="text-warning">En attente retour assurance</span>
+                            }
+                        </td>
+                        <td class="action-cell">
+                            @if (!v.underGuard && !v.insurance) {
+                            <button class="btn-icon" title="Vient d'être réparé" (click)="repairNow(v)">🔧</button>
+                            }
+                            @if (!v.underGuard && !v.insurance && !v.needRepair) {
+                            <button class="btn-icon" title="Besoin de réparation" (click)="needRepair(v)">⚠️</button>
+                            }
+                            @if (!v.underGuard && !v.insurance) {
+                            <button class="btn-icon" title="Demande d'assurance" (click)="insurance(v)">📋</button>
+                            }
+                            @if (!v.underGuard) {
+                            <button class="btn-icon" title="Envoyer en gardiennage"
+                                (click)="openGuardDialog(v)">🚛</button>
+                            }
+                            @if ((v.underGuard && v.recupDate && v.recupDate < now()) || v.insurance) { <button
+                                class="btn-icon" title="Récupérer" (click)="openRecupDialog(v)">🏠</button>
+                                }
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="6" class="empty">Aucun véhicule</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
         }
-    </div>
-    }
 
-    <!-- ===== VEHICLES TAB ===== -->
-    @if (onglet() === 'vehicles') {
-    <div class="vehicles-content">
-        <table class="data-table">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Immatriculation</th>
-                    <th>Localisation</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @for (v of sortedVehicles(); track v.id) {
-                <tr>
-                    <td>{{ v.icon }} {{ v.name }}</td>
-                    <td>{{ v.imat }}</td>
-                    <td>{{ getLocationName(v.where) }}</td>
-                    <td class="action-cell">
-                        <button class="btn-icon" title="Modifier" (click)="openEditVehicle(v)">✏️</button>
-                        <button class="btn-icon" title="Détruire" (click)="destroyVehicle(v)">⚰️</button>
-                        <button class="btn-icon danger" title="Supprimer" (click)="deleteVehicle(v)">🗑️</button>
-                    </td>
-                </tr>
-                } @empty {
-                <tr>
-                    <td colspan="4" class="empty">Aucun véhicule</td>
-                </tr>
+        <!-- ===== HISTORY TAB ===== -->
+        @if (onglet() === 'history') {
+        <div class="history-list garage-panel">
+            @for (key of monthKeys(); track key) {
+            <details class="month-panel" open>
+                <summary class="month-title">
+                    {{ monthGrouped()[key].month }} {{ monthGrouped()[key].year }}
+                    ({{ monthGrouped()[key].histories.length }} opération(s) : {{
+                    formatMoney(monthGrouped()[key].totalPaid)
+                    }})
+                </summary>
+                @for (h of monthGrouped()[key].histories; track h.id) {
+                <details class="history-entry">
+                    <summary class="history-header">
+                        @if (h.vehicle === 'all') { <span>🚑</span> }
+                        @else if (h.message.includes('Récupération')) { <span>🔙</span> }
+                        @else if (h.message.includes('envoyé')) { <span>🛠️</span> }
+                        Le {{ formatDate(h.date!) }}
+                        @if (h.vehicle === 'all') { (Répa flotte) }
+                        @else { ({{ getVehicleName(h.vehicle) }}) }
+                        @if (h.price > 0) { <span class="history-price">{{ formatMoney(h.price) }}</span> }
+                    </summary>
+                    <div class="history-detail">{{ h.message }}</div>
+                </details>
                 }
-            </tbody>
-        </table>
-        <div class="add-row">
-            <button class="btn accent" (click)="openNewVehicle()">➕ Ajouter un véhicule</button>
+            </details>
+            } @empty {
+            <p class="empty">Aucun historique</p>
+            }
         </div>
-    </div>
-    }
+        }
 
-    <!-- Repa flotte dialog -->
-    @if (dialogRepa()) {
-    <div class="overlay" (click)="dialogRepa.set(false)">
-        <div class="dialog" (click)="$event.stopPropagation()">
-            <h3 class="dialog-title">Répa flotte</h3>
-            <div class="form-group">
-                <label>Garage</label>
-                <select class="field" [ngModel]="selectedGarage()" (ngModelChange)="selectedGarage.set($event)">
-                    <option [ngValue]="null" disabled>Choisir un garage</option>
-                    @for (c of companies(); track c.id) {
-                    @if (c.isGarage) {
-                    <option [ngValue]="c.id">{{ c.icon }} {{ c.name }}</option>
+        <!-- ===== VEHICLES TAB ===== -->
+        @if (onglet() === 'vehicles') {
+        <div class="vehicles-content garage-panel">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Nom</th>
+                        <th>Immatriculation</th>
+                        <th>Localisation</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (v of sortedVehicles(); track v.id) {
+                    <tr>
+                        <td>{{ v.icon }} {{ v.name }}</td>
+                        <td>{{ v.imat }}</td>
+                        <td>{{ getLocationName(v.where) }}</td>
+                        <td class="action-cell">
+                            <button class="btn-icon" title="Modifier" (click)="openEditVehicle(v)">✏️</button>
+                            <button class="btn-icon" title="Détruire" (click)="destroyVehicle(v)">⚰️</button>
+                            <button class="btn-icon danger" title="Supprimer" (click)="deleteVehicle(v)">🗑️</button>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="4" class="empty">Aucun véhicule</td>
+                    </tr>
                     }
-                    }
-                </select>
+                </tbody>
+            </table>
+            <div class="add-row">
+                <button class="btn accent" (click)="openNewVehicle()">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    Ajouter un véhicule
+                </button>
             </div>
-            <div class="vehicle-checklist">
-                @for (v of sortedVehicles(); track v.id) {
+        </div>
+        }
+
+        <!-- Repa flotte dialog -->
+        @if (dialogRepa()) {
+        <div class="overlay" (click)="dialogRepa.set(false)">
+            <div class="dialog" (click)="$event.stopPropagation()">
+                <h3 class="dialog-title">Répa flotte</h3>
+                <div class="form-group">
+                    <label>Garage</label>
+                    <select class="field" [ngModel]="selectedGarage()" (ngModelChange)="selectedGarage.set($event)">
+                        <option [ngValue]="null" disabled>Choisir un garage</option>
+                        @for (c of companies(); track c.id) {
+                        @if (c.isGarage) {
+                        <option [ngValue]="c.id">{{ c.icon }} {{ c.name }}</option>
+                        }
+                        }
+                    </select>
+                </div>
+                <div class="vehicle-checklist">
+                    @for (v of sortedVehicles(); track v.id) {
+                    <label class="check-item">
+                        <input type="checkbox" [checked]="selectedVehicles()[v.id]"
+                            (change)="toggleSelectedVehicle(v.id)" />
+                        {{ v.icon }} {{ v.name }} ({{ v.imat }})
+                    </label>
+                    }
+                </div>
+                <div class="dialog-actions">
+                    <button class="btn accent" (click)="repaFlotte()">Valider</button>
+                    <button class="btn danger" (click)="dialogRepa.set(false)">Annuler</button>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- Guard dialog -->
+        @if (dialogGuard()) {
+        <div class="overlay" (click)="dialogGuard.set(false)">
+            <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
+                <h3 class="dialog-title">Envoyer en gardiennage</h3>
+                <div class="form-group">
+                    <label>Localisation</label>
+                    <select class="field" [ngModel]="newLocation()" (ngModelChange)="newLocation.set($event)">
+                        <option [ngValue]="null" disabled>Choisir</option>
+                        @for (l of allLocations(); track l.value) {
+                        <option [ngValue]="l.value">{{ l.text }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date de récupération</label>
+                    <input type="datetime-local" class="field" [ngModel]="recupDateStr()"
+                        (ngModelChange)="recupDateStr.set($event)" />
+                </div>
+                <div class="dialog-actions">
+                    <button class="btn accent" (click)="guardVehicle()">Valider</button>
+                    <button class="btn danger" (click)="dialogGuard.set(false)">Annuler</button>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- Recup dialog -->
+        @if (dialogRecup()) {
+        <div class="overlay" (click)="dialogRecup.set(false)">
+            <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
+                <h3 class="dialog-title">Récupérer le véhicule</h3>
+                <div class="form-group">
+                    <label>Nouvelle localisation</label>
+                    <select class="field" [ngModel]="newLocation()" (ngModelChange)="newLocation.set($event)">
+                        <option [ngValue]="null" disabled>Choisir</option>
+                        @for (l of allLocations(); track l.value) {
+                        <option [ngValue]="l.value">{{ l.text }}</option>
+                        }
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Coût ($)</label>
+                    <input type="number" class="field" [ngModel]="price()" (ngModelChange)="price.set(+$event)" />
+                </div>
+                <div class="dialog-actions">
+                    <button class="btn accent" (click)="recupVehicle()">Valider</button>
+                    <button class="btn danger" (click)="dialogRecup.set(false)">Annuler</button>
+                </div>
+            </div>
+        </div>
+        }
+
+        <!-- Vehicle edit dialog -->
+        @if (dialogVehicle()) {
+        <div class="overlay" (click)="dialogVehicle.set(false)">
+            <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
+                <h3 class="dialog-title">{{ editVehicle().id ? 'Modifier' : 'Ajouter' }} un véhicule</h3>
+                <div class="form-group">
+                    <label>Icône</label>
+                    <input class="field" [ngModel]="editVehicle().icon"
+                        (ngModelChange)="editVehicle.update(v => ({...v, icon: $event}))" />
+                </div>
+                <div class="form-group">
+                    <label>Nom</label>
+                    <input class="field" [ngModel]="editVehicle().name"
+                        (ngModelChange)="editVehicle.update(v => ({...v, name: $event}))" />
+                </div>
+                <div class="form-group">
+                    <label>Immatriculation</label>
+                    <input class="field" [ngModel]="editVehicle().imat"
+                        (ngModelChange)="editVehicle.update(v => ({...v, imat: $event}))" />
+                </div>
+                <div class="form-group">
+                    <label>Localisation</label>
+                    <select class="field" [ngModel]="editVehicle().where"
+                        (ngModelChange)="editVehicle.update(v => ({...v, where: $event}))">
+                        @for (l of allLocations(); track l.value) {
+                        <option [ngValue]="l.value">{{ l.text }}</option>
+                        }
+                    </select>
+                </div>
                 <label class="check-item">
-                    <input type="checkbox" [checked]="selectedVehicles()[v.id]"
-                        (change)="toggleSelectedVehicle(v.id)" />
-                    {{ v.icon }} {{ v.name }} ({{ v.imat }})
+                    <input type="checkbox" [checked]="editVehicle().hideAlert"
+                        (change)="editVehicle.update(v => ({...v, hideAlert: !v.hideAlert}))" />
+                    Réparation facultative
                 </label>
-                }
-            </div>
-            <div class="dialog-actions">
-                <button class="btn accent" (click)="repaFlotte()">Valider</button>
-                <button class="btn danger" (click)="dialogRepa.set(false)">Annuler</button>
-            </div>
-        </div>
-    </div>
-    }
-
-    <!-- Guard dialog -->
-    @if (dialogGuard()) {
-    <div class="overlay" (click)="dialogGuard.set(false)">
-        <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
-            <h3 class="dialog-title">Envoyer en gardiennage</h3>
-            <div class="form-group">
-                <label>Localisation</label>
-                <select class="field" [ngModel]="newLocation()" (ngModelChange)="newLocation.set($event)">
-                    <option [ngValue]="null" disabled>Choisir</option>
-                    @for (l of allLocations(); track l.value) {
-                    <option [ngValue]="l.value">{{ l.text }}</option>
-                    }
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Date de récupération</label>
-                <input type="datetime-local" class="field" [ngModel]="recupDateStr()"
-                    (ngModelChange)="recupDateStr.set($event)" />
-            </div>
-            <div class="dialog-actions">
-                <button class="btn accent" (click)="guardVehicle()">Valider</button>
-                <button class="btn danger" (click)="dialogGuard.set(false)">Annuler</button>
+                <div class="dialog-actions">
+                    <button class="btn accent" (click)="saveVehicle()">Valider</button>
+                    <button class="btn danger" (click)="dialogVehicle.set(false)">Annuler</button>
+                </div>
             </div>
         </div>
-    </div>
-    }
-
-    <!-- Recup dialog -->
-    @if (dialogRecup()) {
-    <div class="overlay" (click)="dialogRecup.set(false)">
-        <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
-            <h3 class="dialog-title">Récupérer le véhicule</h3>
-            <div class="form-group">
-                <label>Nouvelle localisation</label>
-                <select class="field" [ngModel]="newLocation()" (ngModelChange)="newLocation.set($event)">
-                    <option [ngValue]="null" disabled>Choisir</option>
-                    @for (l of allLocations(); track l.value) {
-                    <option [ngValue]="l.value">{{ l.text }}</option>
-                    }
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Coût ($)</label>
-                <input type="number" class="field" [ngModel]="price()" (ngModelChange)="price.set(+$event)" />
-            </div>
-            <div class="dialog-actions">
-                <button class="btn accent" (click)="recupVehicle()">Valider</button>
-                <button class="btn danger" (click)="dialogRecup.set(false)">Annuler</button>
-            </div>
-        </div>
-    </div>
-    }
-
-    <!-- Vehicle edit dialog -->
-    @if (dialogVehicle()) {
-    <div class="overlay" (click)="dialogVehicle.set(false)">
-        <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
-            <h3 class="dialog-title">{{ editVehicle().id ? 'Modifier' : 'Ajouter' }} un véhicule</h3>
-            <div class="form-group">
-                <label>Icône</label>
-                <input class="field" [ngModel]="editVehicle().icon"
-                    (ngModelChange)="editVehicle.update(v => ({...v, icon: $event}))" />
-            </div>
-            <div class="form-group">
-                <label>Nom</label>
-                <input class="field" [ngModel]="editVehicle().name"
-                    (ngModelChange)="editVehicle.update(v => ({...v, name: $event}))" />
-            </div>
-            <div class="form-group">
-                <label>Immatriculation</label>
-                <input class="field" [ngModel]="editVehicle().imat"
-                    (ngModelChange)="editVehicle.update(v => ({...v, imat: $event}))" />
-            </div>
-            <div class="form-group">
-                <label>Localisation</label>
-                <select class="field" [ngModel]="editVehicle().where"
-                    (ngModelChange)="editVehicle.update(v => ({...v, where: $event}))">
-                    @for (l of allLocations(); track l.value) {
-                    <option [ngValue]="l.value">{{ l.text }}</option>
-                    }
-                </select>
-            </div>
-            <label class="check-item">
-                <input type="checkbox" [checked]="editVehicle().hideAlert"
-                    (change)="editVehicle.update(v => ({...v, hideAlert: !v.hideAlert}))" />
-                Réparation facultative
-            </label>
-            <div class="dialog-actions">
-                <button class="btn accent" (click)="saveVehicle()">Valider</button>
-                <button class="btn danger" (click)="dialogVehicle.set(false)">Annuler</button>
-            </div>
-        </div>
-    </div>
-    }
+        }
+    </section>
 </div>

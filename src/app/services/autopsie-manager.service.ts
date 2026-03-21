@@ -147,226 +147,194 @@ export async function generateReport(
     autopsySummary,
     autopsyDate,
   } = data;
-  const colors = INJURY_COLORS;
-
-  const pdf = new jsPDF();
+  const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 10;
-  const lineHeight = 7;
-  let yPosition = margin;
+  const margin = 12;
+  const headerHeight = 20;
+  const footerHeight = 10;
+  const contentWidth = pageWidth - margin * 2;
+  const lineHeight = 4.8;
+  let yPosition = headerHeight + 10;
 
-  const addDarkBackground = () => {
-    pdf.setFillColor(3, 15, 20);
-    pdf.rect(0, 0, pageWidth, pageHeight, 'F');
-  };
-
-  const logoImg = new Image();
-  logoImg.src = 'assets/images/logo.png';
-
-  const addHeader = () => {
-    pdf.setFillColor(0, 188, 212);
-    pdf.rect(0, 0, pageWidth, 28, 'F');
+  const fetchAssetAsDataUrl = async (path: string): Promise<string | null> => {
     try {
-      pdf.addImage(logoImg, 'PNG', margin, 3, 22, 22);
+      const response = await fetch(path);
+      if (!response.ok) return null;
+      const blob = await response.blob();
+      return await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
     } catch {
-      /* logo not loaded */
+      return null;
     }
-    pdf.setTextColor(3, 15, 20);
-    pdf.setFontSize(17);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text('BCES — Bureau Central des Emergency Services', pageWidth - margin, 12, {
-      align: 'right',
-    });
-    pdf.setFontSize(14);
-    pdf.setFont('helvetica', 'normal');
-    pdf.text("RAPPORT D'AUTOPSIE", pageWidth - margin, 20, { align: 'right' });
   };
 
-  const addText = (text: string, fontSize = 10, isBold = false) => {
-    pdf.setFontSize(fontSize);
-    pdf.setFont('helvetica', isBold ? 'bold' : 'normal');
-    const lines = pdf.splitTextToSize(text, pageWidth - 2 * margin);
-    for (const line of lines) {
-      if (yPosition > pageHeight - margin) {
-        pdf.addPage();
-        addDarkBackground();
-        addHeader();
-        yPosition = 38;
+  const logoDataUrl = await fetchAssetAsDataUrl('assets/images/logo.png');
+
+  const resetPageLayout = (createNewPage = false): void => {
+    if (createNewPage) pdf.addPage();
+
+    pdf.setFillColor(16, 53, 84);
+    pdf.rect(0, 0, pageWidth, headerHeight, 'F');
+
+    if (logoDataUrl) {
+      try {
+        pdf.addImage(logoDataUrl, 'PNG', margin, 3.2, 13, 13);
+      } catch {
+        // ignore logo rendering errors
       }
-      pdf.text(line, margin, yPosition);
-      yPosition += lineHeight;
     }
-  };
-
-  addDarkBackground();
-  addHeader();
-  pdf.setTextColor(255, 255, 255);
-  yPosition = 38;
-
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Victime :', margin, yPosition);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(` ${name} (${cid})`, margin + 4 + pdf.getTextWidth('Victime :'), yPosition);
-  yPosition += 8;
-
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Médecin légiste :', margin, yPosition);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(` Dr ${legist}`, margin + 4 + pdf.getTextWidth('Médecin légiste :'), yPosition);
-  yPosition += 8;
-
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Médecin intervenant :', margin, yPosition);
-  pdf.setFont('helvetica', 'normal');
-  pdf.text(` ${doctor}`, margin + 4 + pdf.getTextWidth('Médecin intervenant :'), yPosition);
-  yPosition += 15;
-
-  const startY = yPosition;
-  const leftColWidth = (pageWidth - 2 * margin) / 3;
-  const rightColX = margin + leftColWidth + 10;
-  const rightColWidth = ((pageWidth - 2 * margin) * 2) / 3 - 10;
-
-  let leftYPosition = startY;
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Blessures :', margin, leftYPosition);
-  leftYPosition += 10;
-
-  injuries.forEach((injury: Injury, index: number) => {
-    if (leftYPosition > pageHeight - margin - 30) {
-      pdf.addPage();
-      addDarkBackground();
-      addHeader();
-      leftYPosition = 38;
-    }
-
-    const rgb = getColorRGB(colors[index]);
-    pdf.setTextColor(rgb[0], rgb[1], rgb[2]);
-    pdf.setFontSize(10);
-    pdf.setFont('helvetica', 'bold');
-    pdf.text(`Blessure #${index + 1}`, margin, leftYPosition);
-    leftYPosition += 6;
 
     pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(8);
+    pdf.setFontSize(14);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text("BCES - Rapport d'autopsie", margin + 16, 8);
+
+    pdf.setFontSize(9);
     pdf.setFont('helvetica', 'normal');
+    pdf.text('Blaine County Emergency Services', margin + 16, 14);
 
-    if (injury.externalAnalysis) {
-      const extLines = pdf.splitTextToSize(`Externe: ${injury.externalAnalysis}`, leftColWidth);
-      for (const line of extLines) {
-        if (leftYPosition > pageHeight - margin) {
-          pdf.addPage();
-          addDarkBackground();
-          addHeader();
-          leftYPosition = 54;
-        }
-        pdf.text(line, margin, leftYPosition);
-        leftYPosition += 5;
-      }
+    yPosition = headerHeight + 10;
+  };
+
+  const ensureSpace = (height: number): void => {
+    if (yPosition + height > pageHeight - margin - footerHeight) {
+      resetPageLayout(true);
+    }
+  };
+
+  const drawInfoBlock = (): void => {
+    const rows = [
+      ['Victime', `${name || '-'} (${cid || '-'})`],
+      ['Medecin legiste', legist || '-'],
+      ['Medecin intervenant', doctor || '-'],
+      ['Date du constat', new Date(autopsyDate || Date.now()).toLocaleString('fr-FR')],
+    ];
+
+    const rowHeight = 7.2;
+    const blockHeight = 10 + Math.ceil(rows.length / 2) * rowHeight + 4;
+    const columnWidth = (contentWidth - 8) / 2;
+
+    ensureSpace(blockHeight + 4);
+
+    pdf.setDrawColor(210, 222, 235);
+    pdf.setFillColor(246, 250, 255);
+    pdf.roundedRect(margin, yPosition, contentWidth, blockHeight, 2, 2, 'FD');
+
+    rows.forEach(([label, value], index) => {
+      const col = index % 2;
+      const row = Math.floor(index / 2);
+      const x = margin + 4 + col * (columnWidth + 4);
+      const y = yPosition + 7 + row * rowHeight;
+
+      pdf.setTextColor(32, 67, 97);
+      pdf.setFontSize(8.5);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(`${label}:`, x, y);
+
+      pdf.setTextColor(20, 40, 58);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(String(value), x, y + 4.1);
+    });
+
+    yPosition += blockHeight + 5;
+  };
+
+  const drawTextSection = (title: string, text?: string): void => {
+    const safeText = text?.trim() ? text.trim() : 'Aucune information renseignee.';
+    const lines = pdf.splitTextToSize(safeText, contentWidth - 8);
+    const blockHeight = 12 + lines.length * lineHeight + 4;
+
+    ensureSpace(blockHeight + 4);
+
+    pdf.setDrawColor(210, 222, 235);
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(margin, yPosition, contentWidth, blockHeight, 2, 2, 'FD');
+
+    pdf.setTextColor(24, 60, 92);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text(title, margin + 4, yPosition + 7);
+
+    pdf.setTextColor(30, 45, 58);
+    pdf.setFontSize(9.5);
+    pdf.setFont('helvetica', 'normal');
+    let lineY = yPosition + 12;
+    for (const line of lines) {
+      pdf.text(line, margin + 4, lineY);
+      lineY += lineHeight;
     }
 
-    if (injury.internalAnalysis) {
-      const intLines = pdf.splitTextToSize(`Interne: ${injury.internalAnalysis}`, leftColWidth);
-      for (const line of intLines) {
-        if (leftYPosition > pageHeight - margin) {
-          pdf.addPage();
-          addDarkBackground();
-          addHeader();
-          leftYPosition = 54;
-        }
-        pdf.text(line, margin, leftYPosition);
-        leftYPosition += 5;
-      }
+    yPosition += blockHeight + 4;
+  };
+
+  const drawSchemaSection = (): void => {
+    const maxImageWidth = contentWidth - 10;
+    const maxImageHeight = 95;
+    const imageRatio = canvasElement.width / canvasElement.height || 1;
+    let imageWidth = maxImageWidth;
+    let imageHeight = imageWidth / imageRatio;
+    if (imageHeight > maxImageHeight) {
+      imageHeight = maxImageHeight;
+      imageWidth = imageHeight * imageRatio;
     }
 
-    leftYPosition += 5;
-  });
+    const blockHeight = 12 + imageHeight + 8;
+    ensureSpace(blockHeight + 4);
 
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(12);
-  pdf.setFont('helvetica', 'bold');
-  pdf.text('Schéma corporel :', rightColX, startY);
+    pdf.setDrawColor(210, 222, 235);
+    pdf.setFillColor(255, 255, 255);
+    pdf.roundedRect(margin, yPosition, contentWidth, blockHeight, 2, 2, 'FD');
 
-  const imgData = canvasElement.toDataURL('image/png');
-  pdf.addImage(imgData, 'PNG', rightColX, startY + 10, rightColWidth, rightColWidth);
+    pdf.setTextColor(24, 60, 92);
+    pdf.setFontSize(11);
+    pdf.setFont('helvetica', 'bold');
+    pdf.text('Schema corporel', margin + 4, yPosition + 7);
 
-  yPosition = Math.max(leftYPosition, startY + 10 + rightColWidth + 10);
+    const imgData = canvasElement.toDataURL('image/png');
+    const imageX = margin + (contentWidth - imageWidth) / 2;
+    const imageY = yPosition + 10;
+    pdf.addImage(imgData, 'PNG', imageX, imageY, imageWidth, imageHeight);
 
-  if (yPosition > pageHeight - margin - 30) {
-    pdf.addPage();
-    addDarkBackground();
-    addHeader();
-    yPosition = 38;
-  }
-  pdf.setTextColor(255, 255, 255);
-  yPosition += 3;
-  addText('Bilan sanguin :', 12, true);
-  yPosition += 3;
-  if (bloodBilan) addText(bloodBilan, 10);
-  yPosition += 5;
+    yPosition += blockHeight + 4;
+  };
 
-  if (yPosition > pageHeight - margin - 30) {
-    pdf.addPage();
-    addDarkBackground();
-    addHeader();
-    yPosition = 38;
-  }
-  pdf.setTextColor(255, 255, 255);
-  addText('Diagnostic médical :', 12, true);
-  yPosition += 3;
-  if (diagnostic) addText(diagnostic, 10);
-  yPosition += 5;
+  resetPageLayout();
+  drawInfoBlock();
 
-  if (yPosition > pageHeight - margin - 30) {
-    pdf.addPage();
-    addDarkBackground();
-    addHeader();
-    yPosition = 38;
-  }
-  pdf.setTextColor(255, 255, 255);
-  addText("Rapport d'intervention :", 12, true);
-  yPosition += 3;
-  if (interventionReport) addText(interventionReport, 10);
-  yPosition += 5;
+  const injuriesSummary = injuries.length
+    ? injuries
+        .map((injury: Injury, index: number) => {
+          const colorName = INJURY_COLORS[index] ?? 'inconnue';
+          const ext = injury.externalAnalysis?.trim() || 'Aucune analyse externe';
+          const int = injury.internalAnalysis?.trim() || 'Aucune analyse interne';
+          return `Blessure ${index + 1} (${colorName})\n- Externe: ${ext}\n- Interne: ${int}`;
+        })
+        .join('\n\n')
+    : 'Aucune blessure renseignee.';
 
-  if (yPosition > pageHeight - margin - 30) {
-    pdf.addPage();
-    addDarkBackground();
-    addHeader();
-    yPosition = 38;
-  }
-  pdf.setTextColor(255, 255, 255);
-  addText('Chronologie probable des événements :', 12, true);
-  yPosition += 3;
-  if (eventChronology) addText(eventChronology, 10);
-  yPosition += 5;
+  drawTextSection('Synthese des blessures', injuriesSummary);
+  drawSchemaSection();
+  drawTextSection('Bilan sanguin', bloodBilan);
+  drawTextSection('Diagnostic medical', diagnostic);
+  drawTextSection("Rapport d'intervention", interventionReport);
+  drawTextSection('Chronologie probable des evenements', eventChronology);
+  drawTextSection("Bilan de l'autopsie", autopsySummary);
 
-  const bilanLines = autopsySummary
-    ? pdf.splitTextToSize(autopsySummary, pageWidth - 2 * margin)
-    : [];
-  const bilanHeight = 12 + 3 + bilanLines.length * lineHeight + 15 + 60;
+  ensureSpace(34);
+  pdf.setDrawColor(175, 190, 205);
+  pdf.line(margin, yPosition + 8, margin + 70, yPosition + 8);
 
-  if (yPosition + bilanHeight > pageHeight - margin) {
-    pdf.addPage();
-    addDarkBackground();
-    addHeader();
-    yPosition = 38;
-  }
-
-  pdf.setTextColor(255, 255, 255);
-  addText("Bilan de l'autopsie :", 12, true);
-  yPosition += 3;
-  if (autopsySummary) addText(autopsySummary, 10);
-
-  yPosition += 15;
-  pdf.setTextColor(255, 255, 255);
-  pdf.setFontSize(10);
+  pdf.setTextColor(50, 65, 80);
+  pdf.setFontSize(9.5);
   pdf.setFont('helvetica', 'normal');
-  pdf.text('Signature :', margin, yPosition);
-  yPosition += 20;
+  pdf.text('Signature du medecin legiste', margin, yPosition + 13);
+
+  yPosition += 26;
 
   // Try to load Caveat font for signature
   try {
@@ -385,8 +353,8 @@ export async function generateReport(
     pdf.setFont('helvetica', 'italic');
   }
 
-  const signature = legist || 'Médecin légiste';
-  pdf.setTextColor(255, 255, 255);
+  const signature = legist || 'Medecin legiste';
+  pdf.setTextColor(36, 60, 84);
   pdf.text(signature, margin + 10, yPosition, { angle: 5, align: 'left' });
 
   // Stamp
@@ -395,7 +363,7 @@ export async function generateReport(
     stampImg.src = 'assets/images/stamp_white.png';
     pdf.saveGraphicsState();
     pdf.setGState(new (pdf as any).GState({ opacity: 0.8 }));
-    pdf.addImage(stampImg, 'PNG', margin + 80, yPosition - 40, 50, 50, undefined, undefined, -20);
+    pdf.addImage(stampImg, 'PNG', margin + 80, yPosition - 34, 44, 44, undefined, undefined, -20);
     pdf.restoreGraphicsState();
   } catch {
     /* stamp not available */
@@ -405,17 +373,25 @@ export async function generateReport(
   const totalPages = pdf.internal.pages.length - 1;
   for (let i = 1; i <= totalPages; i++) {
     pdf.setPage(i);
-    if (i > 1) addHeader();
+
+    pdf.setDrawColor(216, 224, 233);
+    pdf.line(margin, pageHeight - 12, pageWidth - margin, pageHeight - 12);
+
     pdf.setFontSize(9);
-    pdf.setTextColor(180, 180, 180);
+    pdf.setTextColor(106, 124, 139);
     const dateStr = new Date(autopsyDate).toLocaleDateString('fr-FR');
     const timeStr = new Date(autopsyDate).toLocaleTimeString('fr-FR', {
       hour: '2-digit',
       minute: '2-digit',
     });
-    pdf.text(`Fait le ${dateStr} à ${timeStr}`, margin, pageHeight - 10);
-    pdf.text(`${name} (${cid})`, pageWidth / 2, pageHeight - 10, { align: 'center' });
-    pdf.text(`Page ${i} / ${totalPages}`, pageWidth - margin, pageHeight - 10, {
+    const patientFooterRaw = `Victime: ${name || '-'}${cid ? ` (${cid})` : ''}`;
+    const patientFooter =
+      patientFooterRaw.length > 52
+        ? `${patientFooterRaw.slice(0, 51).trimEnd()}…`
+        : patientFooterRaw;
+    pdf.text(`Fait le ${dateStr} a ${timeStr}`, margin, pageHeight - 7);
+    pdf.text(patientFooter, pageWidth / 2, pageHeight - 7, { align: 'center' });
+    pdf.text(`Page ${i} / ${totalPages}`, pageWidth - margin, pageHeight - 7, {
       align: 'right',
     });
   }

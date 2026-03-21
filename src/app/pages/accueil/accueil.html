@@ -44,7 +44,9 @@
                 @if (item.notif > 0) {
                 <span class="card-badge">{{ item.notif }}</span>
                 }
-                <span class="quick-card-emoji">{{ item.emoji }}</span>
+                <span class="quick-card-emoji" aria-hidden="true">
+                    <i [class]="'fa-solid ' + item.icon"></i>
+                </span>
                 <span class="quick-card-label">{{ item.titre }}</span>
             </button>
             }

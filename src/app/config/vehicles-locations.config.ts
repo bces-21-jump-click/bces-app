@@ -5,7 +5,7 @@ export interface VehicleLocation {
 }
 
 export const VEHICLES_LOCATIONS: VehicleLocation[] = [
-  { value: 'garage', text: '🏥 Garage LSES', home: true },
-  { value: 'heliport', text: '🚁 Héliport LSES', home: true },
+  { value: 'garage', text: '🏥 Garage BCES', home: true },
+  { value: 'heliport', text: '🚁 Héliport BCES', home: true },
   { value: 'fouriere', text: '⛔ Fourrière', home: false },
 ];

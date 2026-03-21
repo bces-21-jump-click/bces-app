@@ -227,9 +227,9 @@ export class RhPage implements OnInit, OnDestroy {
         (e) => !term || e.name.toLowerCase().includes(term) || e.role.toLowerCase().includes(term),
       )
       .sort((a, b) => {
-        const ia = ORDRE_ROLES.indexOf(a.role);
-        const ib = ORDRE_ROLES.indexOf(b.role);
-        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+        const rankDelta = this.getRoleSortRank(a.role) - this.getRoleSortRank(b.role);
+        if (rankDelta !== 0) return rankDelta;
+        return a.name.localeCompare(b.name);
       });
   });
 
@@ -302,12 +302,29 @@ export class RhPage implements OnInit, OnDestroy {
 
   readonly sortedDirectoryEmployees = computed(() =>
     [...this.employees()].sort((a, b) => {
-      const ra = ORDRE_ROLES.indexOf(a.role);
-      const rb = ORDRE_ROLES.indexOf(b.role);
-      if (ra !== rb) return (ra === -1 ? 999 : ra) - (rb === -1 ? 999 : rb);
+      const ra = this.getRoleSortRank(a.role);
+      const rb = this.getRoleSortRank(b.role);
+      if (ra !== rb) return ra - rb;
       return (a.arrivalDate || '').localeCompare(b.arrivalDate || '');
     }),
   );
+
+  private normalizeRoleName(role: string): string {
+    switch (role) {
+      case 'Titulaire':
+      case 'Médecin':
+        return 'Medecin';
+      case 'Résident':
+        return 'Résidant';
+      default:
+        return role;
+    }
+  }
+
+  private getRoleSortRank(role: string): number {
+    const index = ORDRE_ROLES.indexOf(this.normalizeRoleName(role));
+    return index === -1 ? 999 : index;
+  }
 
   /* ── Lifecycle ────────────────────────────── */
 

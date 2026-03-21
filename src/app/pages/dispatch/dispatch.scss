@@ -786,6 +786,56 @@
   gap: 0.35rem;
 }
 
+.radios-stock-actions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.24rem;
+}
+
+.radio-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  min-height: 20px;
+  padding: 0.1rem 0.36rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--dispatch-zone-border) 55%);
+  background: color-mix(in srgb, var(--theme-soft-band) 82%, var(--accent) 18%);
+  color: var(--text-secondary);
+  font-size: 0.55rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.radio-add-btn:hover {
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--dispatch-zone-border) 35%);
+  color: var(--text-primary);
+}
+
+.radio-add-btn:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 72%, #ffffff 28%);
+  outline-offset: 1px;
+}
+
+.radio-add-btn--direction {
+  border-color: color-mix(in srgb, #f59e0b 45%, var(--dispatch-zone-border) 55%);
+  background: color-mix(in srgb, var(--theme-soft-band) 84%, #f59e0b 16%);
+}
+
+.radio-add-select {
+  min-height: 20px;
+  padding: 0.1rem 0.34rem;
+  border-radius: 999px;
+  border: 1px solid var(--dispatch-zone-border);
+  background: color-mix(in srgb, var(--input-bg) 84%, transparent 16%);
+  color: var(--text-primary);
+  font-size: 0.56rem;
+  font-weight: 700;
+}
+
 .stock-count {
   font-size: 0.58rem;
   font-weight: 700;
@@ -808,7 +858,7 @@
 
 .radio-stock-row {
   display: grid;
-  grid-template-columns: 1fr auto auto;
+  grid-template-columns: 82px minmax(90px, 1fr) auto auto;
   align-items: center;
   gap: 0.28rem;
   min-height: 24px;
@@ -818,15 +868,71 @@
   background: var(--theme-soft-band);
 }
 
+.radio-stock-last {
+  grid-column: 1 / -1;
+  font-size: 0.52rem;
+  color: var(--text-muted);
+  opacity: 0.92;
+  padding-left: 0.1rem;
+}
+
 .radio-stock-serie {
   font-size: 0.62rem;
   font-weight: 700;
   color: #c6dbff;
 }
 
+.radio-stock-serie-input,
+.radio-stock-owner-select {
+  min-height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--dispatch-zone-border);
+  background: color-mix(in srgb, var(--input-bg) 82%, transparent 18%);
+  color: var(--text-primary);
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 0.08rem 0.24rem;
+}
+
+.radio-stock-serie-readonly {
+  width: 100%;
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid var(--dispatch-zone-border);
+  background: color-mix(in srgb, var(--input-bg) 82%, transparent 18%);
+  color: #94a3b8;
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 0.08rem 0.24rem;
+}
+
+.radio-stock-serie-input {
+  width: 100%;
+  color: #c6dbff;
+}
+
+.radio-stock-owner-select {
+  width: 100%;
+}
+
+.radio-stock-serie-input:focus,
+.radio-stock-owner-select:focus,
+.radio-add-select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 62%, var(--dispatch-zone-border) 38%);
+}
+
 .radio-stock-owner {
   font-size: 0.56rem;
   color: var(--text-secondary);
+}
+
+.radio-stock-owner--locked {
+  font-weight: 700;
+  color: #ffd48a;
 }
 
 .radio-stock-state {
@@ -839,6 +945,54 @@
   line-height: 1;
   letter-spacing: 0.03em;
   text-transform: uppercase;
+}
+
+.radio-stock-toggle {
+  min-width: 36px;
+  text-align: center;
+  padding: 0.08rem 0.24rem;
+  border-radius: 4px;
+  font-size: 0.52rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+
+.radio-stock-toggle--on {
+  color: #6dffb0;
+  background: rgba(27, 78, 49, 0.65);
+  border-color: rgba(89, 206, 141, 0.45);
+}
+
+.radio-stock-toggle--off {
+  color: #ff95a4;
+  background: rgba(78, 27, 39, 0.65);
+  border-color: rgba(232, 121, 141, 0.45);
+}
+
+.radio-stock-toggle:disabled {
+  opacity: 0.78;
+  cursor: not-allowed;
+}
+
+.radio-stock-delete {
+  width: 22px;
+  height: 22px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid rgba(232, 121, 141, 0.4);
+  background: rgba(78, 27, 39, 0.45);
+  color: #ff95a4;
+  cursor: pointer;
+}
+
+.radio-stock-delete:hover {
+  background: rgba(78, 27, 39, 0.62);
 }
 
 .radio-stock-state--on {

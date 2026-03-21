@@ -1,224 +1,287 @@
 <div class="inventaire-page">
-  <!-- Tabs -->
-  <div class="storage-tabs">
-    @for (storage of storages(); track storage.id) {
-    <button class="tab-btn" [class.active]="activeTab() === storage.id" (click)="activeTab.set(storage.id)">
-      {{ storage.icon }} {{ storage.name }}
-      @if (deltaTime()[storage.id!] >= 12) {
-      <span class="tab-badge">!</span>
-      }
-    </button>
-    }
+  <div class="page-header inventaire-hero">
+    <div class="inventaire-hero__copy">
+      <span class="inventaire-kicker">BCES Inventory Control</span>
+      <h1>Inventaire</h1>
+      <p>Pilotage des stocks par zone, suivi des besoins et contrôle des mouvements.</p>
+    </div>
+    <div class="inventaire-hero__stats">
+      <article class="inventaire-stat-card">
+        <span class="inventaire-stat-card__label">Zones de stockage</span>
+        <strong class="inventaire-stat-card__value">{{ storages().length }}</strong>
+      </article>
+      <article class="inventaire-stat-card inventaire-stat-card--accent">
+        <span class="inventaire-stat-card__label">Items référencés</span>
+        <strong class="inventaire-stat-card__value">{{ items().length }}</strong>
+      </article>
+      <article class="inventaire-stat-card inventaire-stat-card--warn">
+        <span class="inventaire-stat-card__label">Besoin de réassort</span>
+        <strong class="inventaire-stat-card__value">{{ filteredItems().filter(item => getNeeded(item) > 0).length
+          }}</strong>
+      </article>
+      <article class="inventaire-stat-card inventaire-stat-card--soft">
+        <span class="inventaire-stat-card__label">Items à risque</span>
+        <strong class="inventaire-stat-card__value">{{ filteredItems().filter(item => getNeeded(item) >= (item.wanted *
+          0.75)).length }}</strong>
+      </article>
+    </div>
   </div>
 
-  @if (activeTab(); as tabId) {
-  <!-- Save date -->
-  <h3 class="save-date" [class]="getSaveDateClass(tabId)">
-    💾 Dernière mise à jour : {{ getSaveDateLabel(tabId) }}
-  </h3>
-
-  <!-- Filters + Stats -->
-  <div class="panels-row">
-    <details class="panel">
-      <summary class="panel-title">Filtres</summary>
-      <div class="panel-body">
-        <input type="text" placeholder="Nom" [ngModel]="filterName()" (ngModelChange)="filterName.set($event)"
-          class="field" />
-        <select [ngModel]="filterSeller()" (ngModelChange)="filterSeller.set($event)" class="field">
-          <option [ngValue]="null">Tous les vendeurs</option>
-          @for (c of companies(); track c.id) {
-          <option [ngValue]="c.id">{{ c.icon }} {{ c.name }}</option>
-          }
-        </select>
-      </div>
-    </details>
-    <details class="panel">
-      <summary class="panel-title">Statistiques</summary>
-      <div class="panel-body">
-        <p>Nombre d'items : {{ statsTotal() }}</p>
-        <p>Poids total : {{ statsPoids() }} Kg</p>
-        <p>Poids restant : {{ statsPoidsRestant() }} Kg</p>
-      </div>
-    </details>
-  </div>
-
-  <!-- Data table -->
-  <div class="table-container">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Nom</th>
-          <th>Vendeur</th>
-          <th>Poids</th>
-          <th>Stock actuel</th>
-          <th>Stock souhaité</th>
-          <th>Besoin</th>
-          @if (canViewMovement()) {
-          <th></th>
-          }
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of filteredItems(); track item.id) {
-        <tr>
-          <td>{{ item.icon }} {{ item.name }}</td>
-          <td>{{ getCompanyName(item.seller) }}</td>
-          <td>{{ item.weight }} Kg</td>
-          <td>
-            @if (item.isInstantiated) {
-            <div class="instance-cell">
-              <span>{{ item.amount }}</span>
-              <button class="btn-icon" (click)="openInstanceDialog(item)" title="Instances">📋</button>
-            </div>
-            } @else {
-            <input type="number" class="inline-input" [ngModel]="item.amount" (ngModelChange)="item.amount = +$event"
-              (focus)="startEditing(item)" (blur)="stopEditing(item)" (change)="updateItem(item)" />
-            }
-          </td>
-          <td>{{ item.wanted }}</td>
-          <td [class]="getNeededClass(item)">
-            @if (getNeeded(item) === 0) { <span class="text-success">0</span> }
-            @else { {{ getNeeded(item) }} }
-          </td>
-          @if (canViewMovement()) {
-          <td>
-            <button class="btn-icon" (click)="showMovement(item)" title="Historique">📈</button>
-          </td>
-          }
-        </tr>
-        } @empty {
-        <tr>
-          <td [attr.colspan]="canViewMovement() ? 7 : 6" class="empty">Aucun item</td>
-        </tr>
+  <section class="inventaire-shell">
+    <!-- Tabs -->
+    <div class="storage-tabs tabs inventaire-tabs">
+      @for (storage of storages(); track storage.id) {
+      <button class="tab-btn" [class.active]="activeTab() === storage.id" (click)="activeTab.set(storage.id)">
+        {{ storage.icon }} {{ storage.name }}
+        @if (deltaTime()[storage.id!] >= 12) {
+        <span class="tab-badge">!</span>
         }
-      </tbody>
-    </table>
-  </div>
-  }
+      </button>
+      }
+    </div>
 
-  <!-- Instance dialog -->
-  @if (dialogInstance()) {
-  <div class="overlay" (click)="closeInstanceDialog()">
-    <div class="dialog" (click)="$event.stopPropagation()">
-      <h3 class="dialog-title">{{ currentItem()?.icon }} {{ currentItem()?.name }}</h3>
+    @if (activeTab(); as tabId) {
+    <!-- Save date -->
+    <div class="inventaire-toolbar">
+      <div class="inventaire-status-banner" [class.text-success]="deltaTime()[tabId] < 12"
+        [class.text-warning]="deltaTime()[tabId] >= 12 && deltaTime()[tabId] < 24"
+        [class.text-danger]="deltaTime()[tabId] >= 24">
+        <span class="inventaire-status-banner__icon">
+          <i class="fa-solid fa-box-archive" aria-hidden="true"></i>
+        </span>
+        <div>
+          <strong>Suivi du stock actif</strong>
+          <div class="inventaire-status-banner__meta">Dernière mise à jour : {{ getSaveDateLabel(tabId) }}</div>
+        </div>
+      </div>
+    </div>
 
-      <table class="data-table instance-table">
+    <!-- Filters + Stats -->
+    <div class="panels-row inventaire-panels">
+      <div class="panel inventaire-panel">
+        <button type="button" class="panel-title" (click)="toggleFiltersPanel()"
+          [attr.aria-expanded]="filtersPanelOpen()">
+          <span>Filtres</span>
+          <span class="panel-title__indicator" [class.is-open]="filtersPanelOpen()" aria-hidden="true">
+            <i class="fa-solid fa-chevron-down"></i>
+          </span>
+        </button>
+        @if (filtersPanelOpen()) {
+        <div class="panel-body">
+          <input type="text" placeholder="Nom" [ngModel]="filterName()" (ngModelChange)="filterName.set($event)"
+            class="field" />
+          <select [ngModel]="filterSeller()" (ngModelChange)="filterSeller.set($event)" class="field">
+            <option [ngValue]="null">Tous les vendeurs</option>
+            @for (c of companies(); track c.id) {
+            <option [ngValue]="c.id">{{ c.icon }} {{ c.name }}</option>
+            }
+          </select>
+        </div>
+        }
+      </div>
+      <div class="panel inventaire-panel">
+        <button type="button" class="panel-title" (click)="toggleStatsPanel()" [attr.aria-expanded]="statsPanelOpen()">
+          <span>Statistiques</span>
+          <span class="panel-title__indicator" [class.is-open]="statsPanelOpen()" aria-hidden="true">
+            <i class="fa-solid fa-chevron-down"></i>
+          </span>
+        </button>
+        @if (statsPanelOpen()) {
+        <div class="panel-body">
+          <p>Nombre d'items : {{ statsTotal() }}</p>
+          <p>Poids total : {{ statsPoids() }} Kg</p>
+          <p>Poids restant : {{ statsPoidsRestant() }} Kg</p>
+        </div>
+        }
+      </div>
+    </div>
+
+    <!-- Data table -->
+    <div class="table-container inventaire-table-wrap">
+      <table class="data-table">
         <thead>
           <tr>
-            @if (currentItem()?.instanceByDate) {
-            <th>Date</th>
-            <th>Quantité</th>
-            <th></th>
-            } @else {
             <th>Nom</th>
-            <th>Quantité</th>
+            <th>Vendeur</th>
+            <th>Poids</th>
+            <th>Stock actuel</th>
+            <th>Stock souhaité</th>
+            <th>Besoin</th>
+            @if (canViewMovement()) {
             <th></th>
             }
           </tr>
         </thead>
         <tbody>
-          @for (entry of currentInstance()?.content; track $index) {
+          @for (item of filteredItems(); track item.id) {
           <tr>
-            @if (currentItem()?.instanceByDate) {
-            <td [class.text-danger]="isDateExpired(entry.date ?? '')">{{ entry.date }}</td>
+            <td>{{ item.icon }} {{ item.name }}</td>
+            <td>{{ getCompanyName(item.seller) }}</td>
+            <td>{{ item.weight }} Kg</td>
             <td>
-              <input type="number" class="inline-input" [(ngModel)]="entry.amount" />
-            </td>
-            <td>
-              @if (canEditInstances()) {
-              <button class="btn-icon" (click)="toggleLock(entry)">
-                {{ entry.locked ? '🔒' : '🔓' }}
-              </button>
+              @if (item.isInstantiated) {
+              <div class="instance-cell">
+                <span>{{ item.amount }}</span>
+                <button class="btn-icon" (click)="openInstanceDialog(item)" title="Instances" aria-label="Instances">
+                  <i class="fa-solid fa-clipboard-list" aria-hidden="true"></i>
+                </button>
+              </div>
               } @else {
-              {{ entry.locked ? '🔒' : '🔓' }}
+              <input type="number" class="inline-input" [ngModel]="item.amount" (ngModelChange)="item.amount = +$event"
+                (focus)="startEditing(item)" (blur)="stopEditing(item)" (change)="updateItem(item)" />
               }
             </td>
-            } @else {
-            <td>{{ entry.name }}</td>
-            <td>
-              <input type="number" class="inline-input" [(ngModel)]="entry.amount" />
+            <td>{{ item.wanted }}</td>
+            <td [class]="getNeededClass(item)">
+              @if (getNeeded(item) === 0) { <span class="text-success">0</span> }
+              @else { {{ getNeeded(item) }} }
             </td>
+            @if (canViewMovement()) {
             <td>
-              @if (canEditInstances()) {
-              <button class="btn-icon danger" (click)="removeInstanceEntry(entry)">🗑️</button>
-              }
+              <button class="btn-icon" (click)="showMovement(item)" title="Historique" aria-label="Historique">
+                <i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+              </button>
             </td>
             }
+          </tr>
+          } @empty {
+          <tr>
+            <td [attr.colspan]="canViewMovement() ? 7 : 6" class="empty">Aucun item</td>
           </tr>
           }
         </tbody>
       </table>
-
-      @if (!currentItem()?.instanceByDate && canEditInstances()) {
-      <div class="dialog-actions">
-        <button class="btn success" (click)="openNameDialog()">Ajouter une instance</button>
-      </div>
-      }
-      @if (currentItem()?.instanceByDate && canEditInstances()) {
-      <div class="dialog-actions">
-        <button class="btn success" (click)="openDateDialog()">Ajouter une date spécifique</button>
-      </div>
-      }
-
-      <div class="dialog-actions">
-        <button class="btn accent" (click)="saveInstance()">Valider</button>
-        <button class="btn danger" (click)="closeInstanceDialog()">Annuler</button>
-      </div>
     </div>
-  </div>
-  }
+    }
 
-  <!-- Name dialog -->
-  @if (dialogName()) {
-  <div class="overlay" (click)="closeNameDialog()">
-    <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
-      <input type="text" placeholder="Nom de l'instance" class="field" [ngModel]="instanceName()"
-        (ngModelChange)="instanceName.set($event)" />
-      <div class="dialog-actions">
-        <button class="btn accent" (click)="addInstance()">Valider</button>
-        <button class="btn danger" (click)="closeNameDialog()">Annuler</button>
-      </div>
-    </div>
-  </div>
-  }
+    <!-- Instance dialog -->
+    @if (dialogInstance()) {
+    <div class="overlay" (click)="closeInstanceDialog()">
+      <div class="dialog" (click)="$event.stopPropagation()">
+        <h3 class="dialog-title">{{ currentItem()?.icon }} {{ currentItem()?.name }}</h3>
 
-  <!-- Date dialog -->
-  @if (dialogDate()) {
-  <div class="overlay" (click)="closeDateDialog()">
-    <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
-      <input type="text" placeholder="Date (jj/mm/aaaa)" class="field" [ngModel]="instanceDate()"
-        (ngModelChange)="instanceDate.set($event)" />
-      <input type="number" placeholder="Quantité" class="field" [ngModel]="instanceAmount()"
-        (ngModelChange)="instanceAmount.set(+$event)" />
-      <div class="dialog-actions">
-        <button class="btn accent" (click)="addDateInstance()">Valider</button>
-        <button class="btn danger" (click)="closeDateDialog()">Annuler</button>
-      </div>
-    </div>
-  </div>
-  }
+        <table class="data-table instance-table">
+          <thead>
+            <tr>
+              @if (currentItem()?.instanceByDate) {
+              <th>Date</th>
+              <th>Quantité</th>
+              <th></th>
+              } @else {
+              <th>Nom</th>
+              <th>Quantité</th>
+              <th></th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (entry of currentInstance()?.content; track $index) {
+            <tr>
+              @if (currentItem()?.instanceByDate) {
+              <td [class.text-danger]="isDateExpired(entry.date ?? '')">{{ entry.date }}</td>
+              <td>
+                <input type="number" class="inline-input" [(ngModel)]="entry.amount" />
+              </td>
+              <td>
+                @if (canEditInstances()) {
+                <button class="btn-icon" (click)="toggleLock(entry)">
+                  <i class="fa-solid" [class.fa-lock]="entry.locked" [class.fa-lock-open]="!entry.locked"
+                    aria-hidden="true"></i>
+                </button>
+                } @else {
+                <i class="fa-solid" [class.fa-lock]="entry.locked" [class.fa-lock-open]="!entry.locked"
+                  aria-hidden="true"></i>
+                }
+              </td>
+              } @else {
+              <td>{{ entry.name }}</td>
+              <td>
+                <input type="number" class="inline-input" [(ngModel)]="entry.amount" />
+              </td>
+              <td>
+                @if (canEditInstances()) {
+                <button class="btn-icon danger" (click)="removeInstanceEntry(entry)" aria-label="Supprimer instance">
+                  <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                </button>
+                }
+              </td>
+              }
+            </tr>
+            }
+          </tbody>
+        </table>
 
-  <!-- Movement dialog -->
-  @if (dialogMovement()) {
-  <div class="overlay" (click)="closeMovementDialog()">
-    <div class="dialog" (click)="$event.stopPropagation()">
-      <h3 class="dialog-title">📈 Historique — {{ movementItem()?.icon }} {{ movementItem()?.name }}</h3>
-      @if (movementItem()?.history?.length) {
-      <div class="movement-list">
-        @for (h of movementItem()!.history; track $index) {
-        <div class="movement-entry">
-          <span>{{ h.date | date:'short' }}</span>
-          <span class="movement-amount">{{ h.amount }}</span>
+        @if (!currentItem()?.instanceByDate && canEditInstances()) {
+        <div class="dialog-actions">
+          <button class="btn success" (click)="openNameDialog()">Ajouter une instance</button>
         </div>
         }
-      </div>
-      } @else {
-      <p class="empty">Aucun historique disponible</p>
-      }
-      <div class="dialog-actions">
-        <button class="btn danger" (click)="closeMovementDialog()">Fermer</button>
+        @if (currentItem()?.instanceByDate && canEditInstances()) {
+        <div class="dialog-actions">
+          <button class="btn success" (click)="openDateDialog()">Ajouter une date spécifique</button>
+        </div>
+        }
+
+        <div class="dialog-actions">
+          <button class="btn accent" (click)="saveInstance()">Valider</button>
+          <button class="btn danger" (click)="closeInstanceDialog()">Annuler</button>
+        </div>
       </div>
     </div>
-  </div>
-  }
+    }
+
+    <!-- Name dialog -->
+    @if (dialogName()) {
+    <div class="overlay" (click)="closeNameDialog()">
+      <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
+        <input type="text" placeholder="Nom de l'instance" class="field" [ngModel]="instanceName()"
+          (ngModelChange)="instanceName.set($event)" />
+        <div class="dialog-actions">
+          <button class="btn accent" (click)="addInstance()">Valider</button>
+          <button class="btn danger" (click)="closeNameDialog()">Annuler</button>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Date dialog -->
+    @if (dialogDate()) {
+    <div class="overlay" (click)="closeDateDialog()">
+      <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
+        <input type="text" placeholder="Date (jj/mm/aaaa)" class="field" [ngModel]="instanceDate()"
+          (ngModelChange)="instanceDate.set($event)" />
+        <input type="number" placeholder="Quantité" class="field" [ngModel]="instanceAmount()"
+          (ngModelChange)="instanceAmount.set(+$event)" />
+        <div class="dialog-actions">
+          <button class="btn accent" (click)="addDateInstance()">Valider</button>
+          <button class="btn danger" (click)="closeDateDialog()">Annuler</button>
+        </div>
+      </div>
+    </div>
+    }
+
+    <!-- Movement dialog -->
+    @if (dialogMovement()) {
+    <div class="overlay" (click)="closeMovementDialog()">
+      <div class="dialog" (click)="$event.stopPropagation()">
+        <h3 class="dialog-title">📈 Historique — {{ movementItem()?.icon }} {{ movementItem()?.name }}</h3>
+        @if (movementItem()?.history?.length) {
+        <div class="movement-list">
+          @for (h of movementItem()!.history; track $index) {
+          <div class="movement-entry">
+            <span>{{ h.date | date:'short' }}</span>
+            <span class="movement-amount">{{ h.amount }}</span>
+          </div>
+          }
+        </div>
+        } @else {
+        <p class="empty">Aucun historique disponible</p>
+        }
+        <div class="dialog-actions">
+          <button class="btn danger" (click)="closeMovementDialog()">Fermer</button>
+        </div>
+      </div>
+    </div>
+    }
+  </section>
 </div>

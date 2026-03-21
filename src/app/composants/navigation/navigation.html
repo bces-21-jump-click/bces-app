@@ -33,7 +33,7 @@
     @for (item of groupe; track item.lien) {
     <a class="nav-link" [routerLink]="item.lien" routerLinkActive="active"
       [routerLinkActiveOptions]="{exact: item.lien === '/'}" (click)="fermerMenu()">
-      <span class="nav-icon">{{ item.emoji }}</span>
+      <i [class]="'fa-solid nav-icon ' + item.icon" aria-hidden="true"></i>
       <span class="nav-text">{{ item.titre }}</span>
       @if (getBadge(item) > 0) {
       <span class="nav-badge">{{ getBadge(item) }}</span>

@@ -48,7 +48,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -115,7 +115,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -149,12 +149,12 @@
       <div class="section-header-tools">
         <div class="section-header-radios" aria-label="Fréquences radio">
           <div class="freq-group freq-group--inline freq-group--bces">
-            <label>BCES:</label>
+            <label><i class="fa-solid fa-radio freq-label__icon" aria-hidden="true"></i>BCES:</label>
             <input type="text" [ngModel]="etat().radio_lses" (ngModelChange)="majRadioLses($event)" placeholder="--"
               class="freq-input freq-input--inline" [attr.aria-label]="'Radio BCES'" />
           </div>
           <div class="freq-group freq-group--inline freq-group--commune">
-            <label>Commune:</label>
+            <label><i class="fa-solid fa-signal freq-label__icon" aria-hidden="true"></i>Commune:</label>
             <input type="text" [ngModel]="etat().radio_commune" (ngModelChange)="majRadioCommune($event)"
               placeholder="--" class="freq-input freq-input--inline" [attr.aria-label]="'Radio commune'" />
           </div>
@@ -184,7 +184,11 @@
           <div class="freq-group freq-group--chip service-chip service-chip--lses" aria-label="Statut service LSES"
             [style.--hopital-color]="couleurBordLses()">
             <span class="service-chip__badge">LSES</span>
-            <span class="service-chip__value">{{ statutLses() }}</span>
+            <a class="service-chip__value service-chip__value--link" href="https://lses-inventory.web.app/"
+              target="_blank" rel="noopener noreferrer" aria-label="Ouvrir LSES Inventory dans un nouvel onglet">
+              <span>{{ statutLses() }}</span>
+              <i class="fa-solid fa-arrow-up-right-from-square service-chip__icon" aria-hidden="true"></i>
+            </a>
           </div>
         </div>
       </div>
@@ -207,7 +211,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -241,7 +245,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -275,7 +279,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -312,7 +316,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -347,7 +351,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -382,7 +386,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -419,7 +423,7 @@
             <div class="effectif-card__top">
               <span class="effectif-grip" aria-hidden="true">⠿</span>
               <span class="effectif-emoji">{{ eff.emoji }}</span>
-              <span class="effectif-nom">{{ eff.name }}</span>
+              <span class="effectif-nom">{{ nomTuile(eff) }}</span>
             </div>
             @if (eff.phone) {<div class="effectif-card__tel">{{ eff.phone }}</div>}
             @if (obtenirSpecialites(eff).length > 0) {
@@ -455,6 +459,23 @@
         <span class="stock-count zone-header__count" aria-label="Radios standard utilisées sur le total hors direction">
           {{ nombreRadiosUtilisees(radiosStandards()) }}/{{ radiosStandards().length }}
         </span>
+        @if (peutGererRadiosDepuisDispatch()) {
+        <div class="radios-stock-actions">
+          <button class="radio-add-btn" type="button" (click)="basculerSelectAjoutRadio()"
+            aria-label="Ouvrir le sélecteur d'ajout de radio">
+            <i class="fa-solid fa-plus" aria-hidden="true"></i>
+            Ajouter
+          </button>
+          @if (selectAjoutRadioOuvert()) {
+          <select class="radio-add-select" [ngModel]="''" (ngModelChange)="ajouterRadioDepuisSelect($event)"
+            aria-label="Choisir le type de radio à ajouter">
+            <option value="" disabled>Choisir...</option>
+            <option value="standard">Radio standard</option>
+            <option value="direction">Radio direction</option>
+          </select>
+          }
+        </div>
+        }
       </div>
 
       <div class="radios-stock-group">
@@ -464,12 +485,37 @@
         }
         @for (radio of radiosDirectes(); track radio.id) {
         <div class="radio-stock-row">
-          <span class="radio-stock-serie">{{ radio.serie }}</span>
-          <span class="radio-stock-owner">{{ nomEffectifRadio(radio.effectif_id) }}</span>
-          <span class="radio-stock-state" [class.radio-stock-state--on]="radio.actif"
-            [class.radio-stock-state--off]="!radio.actif">
+          @if (peutGererRadiosDepuisDispatch()) {
+          <input class="radio-stock-serie-input" type="text" [ngModel]="radio.serie"
+            (ngModelChange)="majSerieRadio(radio.id, $event)" placeholder="N° série"
+            [attr.aria-label]="'Numéro de série radio direction ' + radio.id" />
+          } @else {
+          <span class="radio-stock-serie-readonly">{{ radio.serie || '---' }}</span>
+          }
+          <select class="radio-stock-owner-select" [ngModel]="radio.effectif_id ?? ''"
+            (ngModelChange)="majAffectationRadio(radio.id, $event)"
+            [disabled]="!peutAssignerRadio(radio) || getRadioEmployeeOptions(radio).length === 0"
+            [attr.aria-label]="'Affectation radio direction ' + radio.id">
+            <option value="">Non assignée</option>
+            @for (eff of getRadioEmployeeOptions(radio); track eff.id) {
+            <option [value]="eff.id">{{ eff.name }}</option>
+            }
+          </select>
+          <button class="radio-stock-toggle" [class.radio-stock-toggle--on]="radio.actif"
+            [class.radio-stock-toggle--off]="!radio.actif" type="button" (click)="basculerEtatRadio(radio.id)"
+            [disabled]="!hasLsesPerm()"
+            [attr.aria-label]="(radio.actif ? 'Désactiver' : 'Activer') + ' la radio direction'">
             {{ radio.actif ? 'ON' : 'OFF' }}
-          </span>
+          </button>
+          @if (peutGererRadiosDepuisDispatch()) {
+          <button class="radio-stock-delete" type="button" (click)="supprimerRadio(radio.id)"
+            aria-label="Supprimer la radio direction">
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+          </button>
+          }
+          @if (!radio.effectif_id && radio.dernier_effectif_nom) {
+          <span class="radio-stock-last">Dernier: {{ dernierAssigneRadio(radio) }}</span>
+          }
         </div>
         }
       </div>
@@ -481,12 +527,37 @@
         }
         @for (radio of radiosStandards(); track radio.id) {
         <div class="radio-stock-row">
-          <span class="radio-stock-serie">{{ radio.serie }}</span>
-          <span class="radio-stock-owner">{{ nomEffectifRadio(radio.effectif_id) }}</span>
-          <span class="radio-stock-state" [class.radio-stock-state--on]="radio.actif"
-            [class.radio-stock-state--off]="!radio.actif">
+          @if (peutGererRadiosDepuisDispatch()) {
+          <input class="radio-stock-serie-input" type="text" [ngModel]="radio.serie"
+            (ngModelChange)="majSerieRadio(radio.id, $event)" placeholder="N° série"
+            [attr.aria-label]="'Numéro de série radio standard ' + radio.id" />
+          } @else {
+          <span class="radio-stock-serie-readonly">{{ radio.serie || '---' }}</span>
+          }
+          <select class="radio-stock-owner-select" [ngModel]="radio.effectif_id ?? ''"
+            (ngModelChange)="majAffectationRadio(radio.id, $event)"
+            [disabled]="!peutAssignerRadio(radio) || getRadioEmployeeOptions(radio).length === 0"
+            [attr.aria-label]="'Affectation radio standard ' + radio.id">
+            <option value="">Non assignée</option>
+            @for (eff of getRadioEmployeeOptions(radio); track eff.id) {
+            <option [value]="eff.id">{{ eff.name }}</option>
+            }
+          </select>
+          <button class="radio-stock-toggle" [class.radio-stock-toggle--on]="radio.actif"
+            [class.radio-stock-toggle--off]="!radio.actif" type="button" (click)="basculerEtatRadio(radio.id)"
+            [disabled]="!hasLsesPerm()"
+            [attr.aria-label]="(radio.actif ? 'Désactiver' : 'Activer') + ' la radio standard'">
             {{ radio.actif ? 'ON' : 'OFF' }}
-          </span>
+          </button>
+          @if (peutGererRadiosDepuisDispatch()) {
+          <button class="radio-stock-delete" type="button" (click)="supprimerRadio(radio.id)"
+            aria-label="Supprimer la radio standard">
+            <i class="fa-solid fa-trash" aria-hidden="true"></i>
+          </button>
+          }
+          @if (!radio.effectif_id && radio.dernier_effectif_nom) {
+          <span class="radio-stock-last">Dernier: {{ dernierAssigneRadio(radio) }}</span>
+          }
         </div>
         }
       </div>

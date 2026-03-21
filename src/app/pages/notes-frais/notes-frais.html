@@ -1,154 +1,51 @@
 <div class="notes-frais-page">
-    <!-- Tabs -->
-    <div class="tabs">
-        <button [class.active]="onglet() === 'my'" (click)="onglet.set('my')">Mes notes de frais</button>
-        @if (canManage()) {
-        <button [class.active]="onglet() === 'waiting'" (click)="onglet.set('waiting')">
-            En attente
-            @if (waitingNotes().length) { <span class="tab-badge">{{ waitingNotes().length }}</span> }
-        </button>
-        <button [class.active]="onglet() === 'history'" (click)="onglet.set('history')">Historique</button>
-        }
+    <div class="page-header notes-frais-hero">
+        <div class="notes-frais-hero__copy">
+            <span class="notes-frais-kicker">BCES Expense Management</span>
+            <h1>Notes de frais</h1>
+            <p>Suivi des dépenses, validation des remboursements et historique des traitements.</p>
+        </div>
+        <div class="notes-frais-hero__stats">
+            <article class="notes-frais-stat-card">
+                <span class="notes-frais-stat-card__label">Mes notes</span>
+                <strong class="notes-frais-stat-card__value">{{ myNotes().length }}</strong>
+            </article>
+            <article class="notes-frais-stat-card notes-frais-stat-card--warn">
+                <span class="notes-frais-stat-card__label">En attente</span>
+                <strong class="notes-frais-stat-card__value">{{ waitingNotes().length }}</strong>
+            </article>
+            <article class="notes-frais-stat-card notes-frais-stat-card--accent">
+                <span class="notes-frais-stat-card__label">Payées</span>
+                <strong class="notes-frais-stat-card__value">{{ historyNotes().filter(n => n.isPaid).length }}</strong>
+            </article>
+            <article class="notes-frais-stat-card notes-frais-stat-card--soft">
+                <span class="notes-frais-stat-card__label">Refusées</span>
+                <strong class="notes-frais-stat-card__value">{{ historyNotes().filter(n => n.isRefused).length
+                    }}</strong>
+            </article>
+        </div>
     </div>
 
-    <!-- ===== MY TAB ===== -->
-    @if (onglet() === 'my') {
-    <div class="notes-list">
-        @for (note of myNotes(); track note.id) {
-        <div class="note-card" [class]="'border-' + getNoteColor(note)">
-            <div class="note-header">
-                <span>Le {{ formatDate(note.date!) }} - </span>
-                @if (note.reason === 'buy') {
-                @if (getHistoryInfo(note.data); as h) {
-                <span>{{ getCompanyIcon(h.company) }} {{ getCompanyName(h.company) }} : ({{ formatMoney(note.price)
-                    }})</span>
-                }
-                } @else if (note.reason === 'vehicle') {
-                <span>🚗 Fourrière : ({{ formatMoney(note.price) }})</span>
-                } @else {
-                <span>❓ Autre dépense : ({{ formatMoney(note.price) }})</span>
-                }
-            </div>
-            <div class="note-body">
-                @if (note.reason === 'buy') {
-                @if (getHistoryInfo(note.data); as h) {
-                <div class="note-items">
-                    @for (item of h.items; track item.id) {
-                    @if (getItemInfo(item.id); as info) {
-                    <div>{{ info.icon }} {{ info.name }} - {{ item.amount }}</div>
-                    }
-                    }
-                </div>
-                <div class="note-meta">Commande du {{ formatDate(h.payDate!) }} - {{ h.weight }} Kg</div>
-                }
-                } @else if (note.reason === 'vehicle') {
-                @if (getVehicleHistoryInfo(note.data); as vh) {
-                @if (getVehicleInfo(vh.vehicle); as v) {
-                <div class="note-items">
-                    <div>{{ v.icon }} {{ v.name }}</div>
-                </div>
-                }
-                }
-                } @else {
-                <div class="note-items">
-                    <div>❓ {{ note.data }}</div>
-                </div>
-                }
-            </div>
-            @if (note.isRefused) {
-            <div class="note-status text-danger">Refusée le {{ formatDate(note.closeDate!) }}</div>
-            <div class="note-refusal">Motif du refus : {{ note.refusalComment }}</div>
-            } @else if (note.isPaid) {
-            <div class="note-status text-success">Payé le {{ formatDate(note.closeDate!) }}</div>
-            } @else {
-            <div class="note-status">En cours de traitement</div>
+    <section class="notes-frais-shell">
+        <!-- Tabs -->
+        <div class="tabs notes-frais-tabs">
+            <button [class.active]="onglet() === 'my'" (click)="onglet.set('my')">Mes notes de frais</button>
+            @if (canManage()) {
+            <button [class.active]="onglet() === 'waiting'" (click)="onglet.set('waiting')">
+                En attente
+                @if (waitingNotes().length) { <span class="tab-badge">{{ waitingNotes().length }}</span> }
+            </button>
+            <button [class.active]="onglet() === 'history'" (click)="onglet.set('history')">Historique</button>
             }
         </div>
-        } @empty {
-        <p class="empty">Aucune note de frais</p>
-        }
 
-        <div class="create-row">
-            <button class="btn accent" (click)="openCreateDialog()">➕ Nouvelle note</button>
-        </div>
-    </div>
-    }
-
-    <!-- ===== WAITING TAB ===== -->
-    @if (onglet() === 'waiting') {
-    <div class="notes-list">
-        @for (note of waitingNotes(); track note.id) {
-        <div class="note-card border-accent">
-            <div class="note-header">
-                <span>Le {{ formatDate(note.date!) }}</span>
-                <div class="note-actions">
-                    <button class="btn danger" (click)="openRefuseDialog(note)">❌ Refuser</button>
-                    <button class="btn success" (click)="payNote(note)">💵 Payer</button>
-                </div>
-            </div>
-            <div class="note-user">
-                {{ getProfileName(note.user) }} -
-                @if (note.reason === 'buy') {
-                @if (getHistoryInfo(note.data); as h) {
-                <span>{{ getCompanyIcon(h.company) }} {{ getCompanyName(h.company) }} : ({{ formatMoney(note.price)
-                    }})</span>
-                }
-                } @else if (note.reason === 'vehicle') {
-                <span>🚗 Fourrière : ({{ formatMoney(note.price) }})</span>
-                } @else {
-                <span>❓ Autre dépense : ({{ formatMoney(note.price) }})</span>
-                }
-            </div>
-            <div class="note-body">
-                @if (note.reason === 'buy') {
-                @if (getHistoryInfo(note.data); as h) {
-                <div class="note-items">
-                    @for (item of h.items; track item.id) {
-                    @if (getItemInfo(item.id); as info) {
-                    <div>{{ info.icon }} {{ info.name }} - {{ item.amount }}</div>
-                    }
-                    }
-                </div>
-                <div class="note-meta">Commande du {{ formatDate(h.payDate!) }} - {{ h.weight }} Kg</div>
-                }
-                } @else if (note.reason === 'vehicle') {
-                @if (getVehicleHistoryInfo(note.data); as vh) {
-                @if (getVehicleInfo(vh.vehicle); as v) {
-                <div class="note-items">
-                    <div>{{ v.icon }} {{ v.name }}</div>
-                </div>
-                }
-                }
-                } @else {
-                <div class="note-items">
-                    <div>❓ {{ note.data }}</div>
-                </div>
-                }
-            </div>
-            <div class="note-status">En cours de traitement</div>
-        </div>
-        } @empty {
-        <p class="empty">Aucune note en attente</p>
-        }
-    </div>
-    }
-
-    <!-- ===== HISTORY TAB ===== -->
-    @if (onglet() === 'history') {
-    <div class="history-list">
-        @for (key of monthKeys(); track key) {
-        <details class="month-panel" open>
-            <summary class="month-title">
-                {{ monthGrouped()[key].month }} {{ monthGrouped()[key].year }}
-                ({{ monthGrouped()[key].notes.length }} note(s) : {{ formatMoney(monthGrouped()[key].totalPaid) }})
-            </summary>
-            @for (note of monthGrouped()[key].notes; track note.id) {
-            <div class="note-card" [class]="'border-' + getNoteColor(note)" style="margin: 0.5rem 1rem;">
+        <!-- ===== MY TAB ===== -->
+        @if (onglet() === 'my') {
+        <div class="notes-list notes-frais-panel">
+            @for (note of myNotes(); track note.id) {
+            <div class="note-card" [class]="'border-' + getNoteColor(note)">
                 <div class="note-header">
-                    <span>Le {{ formatDate(note.date!) }}</span>
-                </div>
-                <div class="note-user">
-                    {{ getProfileName(note.user) }} -
+                    <span>Le {{ formatDate(note.date!) }} - </span>
                     @if (note.reason === 'buy') {
                     @if (getHistoryInfo(note.data); as h) {
                     <span>{{ getCompanyIcon(h.company) }} {{ getCompanyName(h.company) }} : ({{ formatMoney(note.price)
@@ -191,90 +88,234 @@
                 <div class="note-refusal">Motif du refus : {{ note.refusalComment }}</div>
                 } @else if (note.isPaid) {
                 <div class="note-status text-success">Payé le {{ formatDate(note.closeDate!) }}</div>
+                } @else {
+                <div class="note-status">En cours de traitement</div>
                 }
             </div>
+            } @empty {
+            <p class="empty">Aucune note de frais</p>
             }
-        </details>
-        } @empty {
-        <p class="empty">Aucun historique</p>
+
+            <div class="create-row">
+                <button class="btn accent" (click)="openCreateDialog()">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    Nouvelle note
+                </button>
+            </div>
+        </div>
         }
-    </div>
-    }
 
-    <!-- Create dialog -->
-    @if (dialogCreate()) {
-    <div class="overlay" (click)="dialogCreate.set(false)">
-        <div class="dialog" (click)="$event.stopPropagation()">
-            <h3 class="dialog-title">Nouvelle note de frais</h3>
-            <div class="form-group">
-                <label>Motif</label>
-                <select class="field" [ngModel]="selectedReason()" (ngModelChange)="selectedReason.set($event)">
-                    <option [ngValue]="null" disabled>Choisir un motif</option>
-                    @for (r of reasonList; track r.value) {
-                    <option [ngValue]="r.value">{{ r.title }}</option>
+        <!-- ===== WAITING TAB ===== -->
+        @if (onglet() === 'waiting') {
+        <div class="notes-list notes-frais-panel">
+            @for (note of waitingNotes(); track note.id) {
+            <div class="note-card border-accent">
+                <div class="note-header">
+                    <span>Le {{ formatDate(note.date!) }}</span>
+                    <div class="note-actions">
+                        <button class="btn danger" (click)="openRefuseDialog(note)">
+                            <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+                            Refuser
+                        </button>
+                        <button class="btn success" (click)="payNote(note)">
+                            <i class="fa-solid fa-money-bill-wave" aria-hidden="true"></i>
+                            Payer
+                        </button>
+                    </div>
+                </div>
+                <div class="note-user">
+                    {{ getProfileName(note.user) }} -
+                    @if (note.reason === 'buy') {
+                    @if (getHistoryInfo(note.data); as h) {
+                    <span>{{ getCompanyIcon(h.company) }} {{ getCompanyName(h.company) }} : ({{ formatMoney(note.price)
+                        }})</span>
                     }
-                </select>
-            </div>
-
-            @if (selectedReason() === 'buy') {
-            <div class="form-group">
-                <label>Commande</label>
-                <select class="field" [ngModel]="selectedBuyId()" (ngModelChange)="selectedBuyId.set($event)">
-                    <option [ngValue]="null" disabled>Choisir une commande</option>
-                    @for (h of availableHistories(); track h.id) {
-                    <option [ngValue]="h.id">{{ formatDate(h.payDate!) }} - {{ getCompanyIcon(h.company) }} {{
-                        getCompanyName(h.company) }} - {{ formatMoney(h.price) }}</option>
+                    } @else if (note.reason === 'vehicle') {
+                    <span>🚗 Fourrière : ({{ formatMoney(note.price) }})</span>
+                    } @else {
+                    <span>❓ Autre dépense : ({{ formatMoney(note.price) }})</span>
                     }
-                </select>
-            </div>
-            }
-
-            @if (selectedReason() === 'vehicle') {
-            <div class="form-group">
-                <label>Récupération</label>
-                <select class="field" [ngModel]="selectedVehicleId()" (ngModelChange)="selectedVehicleId.set($event)">
-                    <option [ngValue]="null" disabled>Choisir une récupération</option>
-                    @for (vh of availableVehicleHistories(); track vh.id) {
+                </div>
+                <div class="note-body">
+                    @if (note.reason === 'buy') {
+                    @if (getHistoryInfo(note.data); as h) {
+                    <div class="note-items">
+                        @for (item of h.items; track item.id) {
+                        @if (getItemInfo(item.id); as info) {
+                        <div>{{ info.icon }} {{ info.name }} - {{ item.amount }}</div>
+                        }
+                        }
+                    </div>
+                    <div class="note-meta">Commande du {{ formatDate(h.payDate!) }} - {{ h.weight }} Kg</div>
+                    }
+                    } @else if (note.reason === 'vehicle') {
+                    @if (getVehicleHistoryInfo(note.data); as vh) {
                     @if (getVehicleInfo(vh.vehicle); as v) {
-                    <option [ngValue]="vh.id">{{ formatDate(vh.date!) }} - {{ v.icon }} {{ v.name }} - {{
-                        formatMoney(vh.price) }}</option>
+                    <div class="note-items">
+                        <div>{{ v.icon }} {{ v.name }}</div>
+                    </div>
                     }
                     }
-                </select>
+                    } @else {
+                    <div class="note-items">
+                        <div>❓ {{ note.data }}</div>
+                    </div>
+                    }
+                </div>
+                <div class="note-status">En cours de traitement</div>
             </div>
+            } @empty {
+            <p class="empty">Aucune note en attente</p>
             }
+        </div>
+        }
 
-            @if (selectedReason() === 'other') {
-            <div class="form-group">
-                <label>Raison</label>
-                <input class="field" type="text" [ngModel]="otherText()" (ngModelChange)="otherText.set($event)" />
-            </div>
-            <div class="form-group">
-                <label>Montant ($)</label>
-                <input class="field" type="number" [ngModel]="otherPrice()" (ngModelChange)="otherPrice.set(+$event)" />
-            </div>
+        <!-- ===== HISTORY TAB ===== -->
+        @if (onglet() === 'history') {
+        <div class="history-list notes-frais-panel">
+            @for (key of monthKeys(); track key) {
+            <details class="month-panel" open>
+                <summary class="month-title">
+                    {{ monthGrouped()[key].month }} {{ monthGrouped()[key].year }}
+                    ({{ monthGrouped()[key].notes.length }} note(s) : {{ formatMoney(monthGrouped()[key].totalPaid) }})
+                </summary>
+                @for (note of monthGrouped()[key].notes; track note.id) {
+                <div class="note-card" [class]="'border-' + getNoteColor(note)" style="margin: 0.5rem 1rem;">
+                    <div class="note-header">
+                        <span>Le {{ formatDate(note.date!) }}</span>
+                    </div>
+                    <div class="note-user">
+                        {{ getProfileName(note.user) }} -
+                        @if (note.reason === 'buy') {
+                        @if (getHistoryInfo(note.data); as h) {
+                        <span>{{ getCompanyIcon(h.company) }} {{ getCompanyName(h.company) }} : ({{
+                            formatMoney(note.price)
+                            }})</span>
+                        }
+                        } @else if (note.reason === 'vehicle') {
+                        <span>🚗 Fourrière : ({{ formatMoney(note.price) }})</span>
+                        } @else {
+                        <span>❓ Autre dépense : ({{ formatMoney(note.price) }})</span>
+                        }
+                    </div>
+                    <div class="note-body">
+                        @if (note.reason === 'buy') {
+                        @if (getHistoryInfo(note.data); as h) {
+                        <div class="note-items">
+                            @for (item of h.items; track item.id) {
+                            @if (getItemInfo(item.id); as info) {
+                            <div>{{ info.icon }} {{ info.name }} - {{ item.amount }}</div>
+                            }
+                            }
+                        </div>
+                        <div class="note-meta">Commande du {{ formatDate(h.payDate!) }} - {{ h.weight }} Kg</div>
+                        }
+                        } @else if (note.reason === 'vehicle') {
+                        @if (getVehicleHistoryInfo(note.data); as vh) {
+                        @if (getVehicleInfo(vh.vehicle); as v) {
+                        <div class="note-items">
+                            <div>{{ v.icon }} {{ v.name }}</div>
+                        </div>
+                        }
+                        }
+                        } @else {
+                        <div class="note-items">
+                            <div>❓ {{ note.data }}</div>
+                        </div>
+                        }
+                    </div>
+                    @if (note.isRefused) {
+                    <div class="note-status text-danger">Refusée le {{ formatDate(note.closeDate!) }}</div>
+                    <div class="note-refusal">Motif du refus : {{ note.refusalComment }}</div>
+                    } @else if (note.isPaid) {
+                    <div class="note-status text-success">Payé le {{ formatDate(note.closeDate!) }}</div>
+                    }
+                </div>
+                }
+            </details>
+            } @empty {
+            <p class="empty">Aucun historique</p>
             }
+        </div>
+        }
 
-            <div class="dialog-actions">
-                <button class="btn accent" (click)="sendExpenseNote()">Valider</button>
-                <button class="btn danger" (click)="dialogCreate.set(false)">Annuler</button>
+        <!-- Create dialog -->
+        @if (dialogCreate()) {
+        <div class="overlay" (click)="dialogCreate.set(false)">
+            <div class="dialog" (click)="$event.stopPropagation()">
+                <h3 class="dialog-title">Nouvelle note de frais</h3>
+                <div class="form-group">
+                    <label>Motif</label>
+                    <select class="field" [ngModel]="selectedReason()" (ngModelChange)="selectedReason.set($event)">
+                        <option [ngValue]="null" disabled>Choisir un motif</option>
+                        @for (r of reasonList; track r.value) {
+                        <option [ngValue]="r.value">{{ r.title }}</option>
+                        }
+                    </select>
+                </div>
+
+                @if (selectedReason() === 'buy') {
+                <div class="form-group">
+                    <label>Commande</label>
+                    <select class="field" [ngModel]="selectedBuyId()" (ngModelChange)="selectedBuyId.set($event)">
+                        <option [ngValue]="null" disabled>Choisir une commande</option>
+                        @for (h of availableHistories(); track h.id) {
+                        <option [ngValue]="h.id">{{ formatDate(h.payDate!) }} - {{ getCompanyIcon(h.company) }} {{
+                            getCompanyName(h.company) }} - {{ formatMoney(h.price) }}</option>
+                        }
+                    </select>
+                </div>
+                }
+
+                @if (selectedReason() === 'vehicle') {
+                <div class="form-group">
+                    <label>Récupération</label>
+                    <select class="field" [ngModel]="selectedVehicleId()"
+                        (ngModelChange)="selectedVehicleId.set($event)">
+                        <option [ngValue]="null" disabled>Choisir une récupération</option>
+                        @for (vh of availableVehicleHistories(); track vh.id) {
+                        @if (getVehicleInfo(vh.vehicle); as v) {
+                        <option [ngValue]="vh.id">{{ formatDate(vh.date!) }} - {{ v.icon }} {{ v.name }} - {{
+                            formatMoney(vh.price) }}</option>
+                        }
+                        }
+                    </select>
+                </div>
+                }
+
+                @if (selectedReason() === 'other') {
+                <div class="form-group">
+                    <label>Raison</label>
+                    <input class="field" type="text" [ngModel]="otherText()" (ngModelChange)="otherText.set($event)" />
+                </div>
+                <div class="form-group">
+                    <label>Montant ($)</label>
+                    <input class="field" type="number" [ngModel]="otherPrice()"
+                        (ngModelChange)="otherPrice.set(+$event)" />
+                </div>
+                }
+
+                <div class="dialog-actions">
+                    <button class="btn accent" (click)="sendExpenseNote()">Valider</button>
+                    <button class="btn danger" (click)="dialogCreate.set(false)">Annuler</button>
+                </div>
             </div>
         </div>
-    </div>
-    }
+        }
 
-    <!-- Refuse dialog -->
-    @if (dialogRefuse()) {
-    <div class="overlay" (click)="dialogRefuse.set(false)">
-        <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
-            <h3 class="dialog-title">Raison du refus</h3>
-            <input class="field" type="text" placeholder="Raison du refus" [ngModel]="refuseComment()"
-                (ngModelChange)="refuseComment.set($event)" />
-            <div class="dialog-actions">
-                <button class="btn accent" (click)="confirmRefuse()">Confirmer</button>
-                <button class="btn danger" (click)="dialogRefuse.set(false)">Annuler</button>
+        <!-- Refuse dialog -->
+        @if (dialogRefuse()) {
+        <div class="overlay" (click)="dialogRefuse.set(false)">
+            <div class="dialog dialog-sm" (click)="$event.stopPropagation()">
+                <h3 class="dialog-title">Raison du refus</h3>
+                <input class="field" type="text" placeholder="Raison du refus" [ngModel]="refuseComment()"
+                    (ngModelChange)="refuseComment.set($event)" />
+                <div class="dialog-actions">
+                    <button class="btn accent" (click)="confirmRefuse()">Confirmer</button>
+                    <button class="btn danger" (click)="dialogRefuse.set(false)">Annuler</button>
+                </div>
             </div>
         </div>
-    </div>
-    }
+        }
+    </section>
 </div>

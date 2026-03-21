@@ -31,6 +31,8 @@ export class InventairePage implements OnDestroy {
   readonly activeTab = signal<string | null>(null);
   readonly filterName = signal('');
   readonly filterSeller = signal<string | null>(null);
+  readonly filtersPanelOpen = signal(false);
+  readonly statsPanelOpen = signal(false);
 
   // Instance dialog
   readonly dialogInstance = signal(false);
@@ -138,6 +140,14 @@ export class InventairePage implements OnDestroy {
 
   startEditing(item: Stock): void {
     this.notif.editingItemIds.add(item.id);
+  }
+
+  toggleFiltersPanel(): void {
+    this.filtersPanelOpen.update((isOpen) => !isOpen);
+  }
+
+  toggleStatsPanel(): void {
+    this.statsPanelOpen.update((isOpen) => !isOpen);
   }
 
   stopEditing(item: Stock): void {

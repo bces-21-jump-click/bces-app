@@ -13,6 +13,7 @@ import { FormsModule } from '@angular/forms';
 import { DispatchService } from '../../services/dispatch.service';
 import { ApiService } from '../../services/api.service';
 import { FormationService } from '../../services/formation.service';
+import { AuthService } from '../../services/auth.service';
 import { Effectif } from '../../modeles/effectif';
 import {
   EtatDispatch,
@@ -44,6 +45,7 @@ export class DispatchPage implements OnInit, OnDestroy {
   private readonly dispatchSvc = inject(DispatchService);
   private readonly api = inject(ApiService);
   private readonly formationSvc = inject(FormationService);
+  private readonly authSvc = inject(AuthService);
   private readonly el = inject(ElementRef);
   private readonly sheetGvizUrl =
     'https://docs.google.com/spreadsheets/d/1A1gxOho_roNwxTtcbiEpLGSWbD8JUasMDu4NL-zdcbw/gviz/tq?gid=0&tqx=out:json&range=B3:D3';
@@ -79,6 +81,7 @@ export class DispatchPage implements OnInit, OnDestroy {
   // Section visibility
   readonly sectionCriseOuverte = signal(false);
   readonly inclureLsesCrise = signal(false);
+  readonly selectAjoutRadioOuvert = signal(false);
 
   // Computed: effectifs en service (in the "patate")
   readonly effectifsVisibles = computed(() =>
@@ -91,6 +94,17 @@ export class DispatchPage implements OnInit, OnDestroy {
     return this.trierPatatesParEffectif(
       patates.filter((p) => p.categorie === 'en_service' && idsVisibles.has(p.id)),
     );
+  });
+
+  readonly indexPrenomsTuiles = computed(() => {
+    const index = new Map<string, number>();
+    for (const eff of this.effectifsVisibles()) {
+      const prenom = this.extrairePrenom(eff.name);
+      if (!prenom) continue;
+      const cle = this.normaliserNom(prenom);
+      index.set(cle, (index.get(cle) ?? 0) + 1);
+    }
+    return index;
   });
 
   readonly nombreEnServiceTotal = computed(() => {
@@ -165,6 +179,56 @@ export class DispatchPage implements OnInit, OnDestroy {
   readonly radiosStandards = computed(() =>
     this.etat().radios.filter((radio) => !this.estCategorieDirecte(radio.categorie)),
   );
+
+  readonly isDirection = computed(() => {
+    const roleProfil = this.authSvc.profile()?.role ?? '';
+    if (roleProfil === 'Directeur' || roleProfil === 'Directeur Adjoint') return true;
+
+    const perms = this.authSvc.profile()?.permissions ?? [];
+    if (perms.includes('admin') || perms.includes('dev')) return true;
+
+    const nomProfil = this.normaliserNom(this.authSvc.profile()?.name ?? '');
+    if (!nomProfil) return false;
+    const employe = this.effectifs().find((eff) => this.normaliserNom(eff.name) === nomProfil);
+    return employe?.role === 'Directeur' || employe?.role === 'Directeur Adjoint';
+  });
+
+  readonly hasLsesPerm = computed(() => {
+    const perms = this.authSvc.profile()?.permissions ?? [];
+    const aPermission =
+      perms.includes('lses') ||
+      perms.includes('bces') ||
+      perms.includes('dev') ||
+      perms.includes('admin');
+    return aPermission || this.isDirection();
+  });
+
+  readonly peutGererRadiosDepuisDispatch = computed(() => this.hasLsesPerm());
+
+  readonly peutGererRadiosDirection = computed(() => {
+    const perms = this.authSvc.profile()?.permissions ?? [];
+    return this.isDirection() || perms.includes('admin') || perms.includes('dev');
+  });
+
+  readonly peutGererAssignationRadios = computed(() => {
+    return this.hasLsesPerm();
+  });
+
+  readonly effectifsAssignablesRadio = computed(() => {
+    const etat = this.etat();
+    const idsEnService = new Set<string>();
+
+    for (const p of etat.patates) {
+      if (p.categorie === 'en_service') idsEnService.add(p.id);
+    }
+    for (const id of etat.centrale.effectifs) idsEnService.add(id);
+    for (const inter of etat.interventions) {
+      for (const id of inter.effectifs) idsEnService.add(id);
+    }
+
+    const assignables = this.effectifsVisibles().filter((eff) => idsEnService.has(eff.id));
+    return this.trierEffectifs(assignables);
+  });
 
   ngOnInit(): void {
     this.dispatchSvc.connecter();
@@ -433,9 +497,177 @@ export class DispatchPage implements OnInit, OnDestroy {
     return radios.filter((radio) => radio.effectif_id != null).length;
   }
 
+  basculerSelectAjoutRadio(): void {
+    this.selectAjoutRadioOuvert.set(!this.selectAjoutRadioOuvert());
+  }
+
+  ajouterRadioDepuisSelect(categorie: string): void {
+    if (categorie !== 'standard' && categorie !== 'direction') {
+      this.selectAjoutRadioOuvert.set(false);
+      return;
+    }
+    this.ajouterRadio(categorie);
+    this.selectAjoutRadioOuvert.set(false);
+  }
+
+  ajouterRadio(categorie: 'standard' | 'direction' = 'standard'): void {
+    if (!this.isDirection() || !this.hasLsesPerm()) return;
+
+    const etat = { ...this.etat() };
+    const radios = [...etat.radios];
+    if (radios.length >= 30) return;
+
+    const totalCategorie = radios.filter((radio) => {
+      const estDirection = this.estCategorieDirecte(radio.categorie);
+      return categorie === 'direction' ? estDirection : !estDirection;
+    }).length;
+
+    const prefixeSerie = categorie === 'direction' ? 'DIR' : 'STD';
+    const nouvelleRadio: RadioDispatch = {
+      id: `radio_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      serie: `${prefixeSerie}-${String(totalCategorie + 1).padStart(2, '0')}`,
+      effectif_id: null,
+      dernier_effectif_nom: null,
+      actif: true,
+      categorie,
+    };
+
+    etat.radios = [...radios, nouvelleRadio];
+    this.dispatchSvc.envoyerEtat(etat);
+  }
+
+  majSerieRadio(radioId: string, serie: string): void {
+    if (!this.isDirection() || !this.hasLsesPerm()) return;
+
+    const etat = { ...this.etat() };
+    etat.radios = etat.radios.map((radio) =>
+      radio.id === radioId ? { ...radio, serie: serie.trim().slice(0, 24) } : radio,
+    );
+    this.dispatchSvc.envoyerEtat(etat);
+  }
+
+  basculerEtatRadio(radioId: string): void {
+    if (!this.hasLsesPerm()) return;
+
+    const etat = { ...this.etat() };
+    etat.radios = etat.radios.map((radio) => {
+      if (radio.id !== radioId) return radio;
+      return { ...radio, actif: !radio.actif };
+    });
+    this.dispatchSvc.envoyerEtat(etat);
+  }
+
+  supprimerRadio(radioId: string): void {
+    if (!this.isDirection() || !this.hasLsesPerm()) return;
+
+    const etat = { ...this.etat() };
+    etat.radios = etat.radios.filter((radio) => radio.id !== radioId);
+    this.dispatchSvc.envoyerEtat(etat);
+  }
+
+  majAffectationRadio(radioId: string, effectifId: string): void {
+    if (!this.peutGererAssignationRadios()) return;
+
+    const radio = this.etat().radios.find((r) => r.id === radioId);
+    if (!radio) return;
+    if (this.estCategorieDirecte(radio.categorie) && !this.peutGererRadiosDirection()) return;
+
+    const idsAssignables = new Set(this.getRadioEmployeeOptions(radio).map((eff) => eff.id));
+    const nouvelleAffectation = effectifId && idsAssignables.has(effectifId) ? effectifId : null;
+    const dernierNom = nouvelleAffectation
+      ? (this.obtenirEffectif(nouvelleAffectation)?.name ?? null)
+      : null;
+
+    const etat = { ...this.etat() };
+    etat.radios = etat.radios.map((radio) => {
+      if (radio.id !== radioId) return radio;
+      return {
+        ...radio,
+        effectif_id: nouvelleAffectation,
+        dernier_effectif_nom: dernierNom ?? radio.dernier_effectif_nom ?? null,
+        actif: nouvelleAffectation != null,
+      };
+    });
+    this.dispatchSvc.envoyerEtat(etat);
+  }
+
+  getRadioEmployeeOptions(radio: RadioDispatch): Effectif[] {
+    if (this.estCategorieDirecte(radio.categorie)) {
+      const direction = this.effectifs().filter(
+        (eff) => eff.role === 'Directeur' || eff.role === 'Directeur Adjoint',
+      );
+      const triees = this.trierEffectifs(direction);
+      if (!radio.effectif_id) return triees;
+
+      const dejaPresent = triees.some((eff) => eff.id === radio.effectif_id);
+      if (dejaPresent) return triees;
+
+      const current = this.obtenirEffectif(radio.effectif_id);
+      return current ? [...triees, current] : triees;
+    }
+
+    const enService = this.effectifsAssignablesRadio();
+    if (!radio.effectif_id) return enService;
+
+    const dejaPresent = enService.some((eff) => eff.id === radio.effectif_id);
+    if (dejaPresent) return enService;
+
+    const current = this.obtenirEffectif(radio.effectif_id);
+    return current ? [...enService, current] : enService;
+  }
+
+  peutAssignerRadio(radio: RadioDispatch): boolean {
+    if (!this.hasLsesPerm()) return false;
+    if (this.estCategorieDirecte(radio.categorie)) return this.peutGererRadiosDirection();
+    return true;
+  }
+
+  dernierAssigneRadio(radio: RadioDispatch): string {
+    if (radio.effectif_id) {
+      return (
+        this.obtenirEffectif(radio.effectif_id)?.name ?? radio.dernier_effectif_nom ?? 'Assigner'
+      );
+    }
+    return radio.dernier_effectif_nom ?? 'Assigner';
+  }
+
+  estRadioDirection(radio: RadioDispatch): boolean {
+    return this.estCategorieDirecte(radio.categorie);
+  }
+
   private estCategorieDirecte(categorie: string | null | undefined): boolean {
     const normalisee = (categorie ?? '').toLowerCase();
     return normalisee.includes('direction') || normalisee.includes('direct');
+  }
+
+  private normaliserNom(nom: string): string {
+    return nom.trim().toLowerCase();
+  }
+
+  nomTuile(effectif: Effectif): string {
+    const nomComplet = (effectif.name ?? '').trim();
+    if (!nomComplet) return '';
+
+    const prenom = this.extrairePrenom(nomComplet);
+    if (!prenom) return nomComplet;
+
+    const nbMemePrenom = this.indexPrenomsTuiles().get(this.normaliserNom(prenom)) ?? 0;
+    if (nbMemePrenom < 2) return prenom;
+
+    const initialeNomFamille = this.extraireInitialeNomFamille(nomComplet);
+    return initialeNomFamille ? `${prenom} ${initialeNomFamille}.` : prenom;
+  }
+
+  private extrairePrenom(nomComplet: string): string {
+    const morceaux = nomComplet.trim().split(/\s+/).filter(Boolean);
+    return morceaux[0] ?? '';
+  }
+
+  private extraireInitialeNomFamille(nomComplet: string): string {
+    const morceaux = nomComplet.trim().split(/\s+/).filter(Boolean);
+    if (morceaux.length < 2) return '';
+    const dernier = morceaux[morceaux.length - 1] ?? '';
+    return dernier.charAt(0).toUpperCase();
   }
 
   private estVisibleSurDispatch(effectif: Effectif): boolean {

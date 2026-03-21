@@ -90,7 +90,7 @@ export class GaragePage implements OnDestroy {
 
   readonly deltaTime = computed(() => {
     const sd = this.lastSaveDate();
-    if (!sd?.date) return Infinity;
+    if (!sd?.date) return 0;
     return Math.floor((Date.now() - sd.date) / (1000 * 60 * 60));
   });
 
@@ -127,6 +127,25 @@ export class GaragePage implements OnDestroy {
     return grouped;
   });
   readonly monthKeys = computed(() => Object.keys(this.monthGrouped()));
+
+  readonly vehiclesCount = computed(() => this.sortedVehicles().length);
+  readonly vehiclesNeedRepairCount = computed(
+    () => this.sortedVehicles().filter((vehicle) => vehicle.needRepair).length,
+  );
+  readonly vehiclesUnderGuardCount = computed(
+    () => this.sortedVehicles().filter((vehicle) => vehicle.underGuard).length,
+  );
+  readonly vehiclesInsuranceCount = computed(
+    () => this.sortedVehicles().filter((vehicle) => vehicle.insurance).length,
+  );
+  readonly fleetStatusLabel = computed(() => {
+    const sd = this.lastSaveDate();
+    if (!sd?.date) return 'Aucune réparation flotte enregistrée';
+    const delta = this.deltaTime();
+    if (delta < 24) return 'Flotte révisée récemment';
+    if (delta < 36) return 'Contrôle flotte à prévoir';
+    return 'Réparation flotte en retard';
+  });
 
   constructor() {
     this.unsubs.push(this.api.ecouter<Vehicule>('vehicles', (list) => this.vehicles.set(list)));

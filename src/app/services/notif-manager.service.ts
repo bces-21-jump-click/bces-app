@@ -63,7 +63,7 @@ export class NotifManagerService {
 
   readonly garageNotif = computed(() => {
     const lastSave = this.lastVehicleSaveDate();
-    if (!lastSave) return Infinity;
+    if (!lastSave) return 0;
     const deltaTime = Math.floor((Date.now() - lastSave.date) / (1000 * 60 * 60));
     let count = 0;
     if (deltaTime >= 24) count++;

@@ -1,100 +1,144 @@
 <div class="autopsie-page">
-  <div class="page-header">
-    <button class="btn-back" (click)="retour()">← Retour</button>
-    <h1>🔬 {{ reportId() !== null ? 'Modifier le rapport' : 'Nouvelle autopsie' }}</h1>
-  </div>
+  <header class="autopsie-hero">
+    <button class="btn-back" (click)="retour()">
+      <i class="fa-solid fa-arrow-left" aria-hidden="true"></i>
+      Retour
+    </button>
+    <div class="autopsie-hero__copy">
+      <span class="autopsie-kicker">BCES Forensic Lab</span>
+      <h1>{{ reportId() !== null ? 'Modifier le rapport' : 'Nouvelle autopsie' }}</h1>
+      <p>Edition medico-legale, cartographie des blessures et generation du rapport.</p>
+    </div>
+  </header>
 
   @if (chargement()) {
   <div class="loading">Chargement...</div>
   } @else {
-  <div class="top-info">
-    <div class="form-row">
+  <section class="panel identity-panel">
+    <h2>Identification</h2>
+    <div class="identity-grid">
       <label>Nom du patient
-        <input type="text" [ngModel]="name()" (ngModelChange)="name.set($event)" />
+        <input class="field" type="text" [ngModel]="name()" (ngModelChange)="name.set($event)" />
       </label>
       <label>CID
-        <input type="text" [ngModel]="cid()" (ngModelChange)="cid.set($event)" />
+        <input class="field" type="text" [ngModel]="cid()" (ngModelChange)="cid.set($event)" />
       </label>
-      <label>Médecin intervenant
-        <input type="text" [ngModel]="doctor()" (ngModelChange)="doctor.set($event)" />
+      <label>Medecin intervenant
+        <input class="field" type="text" [ngModel]="doctor()" (ngModelChange)="doctor.set($event)" />
       </label>
-      <label>Médecin légiste
-        <input type="text" [ngModel]="legist()" (ngModelChange)="legist.set($event)" />
+      <label>Medecin legiste
+        <input class="field" type="text" [ngModel]="legist()" (ngModelChange)="legist.set($event)" />
       </label>
     </div>
     <div class="gender-toggle">
-      <button [class.active]="!genderIsMale()" (click)="onGenderChange(false)">♀ Femme</button>
-      <button [class.active]="genderIsMale()" (click)="onGenderChange(true)">♂ Homme</button>
+      <button [class.active]="!genderIsMale()" (click)="onGenderChange(false)">
+        <i class="fa-solid fa-venus" aria-hidden="true"></i>
+        Femme
+      </button>
+      <button [class.active]="genderIsMale()" (click)="onGenderChange(true)">
+        <i class="fa-solid fa-mars" aria-hidden="true"></i>
+        Homme
+      </button>
     </div>
-  </div>
+  </section>
 
-  <div class="main-layout">
-    <!-- Injuries panel -->
-    <div class="injuries-panel">
-      <div class="injuries-header">
+  <section class="workspace">
+    <aside class="panel injuries-panel">
+      <div class="workspace-head">
         <h2>Blessures</h2>
-        <button class="btn-small" (click)="addInjury()">+ Ajouter</button>
+        <button class="btn-small" (click)="addInjury()">
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          Ajouter
+        </button>
       </div>
-      @for (inj of injuries(); track $index; let i = $index) {
-      <div class="injury-card" [style.border-left-color]="colorHex(i)" [class.selected]="selectedInjury() === i"
-        (click)="selectedInjury.set(i)">
-        <div class="injury-header">
-          <span class="injury-color" [style.background]="colorHex(i)">{{ i + 1 }}</span>
-          <span>Blessure {{ i + 1 }}</span>
-          <button class="btn-delete" (click)="deleteInjury(i); $event.stopPropagation()"
-            aria-label="Supprimer la blessure">✕</button>
+      <div class="injuries-list">
+        @for (inj of injuries(); track $index; let i = $index) {
+        <div class="injury-card" [style.border-left-color]="colorHex(i)" [class.selected]="selectedInjury() === i"
+          (click)="selectedInjury.set(i)">
+          <div class="injury-header">
+            <span class="injury-color" [style.background]="colorHex(i)">{{ i + 1 }}</span>
+            <span>Blessure {{ i + 1 }}</span>
+            <button class="btn-delete" (click)="deleteInjury(i); $event.stopPropagation()"
+              aria-label="Supprimer la blessure">
+              <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+            </button>
+          </div>
+          <label>Analyse externe
+            <textarea class="field" rows="2" [ngModel]="inj.externalAnalysis"
+              (ngModelChange)="updateInjuryField(i, 'externalAnalysis', $event)"></textarea>
+          </label>
+          <label>Analyse interne
+            <textarea class="field" rows="2" [ngModel]="inj.internalAnalysis"
+              (ngModelChange)="updateInjuryField(i, 'internalAnalysis', $event)"></textarea>
+          </label>
         </div>
-        <label>Analyse externe
-          <textarea rows="2" [ngModel]="inj.externalAnalysis"
-            (ngModelChange)="updateInjuryField(i, 'externalAnalysis', $event)"></textarea>
-        </label>
-        <label>Analyse interne
-          <textarea rows="2" [ngModel]="inj.internalAnalysis"
-            (ngModelChange)="updateInjuryField(i, 'internalAnalysis', $event)"></textarea>
-        </label>
+        }
       </div>
-      }
-    </div>
+    </aside>
 
-    <!-- Canvas + Tools -->
-    <div class="canvas-zone">
+    <div class="panel canvas-panel">
+      <div class="workspace-head canvas-head">
+        <div>
+          <h2>Cartographie</h2>
+          <p>Selectionne un outil puis clique sur le schema corporel.</p>
+        </div>
+      </div>
       <div class="tool-bar">
-        <button [class.active]="tool() === 'add'" (click)="tool.set('add')">➕ Ajouter</button>
-        <button [class.active]="tool() === 'move'" (click)="tool.set('move')">✋ Déplacer</button>
-        <button [class.active]="tool() === 'delete'" (click)="tool.set('delete')">🗑️ Supprimer</button>
+        <button [class.active]="tool() === 'add'" (click)="tool.set('add')">
+          <i class="fa-solid fa-plus" aria-hidden="true"></i>
+          Ajouter
+        </button>
+        <button [class.active]="tool() === 'move'" (click)="tool.set('move')">
+          <i class="fa-solid fa-hand" aria-hidden="true"></i>
+          Deplacer
+        </button>
+        <button [class.active]="tool() === 'delete'" (click)="tool.set('delete')">
+          <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+          Supprimer
+        </button>
       </div>
-      <canvas #canvasElement width="350" height="600" (mousedown)="useTool($event)" (mousemove)="useTool($event)"
-        (mouseup)="useTool($event)"></canvas>
+      <div class="canvas-stage">
+        <canvas #canvasElement width="350" height="600" (mousedown)="useTool($event)" (mousemove)="useTool($event)"
+          (mouseup)="useTool($event)"></canvas>
+      </div>
     </div>
-  </div>
+  </section>
 
-  <!-- Bottom sections -->
-  <div class="bottom-sections">
-    <section class="form-section">
+  <section class="report-grid">
+    <section class="panel form-section">
       <h2>Bilan sanguin</h2>
-      <textarea rows="3" [ngModel]="bloodBilan()" (ngModelChange)="bloodBilan.set($event)"></textarea>
+      <textarea class="field" rows="3" [ngModel]="bloodBilan()" (ngModelChange)="bloodBilan.set($event)"></textarea>
     </section>
-    <section class="form-section">
+    <section class="panel form-section">
       <h2>Diagnostic</h2>
-      <textarea rows="3" [ngModel]="diagnostic()" (ngModelChange)="diagnostic.set($event)"></textarea>
+      <textarea class="field" rows="3" [ngModel]="diagnostic()" (ngModelChange)="diagnostic.set($event)"></textarea>
     </section>
-    <section class="form-section">
+    <section class="panel form-section">
       <h2>Rapport d'intervention</h2>
-      <textarea rows="3" [ngModel]="interventionReport()" (ngModelChange)="interventionReport.set($event)"></textarea>
+      <textarea class="field" rows="3" [ngModel]="interventionReport()"
+        (ngModelChange)="interventionReport.set($event)"></textarea>
     </section>
-    <section class="form-section">
-      <h2>Chronologie des événements</h2>
-      <textarea rows="3" [ngModel]="eventChronology()" (ngModelChange)="eventChronology.set($event)"></textarea>
+    <section class="panel form-section">
+      <h2>Chronologie des evenements</h2>
+      <textarea class="field" rows="3" [ngModel]="eventChronology()"
+        (ngModelChange)="eventChronology.set($event)"></textarea>
     </section>
-    <section class="form-section">
-      <h2>Résumé d'autopsie</h2>
-      <textarea rows="4" [ngModel]="autopsySummary()" (ngModelChange)="autopsySummary.set($event)"></textarea>
+    <section class="panel form-section report-grid__wide">
+      <h2>Resume d'autopsie</h2>
+      <textarea class="field" rows="4" [ngModel]="autopsySummary()"
+        (ngModelChange)="autopsySummary.set($event)"></textarea>
     </section>
-  </div>
+  </section>
 
   <div class="actions-bar">
-    <button class="btn-save" (click)="saveReport()">💾 Sauvegarder</button>
-    <button class="btn-pdf" (click)="genererPdf()">📄 Générer PDF</button>
+    <button class="btn btn-save" (click)="saveReport()">
+      <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i>
+      Sauvegarder
+    </button>
+    <button class="btn btn-pdf" (click)="genererPdf()">
+      <i class="fa-solid fa-file-pdf" aria-hidden="true"></i>
+      Generer PDF
+    </button>
   </div>
   }
 </div>

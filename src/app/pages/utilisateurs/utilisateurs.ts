@@ -45,6 +45,15 @@ export class UtilisateursPage implements OnDestroy {
   });
 
   readonly nbDemandes = computed(() => this.demandes().length);
+  readonly adminUsersCount = computed(
+    () =>
+      this.utilisateurs().filter((u) =>
+        (u.permissions ?? []).some((p) => p === 'admin' || p === 'dev'),
+      ).length,
+  );
+  readonly usersWithPermissionsCount = computed(
+    () => this.utilisateurs().filter((u) => (u.permissions ?? []).length > 0).length,
+  );
 
   // Dialog d'édition
   readonly dialogOuvert = signal(false);

@@ -639,7 +639,7 @@ body {
   .utilisateurs-page
 ) {
   position: relative;
-  border-radius: 16px;
+  border-radius: 0;
   border: 1px solid var(--border-subtle);
   background: linear-gradient(
     180deg,
@@ -1394,6 +1394,9 @@ kbd {
 }
 
 .column-patate .section-header--status .freq-group--inline label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
   margin: 0;
   color: #a8c8dd;
   font-size: 0.6rem;
@@ -1401,6 +1404,11 @@ kbd {
   text-transform: uppercase;
   letter-spacing: 0.035em;
   opacity: 1;
+}
+
+.column-patate .section-header--status .freq-label__icon {
+  font-size: 0.66rem;
+  line-height: 1;
 }
 
 .column-patate .section-header--status .freq-input--inline {
@@ -1421,12 +1429,20 @@ kbd {
   color: #6dbc8e;
 }
 
+.column-patate .section-header--status .freq-group--bces .freq-label__icon {
+  color: #6dbc8e;
+}
+
 .column-patate .section-header--status .freq-group--bces label {
   color: #6dbc8e;
 }
 
 .column-patate .section-header--status .freq-group--commune label {
   color: #ffd666;
+}
+
+.column-patate .section-header--status .freq-group--commune .freq-label__icon {
+  color: #f59e0b;
 }
 
 .column-patate .section-header--status .freq-group--commune .freq-input--inline {
@@ -1586,6 +1602,31 @@ kbd {
   text-align: center;
   white-space: nowrap;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.45);
+}
+
+.column-patate .section-header--status .service-chip__value--link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.38rem;
+  padding: 0 0.62rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.column-patate .section-header--status .service-chip__value--link:hover {
+  filter: brightness(1.08);
+}
+
+.column-patate .section-header--status .service-chip__value--link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--hopital-color, #4caf50) 64%, #ffffff 36%);
+  outline-offset: 2px;
+}
+
+.column-patate .section-header--status .service-chip__icon {
+  font-size: 0.58rem;
+  line-height: 1;
+  opacity: 0.92;
 }
 
 .column-patate .section-header--status .service-chip--safd .service-chip__badge {

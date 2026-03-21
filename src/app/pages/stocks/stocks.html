@@ -1,21 +1,54 @@
 <div class="stocks-page">
-    <div class="card">
-        <div class="tabs">
+    <div class="page-header stocks-hero">
+        <div class="stocks-hero__copy">
+            <span class="stocks-kicker">BCES Supply Hub</span>
+            <h1>Stocks</h1>
+            <p>Gestion centralisée des entreprises, zones de stockage et catalogue d'items.</p>
+        </div>
+        <div class="stocks-hero__stats">
+            <article class="stocks-stat-card">
+                <span class="stocks-stat-card__label">Entreprises</span>
+                <strong class="stocks-stat-card__value">{{ notif.companies().length }}</strong>
+            </article>
+            <article class="stocks-stat-card stocks-stat-card--accent">
+                <span class="stocks-stat-card__label">Stockages</span>
+                <strong class="stocks-stat-card__value">{{ notif.storages().length }}</strong>
+            </article>
+            <article class="stocks-stat-card stocks-stat-card--soft">
+                <span class="stocks-stat-card__label">Items référencés</span>
+                <strong class="stocks-stat-card__value">{{ sortedItems().length }}</strong>
+            </article>
+            <article class="stocks-stat-card stocks-stat-card--warn">
+                <span class="stocks-stat-card__label">Items sécurisés</span>
+                <strong class="stocks-stat-card__value">{{ sortedItems().filter(item => item.isSecure).length
+                    }}</strong>
+            </article>
+        </div>
+    </div>
+
+    <section class="stocks-shell">
+        <div class="tabs stocks-tabs">
             <button [class.active]="activeTab() === 'companies'" (click)="activeTab.set('companies')">
+                <i class="fa-solid fa-building" aria-hidden="true"></i>
                 Entreprises
             </button>
             <button [class.active]="activeTab() === 'storages'" (click)="activeTab.set('storages')">
+                <i class="fa-solid fa-boxes-stacked" aria-hidden="true"></i>
                 Stockage
             </button>
             <button [class.active]="activeTab() === 'items'" (click)="activeTab.set('items')">
+                <i class="fa-solid fa-cubes" aria-hidden="true"></i>
                 Items
             </button>
         </div>
 
         <!-- Entreprises -->
         @if (activeTab() === 'companies') {
-        <div class="tab-content">
-            <h3 class="text-center">Entreprises :</h3>
+        <div class="tab-content stocks-panel">
+            <div class="section-head">
+                <h3>Entreprises</h3>
+                <p>Référentiel des partenaires et prestataires.</p>
+            </div>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -28,9 +61,12 @@
                     <tr>
                         <td>{{ company.icon }} {{ company.name }}</td>
                         <td class="text-end">
-                            <button class="btn-icon" (click)="editCompany(company)" aria-label="Modifier">✏️</button>
-                            <button class="btn-icon danger" (click)="deleteCompany(company)"
-                                aria-label="Supprimer">🗑️</button>
+                            <button class="btn-icon" (click)="editCompany(company)" aria-label="Modifier">
+                                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                            </button>
+                            <button class="btn-icon danger" (click)="deleteCompany(company)" aria-label="Supprimer">
+                                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                            </button>
                         </td>
                     </tr>
                     } @empty {
@@ -41,15 +77,21 @@
                 </tbody>
             </table>
             <div class="actions-center">
-                <button class="btn btn-accent" (click)="newCompany()">Ajouter une entreprise</button>
+                <button class="btn btn-accent" (click)="newCompany()">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    Ajouter une entreprise
+                </button>
             </div>
         </div>
         }
 
         <!-- Stockages -->
         @if (activeTab() === 'storages') {
-        <div class="tab-content">
-            <h3 class="text-center">Stockages :</h3>
+        <div class="tab-content stocks-panel">
+            <div class="section-head">
+                <h3>Stockages</h3>
+                <p>Capacité maximale et suivi des espaces de stockage.</p>
+            </div>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -64,9 +106,12 @@
                         <td>{{ storage.icon }} {{ storage.name }}</td>
                         <td>{{ storage.maxWeight }} Kg</td>
                         <td class="text-end">
-                            <button class="btn-icon" (click)="editStorage(storage)" aria-label="Modifier">✏️</button>
-                            <button class="btn-icon danger" (click)="deleteStorage(storage)"
-                                aria-label="Supprimer">🗑️</button>
+                            <button class="btn-icon" (click)="editStorage(storage)" aria-label="Modifier">
+                                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                            </button>
+                            <button class="btn-icon danger" (click)="deleteStorage(storage)" aria-label="Supprimer">
+                                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                            </button>
                         </td>
                     </tr>
                     } @empty {
@@ -77,15 +122,21 @@
                 </tbody>
             </table>
             <div class="actions-center">
-                <button class="btn btn-accent" (click)="newStorage()">Ajouter un stockage</button>
+                <button class="btn btn-accent" (click)="newStorage()">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    Ajouter un stockage
+                </button>
             </div>
         </div>
         }
 
         <!-- Items -->
         @if (activeTab() === 'items') {
-        <div class="tab-content">
-            <h3 class="text-center">Items :</h3>
+        <div class="tab-content stocks-panel">
+            <div class="section-head">
+                <h3>Items</h3>
+                <p>Catalogue du matériel, fournisseurs et paramètres de commande.</p>
+            </div>
             <table class="data-table">
                 <thead>
                     <tr>
@@ -111,9 +162,12 @@
                         <td>{{ item.wanted }}</td>
                         <td>{{ item.maxOrder === 0 ? '♾️' : item.maxOrder }}</td>
                         <td class="text-end">
-                            <button class="btn-icon" (click)="editItem(item)" aria-label="Modifier">✏️</button>
-                            <button class="btn-icon danger" (click)="deleteItem(item)"
-                                aria-label="Supprimer">🗑️</button>
+                            <button class="btn-icon" (click)="editItem(item)" aria-label="Modifier">
+                                <i class="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                            </button>
+                            <button class="btn-icon danger" (click)="deleteItem(item)" aria-label="Supprimer">
+                                <i class="fa-solid fa-trash-can" aria-hidden="true"></i>
+                            </button>
                         </td>
                     </tr>
                     } @empty {
@@ -124,17 +178,20 @@
                 </tbody>
             </table>
             <div class="actions-center">
-                <button class="btn btn-accent" (click)="newItem()">Ajouter un item</button>
+                <button class="btn btn-accent" (click)="newItem()">
+                    <i class="fa-solid fa-plus" aria-hidden="true"></i>
+                    Ajouter un item
+                </button>
             </div>
         </div>
         }
-    </div>
+    </section>
 
     <!-- Dialog Entreprise -->
     @if (companyDialog()) {
     <div class="overlay" (click)="companyDialog.set(false)">
         <div class="dialog" (click)="$event.stopPropagation()">
-            <h3>{{ editingCompany()?.id ? 'Modifier' : 'Ajouter' }} une entreprise</h3>
+            <h3 class="dialog-title">{{ editingCompany()?.id ? 'Modifier' : 'Ajouter' }} une entreprise</h3>
             <label>Icone <input [(ngModel)]="editingCompany()!.icon" /></label>
             <label>Nom <input [(ngModel)]="editingCompany()!.name" /></label>
             <label class="toggle"><input type="checkbox" [(ngModel)]="editingCompany()!.canDestroy" /> Peut détruire le
@@ -154,7 +211,7 @@
     @if (storageDialog()) {
     <div class="overlay" (click)="storageDialog.set(false)">
         <div class="dialog" (click)="$event.stopPropagation()">
-            <h3>{{ editingStorage()?.id ? 'Modifier' : 'Ajouter' }} un stockage</h3>
+            <h3 class="dialog-title">{{ editingStorage()?.id ? 'Modifier' : 'Ajouter' }} un stockage</h3>
             <label>Icone <input [(ngModel)]="editingStorage()!.icon" /></label>
             <label>Nom <input [(ngModel)]="editingStorage()!.name" /></label>
             <label>Poids max (Kg) <input type="number" [(ngModel)]="editingStorage()!.maxWeight" /></label>
@@ -170,7 +227,7 @@
     @if (itemDialog()) {
     <div class="overlay" (click)="itemDialog.set(false)">
         <div class="dialog dialog-large" (click)="$event.stopPropagation()">
-            <h3>{{ editingItem()?.id ? 'Modifier' : 'Ajouter' }} un item</h3>
+            <h3 class="dialog-title">{{ editingItem()?.id ? 'Modifier' : 'Ajouter' }} un item</h3>
             <label>Icone <input [(ngModel)]="editingItem()!.icon" /></label>
             <label>Nom <input [(ngModel)]="editingItem()!.name" /></label>
             <label>Poids (Kg) <input type="number" [(ngModel)]="editingItem()!.weight" /></label>

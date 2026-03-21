@@ -23,6 +23,7 @@ export interface RadioDispatch {
   id: string;
   serie: string;
   effectif_id: string | null;
+  dernier_effectif_nom?: string | null;
   actif: boolean;
   categorie: string;
 }

@@ -126,7 +126,7 @@ export class AccueilPage implements OnDestroy {
 
   readonly filteredNavItems = computed(() => {
     const userPerms = this.perms();
-    const result: { titre: string; emoji: string; lien: string; notif: number }[] = [];
+    const result: { titre: string; icon: string; lien: string; notif: number }[] = [];
 
     for (const group of NAV_ITEMS) {
       for (const item of group) {
@@ -164,7 +164,7 @@ export class AccueilPage implements OnDestroy {
           if (item.lien === '/inventaire') notif = this.notif.storagesOutdated();
           if (item.lien === '/garage') notif = this.notif.garageNotif();
           if (item.lien === '/rh') notif = this.notif.rhNotif();
-          result.push({ titre: item.titre, emoji: item.emoji, lien: item.lien, notif });
+          result.push({ titre: item.titre, icon: item.icon, lien: item.lien, notif });
         }
       }
     }
