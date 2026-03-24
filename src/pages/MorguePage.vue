@@ -1,0 +1,278 @@
+<script setup lang="ts">
+import { onMounted, onUnmounted } from 'vue'
+import { useDispatch } from '@/composables/useDispatch'
+import { MORGUE_CONFIG } from '@/config/dispatch.config'
+
+const { etat, connecte, connecter, deconnecter, envoyerEtat } = useDispatch()
+
+onMounted(() => connecter())
+onUnmounted(() => deconnecter())
+
+function range(n: number): number[] {
+  return Array.from({ length: n }, (_, i) => i)
+}
+
+function majMorgue(section: string, numero: string, nom: string): void {
+  const e = { ...etat.value }
+  const morgue = { ...e.morgue }
+  const sectionData = { ...(morgue as unknown as Record<string, Record<string, string>>)[section] }
+  sectionData[numero] = nom
+  ;(morgue as unknown as Record<string, Record<string, string>>)[section] = sectionData
+  e.morgue = morgue
+  envoyerEtat(e)
+}
+</script>
+
+<template>
+  <div class="morgue-page">
+    <header class="page-header">
+      <h1>⚰️ Morgue</h1>
+      <span class="connexion-badge" :class="{ connecte }">
+        {{ connecte ? 'En ligne' : 'Hors ligne' }}
+      </span>
+    </header>
+
+    <div class="morgue-content">
+      <section class="morgue-section">
+        <h3 class="section-titre">Casiers mortuaires</h3>
+        <div class="morgue-grid">
+          <div
+            v-for="i in range(MORGUE_CONFIG.nombreCasiers)"
+            :key="'c' + i"
+            class="morgue-slot"
+            :class="{ occupe: etat.morgue.casiers['' + i] }"
+          >
+            <label>C-{{ i + 1 }}</label>
+            <input
+              type="text"
+              :value="etat.morgue.casiers['' + i] ?? ''"
+              placeholder="..."
+              @input="majMorgue('casiers', '' + i, ($event.target as HTMLInputElement).value)"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="morgue-section">
+        <h3 class="section-titre">Urnes</h3>
+        <div class="morgue-grid">
+          <div
+            v-for="i in range(MORGUE_CONFIG.nombreUrnes)"
+            :key="'u' + i"
+            class="morgue-slot"
+            :class="{ occupe: etat.morgue.urnes['' + i] }"
+          >
+            <label>U-{{ i + 1 }}</label>
+            <input
+              type="text"
+              :value="etat.morgue.urnes['' + i] ?? ''"
+              placeholder="..."
+              @input="majMorgue('urnes', '' + i, ($event.target as HTMLInputElement).value)"
+            />
+          </div>
+        </div>
+      </section>
+
+      <section class="morgue-section">
+        <h3 class="section-titre">Enterrements</h3>
+        <div class="morgue-grid">
+          <div
+            v-for="i in range(MORGUE_CONFIG.nombreEnterrements)"
+            :key="'e' + i"
+            class="morgue-slot"
+            :class="{ occupe: etat.morgue.enterrements['' + i] }"
+          >
+            <label>E-{{ i + 1 }}</label>
+            <input
+              type="text"
+              :value="etat.morgue.enterrements['' + i] ?? ''"
+              placeholder="..."
+              @input="majMorgue('enterrements', '' + i, ($event.target as HTMLInputElement).value)"
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
+
+<style lang="scss" scoped>
+.morgue-page {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+  overflow-y: auto;
+}
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid rgba(198, 220, 237, 0.14);
+  border-radius: 22px;
+  background: rgba(10, 22, 34, 0.72);
+  backdrop-filter: blur(12px);
+  h1 {
+    margin: 0;
+    font-size: clamp(1.25rem, 1.05rem + 0.8vw, 1.9rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--text-primary);
+  }
+}
+.connexion-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.1rem;
+  padding: 0.3rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 120, 120, 0.2);
+  background: rgba(140, 33, 51, 0.28);
+  color: #ffd4da;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  &::before {
+    content: '';
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 50%;
+    background: currentColor;
+    box-shadow: 0 0 0 4px rgba(255, 107, 107, 0.16);
+  }
+  &.connecte {
+    border-color: rgba(88, 212, 159, 0.26);
+    background: rgba(14, 95, 61, 0.28);
+    color: #9ef1c6;
+    &::before {
+      box-shadow: 0 0 0 4px rgba(45, 212, 191, 0.18);
+    }
+  }
+}
+.morgue-section {
+  position: relative;
+  overflow: hidden;
+  padding: 1rem;
+  border-radius: 22px;
+  border: 1px solid rgba(198, 220, 237, 0.14);
+  background: rgba(10, 22, 34, 0.68);
+  backdrop-filter: blur(10px);
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 24%);
+    pointer-events: none;
+  }
+}
+.section-titre {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2rem;
+  margin-bottom: 0.9rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid rgba(116, 193, 255, 0.18);
+  background: rgba(27, 65, 92, 0.62);
+  color: #d9eeff;
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+.morgue-grid {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.7rem;
+}
+.morgue-slot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-height: 92px;
+  padding: 0.75rem 0.7rem;
+  border-radius: 18px;
+  border: 1px solid rgba(194, 217, 234, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  transition:
+    transform 0.18s ease,
+    border-color 0.18s ease,
+    background 0.18s ease;
+  &:hover {
+    transform: translateY(-2px);
+    border-color: rgba(116, 193, 255, 0.24);
+    background: rgba(255, 255, 255, 0.08);
+  }
+  &:focus-within {
+    border-color: rgba(116, 193, 255, 0.42);
+    background: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 0 0 4px rgba(71, 149, 216, 0.12);
+  }
+  &.occupe {
+    border-color: rgba(240, 109, 129, 0.26);
+    background: linear-gradient(180deg, rgba(126, 29, 46, 0.3), rgba(255, 255, 255, 0.05));
+  }
+  label {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    align-self: center;
+    min-width: 3.25rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    font-size: 0.62rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  input {
+    flex: 1;
+    min-height: 2.6rem;
+    padding: 0.55rem 0.6rem;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.14);
+    color: var(--text-primary);
+    text-align: center;
+    font-size: 0.8rem;
+    font-weight: 700;
+    &::placeholder {
+      color: var(--text-muted);
+    }
+    &:focus {
+      border-color: rgba(116, 193, 255, 0.36);
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+}
+@media (max-width: 720px) {
+  .morgue-page {
+    padding: 1rem;
+  }
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .morgue-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 480px) {
+  .morgue-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
