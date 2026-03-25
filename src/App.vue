@@ -18,6 +18,8 @@ const hideNav = () => route.name === 'connexion' || route.name === 'maintenance'
 @import '@fortawesome/fontawesome-free/css/all.min.css';
 
 #app {
+  --topbar-height: 48px;
+
   display: flex;
   flex-direction: column;
   height: 100dvh;

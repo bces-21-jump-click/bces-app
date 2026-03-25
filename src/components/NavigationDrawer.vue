@@ -225,7 +225,9 @@ watch(
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.6rem 1rem;
+  height: var(--topbar-height, 48px);
+  box-sizing: border-box;
+  padding: 0 1rem;
   background: color-mix(in srgb, var(--surface) 82%, var(--brand-deep) 18%);
   border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);

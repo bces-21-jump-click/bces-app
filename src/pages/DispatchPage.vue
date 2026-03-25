@@ -1,6 +1,6 @@
 <script setup lang="ts">
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useCollection } from '@/composables/useFirestore'
 import { useDispatch } from '@/composables/useDispatch'
 import { useFormation } from '@/composables/useFormation'
@@ -11,12 +11,13 @@ import type {
   EffectifPatate,
   EntreeCrise,
   RadioDispatch,
+  EtatDispatch,
 } from '@/models/dispatch'
 import {
   CATEGORIES,
   TYPES_INTERVENTION,
   STATUTS_RETOUR,
-  ROLES_CENTRAL,
+  STATUTS_HOPITAL_INTER,
   STATUTS_HOPITAL,
   COMPLEMENTS,
   APPARTENANCES_CRISE,
@@ -37,7 +38,11 @@ let timerStatutsServices: ReturnType<typeof setInterval> | null = null
 const categories = CATEGORIES
 const typesIntervention = TYPES_INTERVENTION
 const statutsRetour = STATUTS_RETOUR
-const rolesCentral = ROLES_CENTRAL
+const statutsHopitalInter = STATUTS_HOPITAL_INTER
+
+function statutsPourType(type: string) {
+  return type === 'hopital' ? statutsHopitalInter : statutsRetour
+}
 const statutsHopital = STATUTS_HOPITAL
 const complements = COMPLEMENTS
 const appartenances = APPARTENANCES_CRISE
@@ -374,6 +379,13 @@ function couleurEtatLses(): string {
       return '#ffe4b8'
   }
 }
+
+function couleurCategorie(catId: string): string {
+  return categories.find((c) => c.id === catId)?.couleur ?? '#9e9e9e'
+}
+function obtenirCategorie(catId: string) {
+  return categories.find((c) => c.id === catId)
+}
 function couleurFondSafd(): string {
   return etatSafdNormalise() === 'disponibles'
     ? 'linear-gradient(180deg, #1f5f3f, #184e34)'
@@ -609,11 +621,17 @@ function onDropIntervention(event: DragEvent, index: number): void {
   envoyerEtat(e)
   dragData = null
 }
+function desactiverRadiosEffectif(e: EtatDispatch, effectifId: string): void {
+  e.radios = e.radios.map((r) => (r.effectif_id === effectifId ? { ...r, actif: false } : r))
+}
 function onDropHorsService(event: DragEvent): void {
   event.preventDefault()
   if (!dragData) return
-  retirerEffectifDeTout(dragData.id)
-  envoyerEtat(etat.value)
+  const id = dragData.id
+  retirerEffectifDeTout(id)
+  const e = { ...etat.value }
+  desactiverRadiosEffectif(e, id)
+  envoyerEtat(e)
   dragData = null
 }
 
@@ -632,7 +650,13 @@ function ajouterIntervention(): void {
 }
 function supprimerIntervention(index: number): void {
   const e = { ...etat.value }
+  const inter = e.interventions[index]
+  const effectifsARemettreEnService = new Set(inter?.effectifs ?? [])
   e.interventions = e.interventions.filter((_, i) => i !== index)
+  e.patates = [
+    ...e.patates.filter((p) => !effectifsARemettreEnService.has(p.id)),
+    ...Array.from(effectifsARemettreEnService).map((id) => ({ id, categorie: 'en_service' })),
+  ]
   envoyerEtat(e)
 }
 function majInterventionChamp(index: number, champ: string, valeur: string): void {
@@ -658,6 +682,12 @@ function resetAffectations(): void {
 }
 
 // ── Centrale ──
+function resetCentrale(): void {
+  const e = { ...etat.value }
+  e.centrale = { ...e.centrale, type: '', statut_retour: '', lieu: '', complement: '' }
+  envoyerEtat(e)
+}
+
 function majCentraleChamp(champ: string, valeur: string): void {
   const e = { ...etat.value }
   e.centrale = { ...e.centrale, [champ]: valeur }
@@ -742,24 +772,14 @@ function trouverLabelType(id: string): string {
   return typesIntervention.find((t) => t.id === id)?.emoji ?? ''
 }
 function trouverLabelStatut(id: string): string {
-  return statutsRetour.find((s) => s.id === id)?.label ?? ''
+  return (
+    statutsRetour.find((s) => s.id === id)?.label ??
+    statutsHopitalInter.find((s) => s.id === id)?.label ??
+    ''
+  )
 }
 function couleurTypeIntervention(type: string): string {
-  const m: Record<string, string> = {
-    intervention: '#2e7d32',
-    primo_inter: '#d9480f',
-    patrouille: '#1565c0',
-    event: '#8e24aa',
-    rdv: '#00897b',
-    psy: '#6a1b9a',
-    otage: '#c62828',
-    bureau_admin: '#546e7a',
-    formation: '#ef6c00',
-    operation: '#5d4037',
-    vm: '#00838f',
-    hopital: '#7b1fa2',
-  }
-  return m[type] ?? 'var(--dispatch-card-border)'
+  return typesIntervention.find((t) => t.id === type)?.couleur ?? 'var(--dispatch-card-border)'
 }
 function fondTypeIntervention(type: string): string {
   const c = couleurTypeIntervention(type)
@@ -768,17 +788,11 @@ function fondTypeIntervention(type: string): string {
     : `color-mix(in srgb, var(--dispatch-card-bg) 90%, ${c} 10%)`
 }
 function couleurStatutRetour(statut: string): string {
-  const m: Record<string, string> = {
-    pat: '#2e7d32',
-    retour_0: '#1565c0',
-    retour_1: '#00897b',
-    retour_2: '#ef6c00',
-    retour_3: '#c62828',
-    bennys: '#6d4c41',
-    zombie_car: '#455a64',
-    airbaged: '#8d6e63',
-  }
-  return m[statut] ?? 'var(--input-border)'
+  return (
+    statutsRetour.find((s) => s.id === statut)?.couleur ??
+    statutsHopitalInter.find((s) => s.id === statut)?.couleur ??
+    'var(--input-border)'
+  )
 }
 function fondStatutRetour(statut: string): string {
   const c = couleurStatutRetour(statut)
@@ -832,7 +846,7 @@ function roleColor(role: string): string {
 }
 
 const centraleEffectifs = computed<EffectifEnrichi[]>(() => {
-  return trierIdsEffectifs(etat.value.centrale.effectifs)
+  return etat.value.centrale.effectifs
     .map((id) => obtenirEffectif(id))
     .filter((e): e is Effectif => !!e)
     .map(enrichirEffectif)
@@ -884,6 +898,14 @@ const effectifsByCategory = computed<Record<string, EffectifEnrichi[]>>(() => {
   return result
 })
 
+const SEUIL_EXPANSION_STATUS = 8
+const statusGridAutoExpand = computed(() => {
+  const categoriesAvecExpansion = ['pause', 'astreinte', 'conges', 'ipt', 'fin_service']
+  return categoriesAvecExpansion.some(
+    (catId) => (effectifsByCategory.value[catId]?.length ?? 0) > SEUIL_EXPANSION_STATUS,
+  )
+})
+
 function onDrop(event: DragEvent, target: string): void {
   if (target === 'centrale') {
     onDropCentrale(event)
@@ -924,6 +946,10 @@ function removeCrise(index: number): void {
 }
 function addCrise(): void {
   ajouterCrise()
+  nextTick(() => {
+    const appContent = document.querySelector('.app-content')
+    if (appContent) appContent.scrollTop = appContent.scrollHeight
+  })
 }
 
 // ── Lifecycle ──
@@ -954,12 +980,12 @@ onUnmounted(() => {
         <div
           class="centrale-card"
           :style="{
-            borderTopColor: couleurTypeIntervention(etat.centrale.type),
+            borderLeftColor: couleurTypeIntervention(etat.centrale.type),
             background: fondTypeIntervention(etat.centrale.type),
           }"
         >
           <div class="card-title card-title--centrale">
-            <span class="card-title-icon">📡</span>
+            <i class="fa-solid fa-tower-broadcast card-title-icon" aria-hidden="true"></i>
             <span>Centrale</span>
           </div>
           <div class="card-selects">
@@ -977,22 +1003,32 @@ onUnmounted(() => {
                 {{ t.emoji }} {{ t.label }}
               </option>
             </select>
-            <select
-              class="select-statut"
-              :style="{
-                borderColor: couleurStatutRetour(etat.centrale.statut_retour),
-                background: fondStatutRetour(etat.centrale.statut_retour),
-              }"
-              :value="etat.centrale.statut_retour"
-              @change="
-                majCentraleChamp('statut_retour', ($event.target as HTMLSelectElement).value)
-              "
-            >
-              <option value="">Statut...</option>
-              <option v-for="s in statutsRetour" :key="s.id" :value="s.id">
-                {{ s.label }}
-              </option>
-            </select>
+            <div class="status-action-row">
+              <select
+                class="select-statut"
+                :style="{
+                  borderColor: couleurStatutRetour(etat.centrale.statut_retour),
+                  background: fondStatutRetour(etat.centrale.statut_retour),
+                }"
+                :value="etat.centrale.statut_retour"
+                @change="
+                  majCentraleChamp('statut_retour', ($event.target as HTMLSelectElement).value)
+                "
+              >
+                <option value="">Statut...</option>
+                <option v-for="s in statutsPourType(etat.centrale.type)" :key="s.id" :value="s.id">
+                  {{ s.emoji }} {{ s.label }}
+                </option>
+              </select>
+              <button
+                class="btn-suppr btn-suppr--inline"
+                type="button"
+                @click="resetCentrale()"
+                aria-label="Réinitialiser centrale"
+              >
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i>
+              </button>
+            </div>
             <div class="location-pair">
               <input
                 type="text"
@@ -1011,7 +1047,7 @@ onUnmounted(() => {
             </div>
           </div>
           <div class="drop-zone" @dragover="onDragOver($event)" @drop="onDropCentrale($event)">
-            <div class="effectif-cards-grid">
+            <div v-if="etat.centrale.effectifs.length > 0" class="effectif-cards-grid">
               <div
                 v-for="eff in centraleEffectifs"
                 :key="eff.id"
@@ -1055,22 +1091,10 @@ onUnmounted(() => {
           :key="'inter-' + i"
           class="intervention-card"
           :style="{
-            borderTopColor: couleurTypeIntervention(inter.type),
+            borderLeftColor: couleurTypeIntervention(inter.type),
             background: fondTypeIntervention(inter.type),
           }"
         >
-          <div class="card-title-row">
-            <span class="card-title"
-              >{{ trouverLabelType(inter.type) }} Intervention {{ i + 1 }}</span
-            >
-            <button
-              class="btn-suppr"
-              @click="supprimerIntervention(i)"
-              aria-label="Supprimer intervention"
-            >
-              ✕
-            </button>
-          </div>
           <div class="card-selects">
             <select
               class="select-type"
@@ -1085,22 +1109,35 @@ onUnmounted(() => {
                 {{ t.emoji }} {{ t.label }}
               </option>
             </select>
-            <select
-              class="select-statut"
-              :style="{
-                borderColor: couleurStatutRetour(inter.statut_retour),
-                background: fondStatutRetour(inter.statut_retour),
-              }"
-              :value="inter.statut_retour"
-              @change="
-                majInterventionChamp(i, 'statut_retour', ($event.target as HTMLSelectElement).value)
-              "
-            >
-              <option value="">Statut...</option>
-              <option v-for="s in statutsRetour" :key="s.id" :value="s.id">
-                {{ s.label }}
-              </option>
-            </select>
+            <div class="status-action-row">
+              <select
+                class="select-statut"
+                :style="{
+                  borderColor: couleurStatutRetour(inter.statut_retour),
+                  background: fondStatutRetour(inter.statut_retour),
+                }"
+                :value="inter.statut_retour"
+                @change="
+                  majInterventionChamp(
+                    i,
+                    'statut_retour',
+                    ($event.target as HTMLSelectElement).value,
+                  )
+                "
+              >
+                <option value="">Statut...</option>
+                <option v-for="s in statutsPourType(inter.type)" :key="s.id" :value="s.id">
+                  {{ s.emoji }} {{ s.label }}
+                </option>
+              </select>
+              <button
+                class="btn-suppr btn-suppr--inline"
+                @click="supprimerIntervention(i)"
+                aria-label="Supprimer intervention"
+              >
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
+              </button>
+            </div>
             <div class="location-pair">
               <input
                 type="text"
@@ -1125,7 +1162,7 @@ onUnmounted(() => {
             @dragover="onDragOver($event)"
             @drop="onDropIntervention($event, i)"
           >
-            <div class="effectif-cards-grid">
+            <div v-if="inter.effectifs.length > 0" class="effectif-cards-grid">
               <div
                 v-for="eff in obtenirEffectifsIntervention(i)"
                 :key="eff.id"
@@ -1157,7 +1194,12 @@ onUnmounted(() => {
                 </div>
               </div>
             </div>
-            <div v-if="inter.effectifs.length === 0" class="drop-placeholder">Déposer ici</div>
+            <div
+              v-if="inter.effectifs.length === 0"
+              class="drop-placeholder drop-placeholder--urgent"
+            >
+              A PRENDRE
+            </div>
           </div>
         </div>
 
@@ -1166,408 +1208,442 @@ onUnmounted(() => {
 
       <!-- ===== COL 2: STATUTS ===== -->
       <section class="column column-patate">
-        <div class="section-header section-header--status">
-          <div class="section-header-tools">
-            <div class="section-header-radios" aria-label="Fréquences radio">
-              <div class="freq-group freq-group--inline freq-group--bces">
-                <label
-                  ><i class="fa-solid fa-radio freq-label__icon" aria-hidden="true"></i>BCES:</label
-                >
-                <input
-                  type="text"
-                  :value="state.freq_bces"
-                  @input="updateState('freq_bces', ($event.target as HTMLInputElement).value)"
-                  placeholder="--"
-                  class="freq-input freq-input--inline"
-                  aria-label="Radio BCES"
-                />
-              </div>
-              <div class="freq-group freq-group--inline freq-group--commune">
-                <label
-                  ><i class="fa-solid fa-signal freq-label__icon" aria-hidden="true"></i
-                  >Commune:</label
-                >
-                <input
-                  type="text"
-                  :value="state.freq_commune"
-                  @input="updateState('freq_commune', ($event.target as HTMLInputElement).value)"
-                  placeholder="--"
-                  class="freq-input freq-input--inline"
-                  aria-label="Radio commune"
-                />
-              </div>
-            </div>
-            <div class="section-header-hospital">
-              <div
-                class="freq-group freq-group--chip freq-group--chip-clickable service-chip service-chip--bces"
-                :style="{ '--hopital-color': couleurStatutHopital() }"
-                @click="ouvrirSelectHopital($event)"
-              >
-                <span class="service-chip__badge">BCES</span>
-                <div class="service-chip__value">
-                  <select
-                    ref="hopitalSelectRef"
-                    class="hopital-select"
-                    :value="etat.statut_hopital"
-                    @change="majStatutHopital(($event.target as HTMLSelectElement).value)"
-                    @click.stop
+        <div class="patate-layout">
+          <div class="patate-main">
+            <div class="section-header section-header--status">
+              <div class="section-header-tools">
+                <div class="section-header-radios" aria-label="Fréquences radio">
+                  <div class="freq-group freq-group--inline freq-group--bces">
+                    <label
+                      ><i class="fa-solid fa-radio freq-label__icon" aria-hidden="true"></i
+                      >BCES:</label
+                    >
+                    <input
+                      type="text"
+                      :value="state.freq_bces"
+                      @input="updateState('freq_bces', ($event.target as HTMLInputElement).value)"
+                      placeholder="--"
+                      class="freq-input freq-input--inline"
+                      aria-label="Radio BCES"
+                    />
+                  </div>
+                  <div class="freq-group freq-group--inline freq-group--commune">
+                    <label
+                      ><i class="fa-solid fa-signal freq-label__icon" aria-hidden="true"></i
+                      >Commune:</label
+                    >
+                    <input
+                      type="text"
+                      :value="state.freq_commune"
+                      @input="
+                        updateState('freq_commune', ($event.target as HTMLInputElement).value)
+                      "
+                      placeholder="--"
+                      class="freq-input freq-input--inline"
+                      aria-label="Radio commune"
+                    />
+                  </div>
+                </div>
+                <div class="section-header-hospital">
+                  <div
+                    class="freq-group freq-group--chip freq-group--chip-clickable service-chip service-chip--bces"
+                    :style="{ '--hopital-color': couleurStatutHopital() }"
+                    @click="ouvrirSelectHopital($event)"
                   >
-                    <option v-for="s in statutsHopital" :key="s.id" :value="s.id">
-                      {{ s.label }}
-                    </option>
-                  </select>
+                    <span class="service-chip__badge">BCES</span>
+                    <div class="service-chip__value">
+                      <select
+                        ref="hopitalSelectRef"
+                        class="hopital-select"
+                        :value="etat.statut_hopital"
+                        @change="majStatutHopital(($event.target as HTMLSelectElement).value)"
+                        @click.stop
+                      >
+                        <option v-for="s in statutsHopital" :key="s.id" :value="s.id">
+                          {{ s.label }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+                <div class="section-header-service section-header-service--safd">
+                  <div
+                    class="freq-group freq-group--chip service-chip service-chip--safd"
+                    aria-label="Statut service SAFD"
+                    :style="{ '--hopital-color': couleurBordSafd() }"
+                  >
+                    <span class="service-chip__badge">SAFD</span>
+                    <span class="service-chip__value">{{ statutSafd }}</span>
+                  </div>
+                </div>
+                <div class="section-header-service section-header-service--lses">
+                  <div
+                    class="freq-group freq-group--chip service-chip service-chip--lses"
+                    aria-label="Statut service LSES"
+                    :style="{ '--hopital-color': couleurBordLses() }"
+                  >
+                    <span class="service-chip__badge">LSES</span>
+                    <a
+                      class="service-chip__value service-chip__value--link"
+                      href="https://lses-inventory.web.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label="Ouvrir LSES Inventory dans un nouvel onglet"
+                    >
+                      <span>{{ statutLses }}</span>
+                      <i
+                        class="fa-solid fa-arrow-up-right-from-square service-chip__icon"
+                        aria-hidden="true"
+                      ></i>
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
-            <div class="section-header-service section-header-service--safd">
-              <div
-                class="freq-group freq-group--chip service-chip service-chip--safd"
-                aria-label="Statut service SAFD"
-                :style="{ '--hopital-color': couleurBordSafd() }"
-              >
-                <span class="service-chip__badge">SAFD</span>
-                <span class="service-chip__value">{{ statutSafd }}</span>
-              </div>
-            </div>
-            <div class="section-header-service section-header-service--lses">
-              <div
-                class="freq-group freq-group--chip service-chip service-chip--lses"
-                aria-label="Statut service LSES"
-                :style="{ '--hopital-color': couleurBordLses() }"
-              >
-                <span class="service-chip__badge">LSES</span>
-                <a
-                  class="service-chip__value service-chip__value--link"
-                  href="https://lses-inventory.web.app/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Ouvrir LSES Inventory dans un nouvel onglet"
-                >
-                  <span>{{ statutLses }}</span>
-                  <i
-                    class="fa-solid fa-arrow-up-right-from-square service-chip__icon"
-                    aria-hidden="true"
-                  ></i>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
 
-        <div class="status-grid">
-          <!-- En service -->
-          <div
-            class="status-zone status-en-service"
-            @dragover="onDragOver($event)"
-            @drop="onDrop($event, 'en_service')"
-          >
-            <div class="zone-header" style="border-color: #2e7d32">
-              <span class="zone-header__label">🟢 En service</span>
-              <span class="zone-header__count">{{ nombreEnServiceTotal }}</span>
-            </div>
-            <div class="effectif-cards-grid">
+            <div class="status-grid" :class="{ 'status-grid--auto-expand': statusGridAutoExpand }">
+              <!-- En service -->
               <div
-                v-for="eff in effectifsByCategory['en_service']"
-                :key="eff.id"
-                class="effectif-card"
-                :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
-                draggable="true"
-                @dragstart="onDragStart($event, eff.id ?? '', 'patate')"
-                :style="{
-                  borderLeftColor: roleColor(eff.role),
-                  '--role-color': roleColor(eff.role),
-                }"
+                class="status-zone status-en-service"
+                @dragover="onDragOver($event)"
+                @drop="onDrop($event, 'en_service')"
               >
-                <div class="effectif-card__top">
-                  <span class="effectif-grip" aria-hidden="true">⠿</span>
-                  <span class="effectif-emoji">{{ eff.emoji }}</span>
-                  <span class="effectif-nom">{{ nomTuile(eff) }}</span>
+                <div class="zone-header" :style="{ borderColor: couleurCategorie('en_service') }">
+                  <span class="zone-header__label"
+                    >{{ obtenirCategorie('en_service')?.emoji }}
+                    {{ obtenirCategorie('en_service')?.label }}</span
+                  >
+                  <span class="zone-header__count">{{ nombreEnServiceTotal }}</span>
                 </div>
-                <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
-                <div v-if="eff.specialties.length" class="effectif-card__specs">
-                  <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
+                <div class="effectif-cards-grid">
+                  <div
+                    v-for="eff in effectifsByCategory['en_service']"
+                    :key="eff.id"
+                    class="effectif-card"
+                    :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
+                    draggable="true"
+                    @dragstart="onDragStart($event, eff.id ?? '', 'patate')"
+                    :style="{
+                      borderLeftColor: roleColor(eff.role),
+                      '--role-color': roleColor(eff.role),
+                    }"
+                  >
+                    <div class="effectif-card__top">
+                      <span class="effectif-grip" aria-hidden="true">⠿</span>
+                      <span class="effectif-emoji">{{ eff.emoji }}</span>
+                      <span class="effectif-nom">{{ nomTuile(eff) }}</span>
+                    </div>
+                    <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
+                    <div v-if="eff.specialties.length" class="effectif-card__specs">
+                      <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
+                    </div>
+                    <div v-if="eff.validations.length" class="effectif-card__validations">
+                      <span v-for="v in eff.validations" :key="v">{{ v }}</span>
+                    </div>
+                    <div class="effectif-card__meta">
+                      <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
+                        eff.role
+                      }}</span>
+                    </div>
+                  </div>
                 </div>
-                <div v-if="eff.validations.length" class="effectif-card__validations">
-                  <span v-for="v in eff.validations" :key="v">{{ v }}</span>
-                </div>
-                <div class="effectif-card__meta">
-                  <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
-                    eff.role
+              </div>
+
+              <!-- Pause -->
+              <div
+                class="status-zone status-pause"
+                @dragover="onDragOver($event)"
+                @drop="onDrop($event, 'pause')"
+              >
+                <div class="zone-header-small" :style="{ borderColor: couleurCategorie('pause') }">
+                  <span class="zone-header__label"
+                    >{{ obtenirCategorie('pause')?.emoji }}
+                    {{ obtenirCategorie('pause')?.label }}</span
+                  >
+                  <span class="zone-header__count">{{
+                    effectifsByCategory['pause']?.length ?? 0
                   }}</span>
                 </div>
+                <div class="effectif-cards-grid">
+                  <div
+                    v-for="eff in effectifsByCategory['pause']"
+                    :key="eff.id"
+                    class="effectif-card small"
+                    :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
+                    draggable="true"
+                    @dragstart="onDragStart($event, eff.id ?? '', 'patate-pause')"
+                    :style="{
+                      borderLeftColor: roleColor(eff.role),
+                      '--role-color': roleColor(eff.role),
+                    }"
+                  >
+                    <div class="effectif-card__top">
+                      <span class="effectif-grip" aria-hidden="true">⠿</span>
+                      <span class="effectif-emoji">{{ eff.emoji }}</span>
+                      <span class="effectif-nom">{{ nomTuile(eff) }}</span>
+                    </div>
+                    <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
+                    <div v-if="eff.specialties.length" class="effectif-card__specs">
+                      <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
+                    </div>
+                    <div v-if="eff.validations.length" class="effectif-card__validations">
+                      <span v-for="v in eff.validations" :key="v">{{ v }}</span>
+                    </div>
+                    <div class="effectif-card__meta">
+                      <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
+                        eff.role
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Astreinte -->
+              <div
+                class="status-zone status-astreinte"
+                @dragover="onDragOver($event)"
+                @drop="onDrop($event, 'astreinte')"
+              >
+                <div
+                  class="zone-header-small"
+                  :style="{ borderColor: couleurCategorie('astreinte') }"
+                >
+                  <span class="zone-header__label"
+                    >{{ obtenirCategorie('astreinte')?.emoji }}
+                    {{ obtenirCategorie('astreinte')?.label }}</span
+                  >
+                  <span class="zone-header__count">{{
+                    effectifsByCategory['astreinte']?.length ?? 0
+                  }}</span>
+                </div>
+                <div class="effectif-cards-grid">
+                  <div
+                    v-for="eff in effectifsByCategory['astreinte']"
+                    :key="eff.id"
+                    class="effectif-card small"
+                    :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
+                    draggable="true"
+                    @dragstart="onDragStart($event, eff.id ?? '', 'patate-astreinte')"
+                    :style="{
+                      borderLeftColor: roleColor(eff.role),
+                      '--role-color': roleColor(eff.role),
+                    }"
+                  >
+                    <div class="effectif-card__top">
+                      <span class="effectif-grip" aria-hidden="true">⠿</span>
+                      <span class="effectif-emoji">{{ eff.emoji }}</span>
+                      <span class="effectif-nom">{{ nomTuile(eff) }}</span>
+                    </div>
+                    <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
+                    <div v-if="eff.specialties.length" class="effectif-card__specs">
+                      <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
+                    </div>
+                    <div v-if="eff.validations.length" class="effectif-card__validations">
+                      <span v-for="v in eff.validations" :key="v">{{ v }}</span>
+                    </div>
+                    <div class="effectif-card__meta">
+                      <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
+                        eff.role
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Congés -->
+              <div
+                class="status-zone status-conges"
+                @dragover="onDragOver($event)"
+                @drop="onDrop($event, 'conges')"
+              >
+                <div class="zone-header-small" :style="{ borderColor: couleurCategorie('conges') }">
+                  <span class="zone-header__label"
+                    >{{ obtenirCategorie('conges')?.emoji }}
+                    {{ obtenirCategorie('conges')?.label }}</span
+                  >
+                  <span class="zone-header__count">{{
+                    effectifsByCategory['conges']?.length ?? 0
+                  }}</span>
+                </div>
+                <div class="effectif-cards-grid">
+                  <div
+                    v-for="eff in effectifsByCategory['conges']"
+                    :key="eff.id"
+                    class="effectif-card small"
+                    :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
+                    draggable="true"
+                    @dragstart="onDragStart($event, eff.id ?? '', 'patate-conges')"
+                    :style="{
+                      borderLeftColor: roleColor(eff.role),
+                      '--role-color': roleColor(eff.role),
+                    }"
+                  >
+                    <div class="effectif-card__top">
+                      <span class="effectif-grip" aria-hidden="true">⠿</span>
+                      <span class="effectif-emoji">{{ eff.emoji }}</span>
+                      <span class="effectif-nom">{{ nomTuile(eff) }}</span>
+                    </div>
+                    <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
+                    <div v-if="eff.specialties.length" class="effectif-card__specs">
+                      <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
+                    </div>
+                    <div v-if="eff.validations.length" class="effectif-card__validations">
+                      <span v-for="v in eff.validations" :key="v">{{ v }}</span>
+                    </div>
+                    <div class="effectif-card__meta">
+                      <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
+                        eff.role
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- IPT -->
+              <div
+                class="status-zone status-ipt"
+                @dragover="onDragOver($event)"
+                @drop="onDrop($event, 'ipt')"
+              >
+                <div class="zone-header-small" :style="{ borderColor: couleurCategorie('ipt') }">
+                  <span class="zone-header__label"
+                    >{{ obtenirCategorie('ipt')?.emoji }} {{ obtenirCategorie('ipt')?.label }}</span
+                  >
+                  <span class="zone-header__count">{{
+                    effectifsByCategory['ipt']?.length ?? 0
+                  }}</span>
+                </div>
+                <div class="effectif-cards-grid">
+                  <div
+                    v-for="eff in effectifsByCategory['ipt']"
+                    :key="eff.id"
+                    class="effectif-card small"
+                    :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
+                    draggable="true"
+                    @dragstart="onDragStart($event, eff.id ?? '', 'patate-ipt')"
+                    :style="{
+                      borderLeftColor: roleColor(eff.role),
+                      '--role-color': roleColor(eff.role),
+                    }"
+                  >
+                    <div class="effectif-card__top">
+                      <span class="effectif-grip" aria-hidden="true">⠿</span>
+                      <span class="effectif-emoji">{{ eff.emoji }}</span>
+                      <span class="effectif-nom">{{ nomTuile(eff) }}</span>
+                    </div>
+                    <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
+                    <div v-if="eff.specialties.length" class="effectif-card__specs">
+                      <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
+                    </div>
+                    <div v-if="eff.validations.length" class="effectif-card__validations">
+                      <span v-for="v in eff.validations" :key="v">{{ v }}</span>
+                    </div>
+                    <div class="effectif-card__meta">
+                      <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
+                        eff.role
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Fin de service -->
+              <div
+                class="status-zone status-fin-service"
+                @dragover="onDragOver($event)"
+                @drop="onDrop($event, 'fin_service')"
+              >
+                <div
+                  class="zone-header-small"
+                  :style="{ borderColor: couleurCategorie('fin_service') }"
+                >
+                  <span class="zone-header__label"
+                    >{{ obtenirCategorie('fin_service')?.emoji }}
+                    {{ obtenirCategorie('fin_service')?.label }}</span
+                  >
+                  <span class="zone-header__count">{{
+                    effectifsByCategory['fin_service']?.length ?? 0
+                  }}</span>
+                </div>
+                <div class="effectif-cards-grid">
+                  <div
+                    v-for="eff in effectifsByCategory['fin_service']"
+                    :key="eff.id"
+                    class="effectif-card small"
+                    :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
+                    draggable="true"
+                    @dragstart="onDragStart($event, eff.id ?? '', 'patate-fin_service')"
+                    :style="{
+                      borderLeftColor: roleColor(eff.role),
+                      '--role-color': roleColor(eff.role),
+                    }"
+                  >
+                    <div class="effectif-card__top">
+                      <span class="effectif-grip" aria-hidden="true">⠿</span>
+                      <span class="effectif-emoji">{{ eff.emoji }}</span>
+                      <span class="effectif-nom">{{ nomTuile(eff) }}</span>
+                    </div>
+                    <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
+                    <div v-if="eff.specialties.length" class="effectif-card__specs">
+                      <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
+                    </div>
+                    <div v-if="eff.validations.length" class="effectif-card__validations">
+                      <span v-for="v in eff.validations" :key="v">{{ v }}</span>
+                    </div>
+                    <div class="effectif-card__meta">
+                      <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
+                        eff.role
+                      }}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
 
-          <!-- Hors service -->
-          <div
-            class="status-zone status-hors-service"
-            @dragover="onDragOver($event)"
-            @drop="onDrop($event, 'hors_service')"
-          >
-            <div class="zone-header" style="border-color: #6b7280">
-              <span class="zone-header__label">Hors service</span>
+          <!-- Hors service (sidebar) -->
+          <div class="patate-sidebar">
+            <div class="section-header section-header--sidebar">
+              <span>Hors service</span>
               <span class="zone-header__count">{{
                 effectifsByCategory['hors_service']?.length ?? 0
               }}</span>
             </div>
-            <div class="effectif-cards-grid">
-              <div
-                v-for="eff in effectifsByCategory['hors_service']"
-                :key="eff.id"
-                class="effectif-card"
-                :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
-                draggable="true"
-                @dragstart="onDragStart($event, eff.id ?? '', 'hors-service')"
-                :style="{
-                  borderLeftColor: roleColor(eff.role),
-                  '--role-color': roleColor(eff.role),
-                }"
-              >
-                <div class="effectif-card__top">
-                  <span class="effectif-grip" aria-hidden="true">⠿</span>
-                  <span class="effectif-emoji">{{ eff.emoji }}</span>
-                  <span class="effectif-nom">{{ nomTuile(eff) }}</span>
-                </div>
-                <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
-                <div v-if="eff.specialties.length" class="effectif-card__specs">
-                  <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
-                </div>
-                <div v-if="eff.validations.length" class="effectif-card__validations">
-                  <span v-for="v in eff.validations" :key="v">{{ v }}</span>
-                </div>
-                <div class="effectif-card__meta">
-                  <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
-                    eff.role
-                  }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Pause -->
-          <div
-            class="status-zone status-pause"
-            @dragover="onDragOver($event)"
-            @drop="onDrop($event, 'pause')"
-          >
-            <div class="zone-header-small" style="border-color: #f59f00">
-              <span class="zone-header__label">⏸️ En Pause</span>
-              <span class="zone-header__count">{{
-                effectifsByCategory['pause']?.length ?? 0
-              }}</span>
-            </div>
-            <div class="effectif-cards-grid">
-              <div
-                v-for="eff in effectifsByCategory['pause']"
-                :key="eff.id"
-                class="effectif-card small"
-                :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
-                draggable="true"
-                @dragstart="onDragStart($event, eff.id ?? '', 'patate-pause')"
-                :style="{
-                  borderLeftColor: roleColor(eff.role),
-                  '--role-color': roleColor(eff.role),
-                }"
-              >
-                <div class="effectif-card__top">
-                  <span class="effectif-grip" aria-hidden="true">⠿</span>
-                  <span class="effectif-emoji">{{ eff.emoji }}</span>
-                  <span class="effectif-nom">{{ nomTuile(eff) }}</span>
-                </div>
-                <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
-                <div v-if="eff.specialties.length" class="effectif-card__specs">
-                  <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
-                </div>
-                <div v-if="eff.validations.length" class="effectif-card__validations">
-                  <span v-for="v in eff.validations" :key="v">{{ v }}</span>
-                </div>
-                <div class="effectif-card__meta">
-                  <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
-                    eff.role
-                  }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Astreinte -->
-          <div
-            class="status-zone status-astreinte"
-            @dragover="onDragOver($event)"
-            @drop="onDrop($event, 'astreinte')"
-          >
-            <div class="zone-header-small" style="border-color: #e65100">
-              <span class="zone-header__label">⏰ Astreinte</span>
-              <span class="zone-header__count">{{
-                effectifsByCategory['astreinte']?.length ?? 0
-              }}</span>
-            </div>
-            <div class="effectif-cards-grid">
-              <div
-                v-for="eff in effectifsByCategory['astreinte']"
-                :key="eff.id"
-                class="effectif-card small"
-                :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
-                draggable="true"
-                @dragstart="onDragStart($event, eff.id ?? '', 'patate-astreinte')"
-                :style="{
-                  borderLeftColor: roleColor(eff.role),
-                  '--role-color': roleColor(eff.role),
-                }"
-              >
-                <div class="effectif-card__top">
-                  <span class="effectif-grip" aria-hidden="true">⠿</span>
-                  <span class="effectif-emoji">{{ eff.emoji }}</span>
-                  <span class="effectif-nom">{{ nomTuile(eff) }}</span>
-                </div>
-                <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
-                <div v-if="eff.specialties.length" class="effectif-card__specs">
-                  <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
-                </div>
-                <div v-if="eff.validations.length" class="effectif-card__validations">
-                  <span v-for="v in eff.validations" :key="v">{{ v }}</span>
-                </div>
-                <div class="effectif-card__meta">
-                  <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
-                    eff.role
-                  }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Congés -->
-          <div
-            class="status-zone status-conges"
-            @dragover="onDragOver($event)"
-            @drop="onDrop($event, 'conges')"
-          >
-            <div class="zone-header-small conges-header">
-              <span class="zone-header__label">🏖️ Congés</span>
-              <span class="zone-header__count">{{
-                effectifsByCategory['conges']?.length ?? 0
-              }}</span>
-            </div>
-            <div class="effectif-cards-grid">
-              <div
-                v-for="eff in effectifsByCategory['conges']"
-                :key="eff.id"
-                class="effectif-card small"
-                :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
-                draggable="true"
-                @dragstart="onDragStart($event, eff.id ?? '', 'patate-conges')"
-                :style="{
-                  borderLeftColor: roleColor(eff.role),
-                  '--role-color': roleColor(eff.role),
-                }"
-              >
-                <div class="effectif-card__top">
-                  <span class="effectif-grip" aria-hidden="true">⠿</span>
-                  <span class="effectif-emoji">{{ eff.emoji }}</span>
-                  <span class="effectif-nom">{{ nomTuile(eff) }}</span>
-                </div>
-                <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
-                <div v-if="eff.specialties.length" class="effectif-card__specs">
-                  <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
-                </div>
-                <div v-if="eff.validations.length" class="effectif-card__validations">
-                  <span v-for="v in eff.validations" :key="v">{{ v }}</span>
-                </div>
-                <div class="effectif-card__meta">
-                  <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
-                    eff.role
-                  }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- IPT -->
-          <div
-            class="status-zone status-ipt"
-            @dragover="onDragOver($event)"
-            @drop="onDrop($event, 'ipt')"
-          >
-            <div class="zone-header-small" style="border-color: #455a64">
-              <span class="zone-header__label">🚶 IPT</span>
-              <span class="zone-header__count">{{ effectifsByCategory['ipt']?.length ?? 0 }}</span>
-            </div>
-            <div class="effectif-cards-grid">
-              <div
-                v-for="eff in effectifsByCategory['ipt']"
-                :key="eff.id"
-                class="effectif-card small"
-                :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
-                draggable="true"
-                @dragstart="onDragStart($event, eff.id ?? '', 'patate-ipt')"
-                :style="{
-                  borderLeftColor: roleColor(eff.role),
-                  '--role-color': roleColor(eff.role),
-                }"
-              >
-                <div class="effectif-card__top">
-                  <span class="effectif-grip" aria-hidden="true">⠿</span>
-                  <span class="effectif-emoji">{{ eff.emoji }}</span>
-                  <span class="effectif-nom">{{ nomTuile(eff) }}</span>
-                </div>
-                <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
-                <div v-if="eff.specialties.length" class="effectif-card__specs">
-                  <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
-                </div>
-                <div v-if="eff.validations.length" class="effectif-card__validations">
-                  <span v-for="v in eff.validations" :key="v">{{ v }}</span>
-                </div>
-                <div class="effectif-card__meta">
-                  <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
-                    eff.role
-                  }}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Fin de service -->
-          <div
-            class="status-zone status-fin-service"
-            @dragover="onDragOver($event)"
-            @drop="onDrop($event, 'fin_service')"
-          >
-            <div class="zone-header-small" style="border-color: #c62828">
-              <span class="zone-header__label">🔴 Fin de service</span>
-              <span class="zone-header__count">{{
-                effectifsByCategory['fin_service']?.length ?? 0
-              }}</span>
-            </div>
-            <div class="effectif-cards-grid">
-              <div
-                v-for="eff in effectifsByCategory['fin_service']"
-                :key="eff.id"
-                class="effectif-card small"
-                :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
-                draggable="true"
-                @dragstart="onDragStart($event, eff.id ?? '', 'patate-fin_service')"
-                :style="{
-                  borderLeftColor: roleColor(eff.role),
-                  '--role-color': roleColor(eff.role),
-                }"
-              >
-                <div class="effectif-card__top">
-                  <span class="effectif-grip" aria-hidden="true">⠿</span>
-                  <span class="effectif-emoji">{{ eff.emoji }}</span>
-                  <span class="effectif-nom">{{ nomTuile(eff) }}</span>
-                </div>
-                <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
-                <div v-if="eff.specialties.length" class="effectif-card__specs">
-                  <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
-                </div>
-                <div v-if="eff.validations.length" class="effectif-card__validations">
-                  <span v-for="v in eff.validations" :key="v">{{ v }}</span>
-                </div>
-                <div class="effectif-card__meta">
-                  <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
-                    eff.role
-                  }}</span>
+            <div
+              class="status-zone status-hors-service"
+              @dragover="onDragOver($event)"
+              @drop="onDrop($event, 'hors_service')"
+            >
+              <div class="effectif-cards-grid">
+                <div
+                  v-for="eff in effectifsByCategory['hors_service']"
+                  :key="eff.id"
+                  class="effectif-card"
+                  :class="{ 'effectif-card--helico': eff.helicopterTrainingDate }"
+                  draggable="true"
+                  @dragstart="onDragStart($event, eff.id ?? '', 'hors-service')"
+                  :style="{
+                    borderLeftColor: roleColor(eff.role),
+                    '--role-color': roleColor(eff.role),
+                  }"
+                >
+                  <div class="effectif-card__top">
+                    <span class="effectif-grip" aria-hidden="true">⠿</span>
+                    <span class="effectif-emoji">{{ eff.emoji }}</span>
+                    <span class="effectif-nom">{{ nomTuile(eff) }}</span>
+                  </div>
+                  <div v-if="eff.phone" class="effectif-card__tel">{{ eff.phone }}</div>
+                  <div v-if="eff.specialties.length" class="effectif-card__specs">
+                    <span v-for="s in eff.specialties" :key="s">{{ s }}</span>
+                  </div>
+                  <div v-if="eff.validations.length" class="effectif-card__validations">
+                    <span v-for="v in eff.validations" :key="v">{{ v }}</span>
+                  </div>
+                  <div class="effectif-card__meta">
+                    <span class="effectif-badge" :style="{ color: roleColor(eff.role) }">{{
+                      eff.role
+                    }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1588,8 +1664,9 @@ onUnmounted(() => {
           </button>
         </div>
         <div class="radios-stock-zone">
-          <div class="notes-label-row">
-            <label class="notes-label">Stock Radios</label>
+          <!-- Header row -->
+          <div class="radios-stock-header">
+            <label class="radios-stock-title">Stock Radios</label>
             <span
               class="stock-count zone-header__count"
               aria-label="Radios standard utilisées sur le total hors direction"
@@ -1600,59 +1677,75 @@ onUnmounted(() => {
               <button
                 class="radio-add-btn"
                 type="button"
-                @click="basculerSelectAjoutRadio()"
-                aria-label="Ouvrir le sélecteur d'ajout de radio"
+                @click="ajouterRadio('direction')"
+                aria-label="Ajouter une radio direction"
               >
-                <i class="fa-solid fa-plus" aria-hidden="true"></i>
-                Ajouter
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Direction
               </button>
-              <select
-                v-if="selectAjoutRadioOuvert"
-                class="radio-add-select"
-                :value="''"
-                @change="ajouterRadioDepuisSelect(($event.target as HTMLSelectElement).value)"
-                aria-label="Choisir le type de radio à ajouter"
+              <button
+                class="radio-add-btn"
+                type="button"
+                @click="ajouterRadio('standard')"
+                aria-label="Ajouter une radio standard"
               >
-                <option value="" disabled>Choisir...</option>
-                <option value="standard">Radio standard</option>
-                <option value="direction">Radio direction</option>
-              </select>
+                <i class="fa-solid fa-plus" aria-hidden="true"></i> Standard
+              </button>
             </div>
           </div>
 
+          <!-- Direction group -->
           <div class="radios-stock-group">
-            <div class="radios-stock-group-title">DIRECTION</div>
+            <div class="radios-stock-group-title">
+              <span>DIRECTION</span>
+              <span class="radios-stock-group-count">{{ radiosDirectes.length }}</span>
+            </div>
             <div v-if="radiosDirectes.length === 0" class="radio-stock-empty">
               Aucune radio direction
             </div>
-            <div v-for="radio in radiosDirectes" :key="radio.id" class="radio-stock-row">
+            <div
+              v-for="radio in radiosDirectes"
+              :key="radio.id"
+              class="radio-item"
+              :class="{
+                'radio-item--active': radio.actif,
+                'radio-item--assigned': radio.effectif_id != null,
+              }"
+            >
               <template v-if="peutGererRadiosDepuisDispatch">
                 <input
-                  class="radio-stock-serie-input"
+                  class="radio-item__serie"
                   type="text"
                   :value="radio.serie"
                   @input="majSerieRadio(radio.id, ($event.target as HTMLInputElement).value)"
-                  placeholder="N° série"
+                  placeholder="N°"
                   :aria-label="'Numéro de série radio direction ' + radio.id"
                 />
               </template>
-              <span v-else class="radio-stock-serie-readonly">{{ radio.serie || '---' }}</span>
+              <span v-else class="radio-item__serie radio-item__serie--readonly">{{
+                radio.serie || '---'
+              }}</span>
               <select
-                class="radio-stock-owner-select"
+                class="radio-item__assign"
                 :value="radio.effectif_id ?? ''"
                 @change="majAffectationRadio(radio.id, ($event.target as HTMLSelectElement).value)"
                 :disabled="!peutAssignerRadio(radio) || getRadioEmployeeOptions(radio).length === 0"
                 :aria-label="'Affectation radio direction ' + radio.id"
               >
-                <option value="">Non assignée</option>
+                <option value="">
+                  {{
+                    radio.dernier_effectif_nom && !radio.effectif_id
+                      ? '(' + radio.dernier_effectif_nom + ')'
+                      : 'Non assignée'
+                  }}
+                </option>
                 <option v-for="eff in getRadioEmployeeOptions(radio)" :key="eff.id" :value="eff.id">
                   {{ eff.name }}
                 </option>
               </select>
               <button
                 :class="[
-                  'radio-stock-toggle',
-                  radio.actif ? 'radio-stock-toggle--on' : 'radio-stock-toggle--off',
+                  'radio-item__toggle',
+                  radio.actif ? 'radio-item__toggle--on' : 'radio-item__toggle--off',
                 ]"
                 type="button"
                 @click="basculerEtatRadio(radio.id)"
@@ -1663,52 +1756,69 @@ onUnmounted(() => {
               </button>
               <button
                 v-if="peutGererRadiosDepuisDispatch"
-                class="radio-stock-delete"
+                class="radio-item__delete"
                 type="button"
                 @click="supprimerRadio(radio.id)"
                 aria-label="Supprimer la radio direction"
               >
-                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
               </button>
-              <span v-if="!radio.effectif_id && radio.dernier_effectif_nom" class="radio-stock-last"
-                >Dernier: {{ dernierAssigneRadio(radio) }}</span
-              >
             </div>
           </div>
 
+          <!-- Standard group -->
           <div class="radios-stock-group">
-            <div class="radios-stock-group-title">STANDARD</div>
+            <div class="radios-stock-group-title">
+              <span>STANDARD</span>
+              <span class="radios-stock-group-count">{{ radiosStandards.length }}</span>
+            </div>
             <div v-if="radiosStandards.length === 0" class="radio-stock-empty">
               Aucune radio standard
             </div>
-            <div v-for="radio in radiosStandards" :key="radio.id" class="radio-stock-row">
+            <div
+              v-for="radio in radiosStandards"
+              :key="radio.id"
+              class="radio-item"
+              :class="{
+                'radio-item--active': radio.actif,
+                'radio-item--assigned': radio.effectif_id != null,
+              }"
+            >
               <template v-if="peutGererRadiosDepuisDispatch">
                 <input
-                  class="radio-stock-serie-input"
+                  class="radio-item__serie"
                   type="text"
                   :value="radio.serie"
                   @input="majSerieRadio(radio.id, ($event.target as HTMLInputElement).value)"
-                  placeholder="N° série"
+                  placeholder="N°"
                   :aria-label="'Numéro de série radio standard ' + radio.id"
                 />
               </template>
-              <span v-else class="radio-stock-serie-readonly">{{ radio.serie || '---' }}</span>
+              <span v-else class="radio-item__serie radio-item__serie--readonly">{{
+                radio.serie || '---'
+              }}</span>
               <select
-                class="radio-stock-owner-select"
+                class="radio-item__assign"
                 :value="radio.effectif_id ?? ''"
                 @change="majAffectationRadio(radio.id, ($event.target as HTMLSelectElement).value)"
                 :disabled="!peutAssignerRadio(radio) || getRadioEmployeeOptions(radio).length === 0"
                 :aria-label="'Affectation radio standard ' + radio.id"
               >
-                <option value="">Non assignée</option>
+                <option value="">
+                  {{
+                    radio.dernier_effectif_nom && !radio.effectif_id
+                      ? '(' + radio.dernier_effectif_nom + ')'
+                      : 'Non assignée'
+                  }}
+                </option>
                 <option v-for="eff in getRadioEmployeeOptions(radio)" :key="eff.id" :value="eff.id">
                   {{ eff.name }}
                 </option>
               </select>
               <button
                 :class="[
-                  'radio-stock-toggle',
-                  radio.actif ? 'radio-stock-toggle--on' : 'radio-stock-toggle--off',
+                  'radio-item__toggle',
+                  radio.actif ? 'radio-item__toggle--on' : 'radio-item__toggle--off',
                 ]"
                 type="button"
                 @click="basculerEtatRadio(radio.id)"
@@ -1719,16 +1829,13 @@ onUnmounted(() => {
               </button>
               <button
                 v-if="peutGererRadiosDepuisDispatch"
-                class="radio-stock-delete"
+                class="radio-item__delete"
                 type="button"
                 @click="supprimerRadio(radio.id)"
                 aria-label="Supprimer la radio standard"
               >
-                <i class="fa-solid fa-trash" aria-hidden="true"></i>
+                <i class="fa-solid fa-xmark" aria-hidden="true"></i>
               </button>
-              <span v-if="!radio.effectif_id && radio.dernier_effectif_nom" class="radio-stock-last"
-                >Dernier: {{ dernierAssigneRadio(radio) }}</span
-              >
             </div>
           </div>
         </div>
@@ -1749,6 +1856,7 @@ onUnmounted(() => {
       <button class="section-toggle" @click="sectionCriseOpen = !sectionCriseOpen">
         <span class="crise-toggle-main">🚨 Gestion de Crise ({{ state.crises.length }})</span>
         <span class="crise-toggle-zip" @click.stop>
+          <i class="fa-solid fa-location-dot" aria-hidden="true"></i>
           <input
             id="zip-crise"
             class="zip-crise-input"
@@ -1928,14 +2036,11 @@ onUnmounted(() => {
 
 /* ---- HOST ---- */
 .dispatch-page {
-  --crise-toggle-height: 35px;
+  --crise-toggle-height: 30px;
 
   display: flex;
   flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  min-height: 100%;
   background: var(--bg);
 }
 
@@ -1946,8 +2051,7 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: 320px 1fr 280px;
   gap: 0;
-  flex: 0 0 auto;
-  height: calc(100% - var(--crise-toggle-height));
+  height: calc(100dvh - var(--topbar-height) - var(--crise-toggle-height));
   min-height: 0;
   box-sizing: border-box;
 }
@@ -1955,16 +2059,20 @@ onUnmounted(() => {
 .column {
   border-right: 1px solid var(--dispatch-zone-border);
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   background: var(--dispatch-zone-bg);
-  padding: 0 0.45rem 0.45rem;
+  padding: 0 0 0.45rem;
 
   &:last-child {
     border-right: none;
   }
   &:first-child {
     background: color-mix(in srgb, var(--dispatch-zone-bg) 90%, var(--accent) 10%);
+  }
+  &.column-patate {
+    padding-bottom: 0;
   }
 }
 
@@ -1977,17 +2085,19 @@ onUnmounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--dispatch-col-header-text);
-  background: var(--dispatch-col-header);
+  background: linear-gradient(180deg, #0f3450, #0b2a42);
   min-height: 42px;
   padding: 0.38rem 0.85rem;
-  border-bottom: 2px solid
-    color-mix(in srgb, var(--dispatch-col-header) 74%, var(--theme-shadow-medium) 26%);
+  border-bottom: 1px solid #1c4f71;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  box-shadow: 0 2px 6px var(--theme-shadow-medium);
-  margin: 0 -0.45rem;
+  box-shadow: 0 2px 10px rgba(4, 18, 30, 0.35);
+  margin: 0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 
 /* =============================================================
@@ -1995,21 +2105,19 @@ onUnmounted(() => {
    ============================================================= */
 .centrale-card,
 .intervention-card {
-  background: var(--dispatch-card-bg);
-  border: 1px solid var(--dispatch-card-border);
-  border-radius: 8px;
-  padding: 0.55rem;
-  margin-bottom: 0.55rem;
-  box-shadow:
-    0 2px 8px var(--theme-shadow-soft),
-    0 0 0 1px var(--dispatch-card-border);
-  transition: box-shadow 0.15s;
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: none;
+  border-left: 3px solid var(--accent);
+  border-radius: 0;
+  padding: 0.45rem 0.5rem;
+  margin-bottom: 0.35rem;
+  box-shadow: none;
+  transition: background 0.15s;
   animation: slideIn 0.2s ease;
 
   &:hover {
-    box-shadow:
-      0 4px 14px var(--theme-shadow-medium),
-      0 0 0 1px var(--dispatch-card-border);
+    background: rgba(255, 255, 255, 0.05);
   }
 }
 
@@ -2025,104 +2133,226 @@ onUnmounted(() => {
 }
 
 .centrale-card {
-  border-top: 3px solid var(--accent);
+  border-left-color: var(--accent);
 }
 
 .intervention-card {
-  border-top: 3px solid var(--dispatch-card-border);
+  border-left-color: var(--dispatch-card-border);
 }
 
 .card-title-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
 }
 
 .card-title {
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 
 .card-title--centrale {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
-  margin-bottom: 0.4rem;
+  gap: 0.3rem;
+  margin-bottom: 0.3rem;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  opacity: 0.85;
 }
 
 .card-title-icon {
-  font-size: 1rem;
+  font-size: 0.85rem;
 }
 
 .card-selects {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.25rem;
-  margin-bottom: 0.4rem;
+  margin-bottom: 0.3rem;
 
   select,
   input {
-    font-size: 0.68rem;
-    padding: 0.2rem 0.28rem;
-    background: var(--input-bg);
-    border: 1px solid var(--input-border);
-    border-radius: 4px;
+    font-size: 0.64rem;
+    padding: 0.22rem 0.3rem;
     color: var(--text-primary);
-    transition: border-color 0.15s;
+    transition: all 0.15s;
 
     &:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 2px var(--accent-subtle);
+      box-shadow: none;
+    }
+
+    option {
+      background: var(--surface-elevated);
+      color: var(--text-primary);
+    }
+  }
+
+  .select-type {
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-left: 3px solid;
+    border-left-color: inherit;
+    border-radius: 3px;
+    font-weight: 700;
+    font-size: 0.62rem;
+    padding: 0.24rem 0.3rem;
+    cursor: pointer;
+
+    &:focus {
+      border-color: rgba(255, 255, 255, 0.15);
+      border-left-width: 3px;
+    }
+  }
+
+  .select-statut {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    font-size: 0.62rem;
+    font-weight: 600;
+    padding: 0.24rem 0.3rem;
+    cursor: pointer;
+
+    &:focus {
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+  }
+
+  input {
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 0;
+
+    &:focus {
+      border-bottom-color: var(--accent);
     }
   }
 }
 
 .location-pair {
   grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 3px;
+  overflow: hidden;
+
+  .zip-input {
+    width: 58px;
+    flex-shrink: 0;
+    border: none !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 0 !important;
+    background: rgba(255, 255, 255, 0.03);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.62rem;
+    padding: 0.24rem 0.2rem;
+    letter-spacing: 0.02em;
+
+    &::placeholder {
+      font-weight: 400;
+      opacity: 0.4;
+    }
+
+    &:focus {
+      background: rgba(255, 255, 255, 0.06);
+    }
+  }
+
+  .complement-input {
+    flex: 1;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent;
+    font-size: 0.62rem;
+    padding: 0.24rem 0.3rem;
+
+    &::placeholder {
+      opacity: 0.35;
+    }
+
+    &:focus {
+      background: rgba(255, 255, 255, 0.03);
+    }
+  }
+}
+
+.status-action-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.25rem;
+  grid-template-columns: 1fr auto;
+  gap: 0.2rem;
+  align-items: stretch;
 }
 
 .btn-suppr {
   background: none;
   border: none;
   color: var(--text-muted);
-  font-size: 0.78rem;
+  font-size: 0.68rem;
   cursor: pointer;
-  padding: 0.12rem 0.35rem;
-  border-radius: 4px;
+  padding: 0.1rem 0.3rem;
+  border-radius: 3px;
   line-height: 1;
+  opacity: 0.5;
   transition: all 0.15s;
 
   &:hover {
+    opacity: 1;
     background: var(--danger-subtle);
     color: var(--danger);
   }
 }
 
+.btn-suppr--inline {
+  height: 100%;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.58rem;
+  line-height: 0;
+}
+
+.btn-suppr--inline i {
+  display: block;
+  font-size: 0.58rem;
+  line-height: 1;
+}
+
 .btn-ajouter {
   width: 100%;
-  padding: 0.45rem;
+  padding: 0.35rem;
   background: transparent;
-  border: 1.5px dashed var(--dispatch-card-border);
-  border-radius: 6px;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
   color: var(--text-muted);
-  font-size: 0.73rem;
+  font-size: 0.65rem;
   font-weight: 700;
   cursor: pointer;
   transition: all 0.18s;
-  letter-spacing: 0.01em;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  opacity: 0.6;
 
   &:hover {
-    background: var(--accent-subtle);
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.04);
     color: var(--accent);
     border-color: var(--accent);
-    border-style: solid;
   }
 }
 
@@ -2130,65 +2360,122 @@ onUnmounted(() => {
    DROP ZONES
    ============================================================= */
 .drop-zone {
-  min-height: 40px;
-  border: 1.5px dashed var(--dispatch-card-border);
-  border-radius: 6px;
-  padding: 0.25rem;
+  min-height: 32px;
+  border: none;
+  border-radius: 3px;
+  padding: 0.15rem;
   transition: all 0.18s;
-  background: color-mix(in srgb, var(--dispatch-zone-bg) 88%, var(--theme-shadow-soft) 12%);
+  background: rgba(255, 255, 255, 0.02);
+  display: flex;
+  flex-direction: column;
 
   &:hover {
-    background: color-mix(in srgb, var(--dispatch-zone-bg) 85%, var(--accent-subtle) 15%);
-    border-color: color-mix(in srgb, var(--dispatch-card-border) 70%, var(--accent) 30%);
+    background: rgba(255, 255, 255, 0.04);
   }
 
   &.drag-over {
     background: color-mix(in srgb, var(--dispatch-zone-bg) 72%, var(--accent-subtle) 28%);
-    border-color: var(--accent);
-    border-style: dashed;
+    outline: 1px dashed var(--accent);
+    outline-offset: -1px;
   }
 }
 
 .drop-placeholder {
-  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
   color: var(--text-muted);
-  font-size: 0.64rem;
-  padding: 0.6rem;
+  font-size: 0.58rem;
+  padding: 0.4rem;
   font-style: italic;
-  opacity: 0.6;
+  opacity: 0.4;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.drop-placeholder--urgent {
+  min-height: 34px;
+  background: linear-gradient(180deg, rgba(198, 40, 40, 0.3), rgba(156, 27, 27, 0.22));
+  border: 1px solid rgba(198, 40, 40, 0.45);
+  color: rgba(255, 225, 225, 0.95);
+  font-size: 0.64rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+  opacity: 1;
 }
 
 /* =============================================================
    STATUS GRID (COL 2)
    ============================================================= */
+.patate-layout {
+  display: flex;
+  gap: 0;
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+}
+
+.patate-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.patate-sidebar {
+  width: 320px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  margin-top: 0;
+}
+
+.patate-sidebar .status-hors-service {
+  flex: 1;
+  border-radius: 0;
+  background: color-mix(in srgb, var(--dispatch-zone-bg) 90%, var(--theme-shadow-soft) 10%);
+}
+
 .status-grid {
   flex: 1;
   display: grid;
-  grid-template-columns: repeat(4, minmax(140px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   grid-template-rows: minmax(280px, 1.55fr) minmax(96px, 0.75fr) minmax(96px, 0.75fr);
-  gap: 0.5rem;
-  margin-top: 0.55rem;
+  gap: 0;
+  margin-top: 0;
+  overflow: hidden;
+}
+
+.status-grid.status-grid--auto-expand {
+  grid-template-rows: minmax(280px, auto) minmax(96px, auto) minmax(96px, auto);
+  overflow: visible;
 }
 
 .status-zone {
   background: var(--dispatch-card-bg);
-  border: 1.5px dashed var(--dispatch-zone-border);
-  border-radius: 8px;
-  padding: 0.4rem;
-  overflow-y: auto;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 0;
+  padding: 0;
+  overflow-y: hidden;
   transition: all 0.18s;
 }
 
+.status-grid.status-grid--auto-expand .status-zone {
+  overflow-y: visible;
+}
+
 .status-en-service {
-  grid-column: 1 / span 3;
+  grid-column: 1 / -1;
   grid-row: 1;
   background: rgba(46, 125, 50, 0.06);
   border-color: rgba(46, 125, 50, 0.35);
 }
 
 .status-hors-service {
-  grid-column: 4;
-  grid-row: 1 / span 3;
   background: color-mix(in srgb, var(--dispatch-zone-bg) 90%, var(--theme-shadow-soft) 10%);
 }
 
@@ -2218,10 +2505,6 @@ onUnmounted(() => {
   grid-row: 3;
 }
 
-.conges-header {
-  border-left-color: var(--warning);
-}
-
 /* =============================================================
    ZONE HEADERS
    ============================================================= */
@@ -2229,9 +2512,9 @@ onUnmounted(() => {
   font-size: 0.76rem;
   font-weight: 800;
   padding: 0.3rem 0.6rem;
-  margin-bottom: 0.4rem;
+  margin: 0 0 0.4rem 0;
   border-left: 4px solid currentColor;
-  border-radius: 0 5px 5px 0;
+  border-radius: 0;
   background: var(--theme-soft-band);
   color: var(--text-primary);
   letter-spacing: -0.01em;
@@ -2239,21 +2522,27 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 0.45rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
 .zone-header-small {
   font-size: 0.67rem;
   font-weight: 800;
   padding: 0.22rem 0.4rem;
-  margin-bottom: 0.25rem;
+  margin: 0 0 0.25rem 0;
   border-left: 3px solid currentColor;
-  border-radius: 0 4px 4px 0;
+  border-radius: 0;
   background: var(--theme-soft-band-alt);
   color: var(--text-secondary);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.35rem;
+  position: sticky;
+  top: 0;
+  z-index: 5;
 }
 
 .zone-header__label {
@@ -2264,31 +2553,19 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.65rem;
-  height: 1.45rem;
-  padding: 0 0.52rem;
-  border-radius: 999px;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--surface-elevated) 72%, var(--accent) 28%),
-    color-mix(in srgb, var(--surface) 60%, var(--accent) 40%)
-  );
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--input-border) 55%);
-  color: #ffffff;
-  font-size: 0.64rem;
-  font-weight: 900;
+  min-width: 1.3rem;
+  height: 1.2rem;
+  padding: 0 0.38rem;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 0.62rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
   line-height: 1;
-  letter-spacing: 0.02em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.18),
-    inset 0 1px 0 rgba(255, 255, 255, 0.22);
-}
-
-.zone-header-small .zone-header__count {
-  min-width: 1.42rem;
-  height: 1.26rem;
-  font-size: 0.58rem;
+  letter-spacing: 0.01em;
+  backdrop-filter: blur(4px);
 }
 
 /* =============================================================
@@ -2299,6 +2576,8 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 0.44rem;
   align-content: flex-start;
+  padding: 0.35rem;
+  overflow: hidden;
 }
 
 .effectif-card {
@@ -2309,7 +2588,7 @@ onUnmounted(() => {
   background: color-mix(in srgb, var(--role-color, #64748b) 15%, var(--surface-elevated) 85%);
   border: 1.5px solid color-mix(in srgb, var(--dispatch-card-border) 72%, transparent 28%);
   border-left: 3px solid #666;
-  border-radius: 8px;
+  border-radius: 4px;
   min-width: 90px;
   width: max-content;
   max-width: 156px;
@@ -2507,12 +2786,13 @@ onUnmounted(() => {
 .section-header--status {
   text-transform: none;
   letter-spacing: normal;
-  min-height: 42px;
-  padding: 0.38rem 0.8rem;
-  background: linear-gradient(180deg, #0f3450, #0b2a42);
-  border-bottom: 1px solid #1c4f71;
-  box-shadow: 0 2px 10px rgba(4, 18, 30, 0.35);
+  margin: 0;
   --status-block-height: 24px;
+}
+
+.section-header--sidebar {
+  margin: 0;
+  border-radius: 0;
 }
 
 .section-header-tools {
@@ -2814,113 +3094,211 @@ onUnmounted(() => {
 }
 
 /* =============================================================
-   RADIOS COL 3
+   RADIOS COL 3 — LSES-INVENTORY STYLE
    ============================================================= */
 .radios-stock-zone {
   display: flex;
   flex-direction: column;
-  gap: 0.32rem;
+  gap: 0.45rem;
   margin-top: 0.35rem;
   margin-bottom: 0.5rem;
 }
 
-.notes-label-row {
-  display: inline-flex;
+.radios-stock-header {
+  display: flex;
   align-items: center;
   gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.radios-stock-title {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
 }
 
 .radios-stock-group {
   display: flex;
   flex-direction: column;
-  gap: 0.26rem;
+  gap: 2px;
 }
 
 .radios-stock-group-title {
-  font-size: 0.56rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.6rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.07em;
+  letter-spacing: 0.08em;
   color: var(--text-muted);
+  padding: 0.2rem 0.3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  margin-bottom: 1px;
 }
 
-.radio-stock-row {
-  display: grid;
-  grid-template-columns: 82px minmax(90px, 1fr) auto auto auto;
+.radios-stock-group-count {
+  display: inline-flex;
   align-items: center;
-  gap: 0.28rem;
-  min-height: 24px;
-  padding: 0.15rem 0.3rem;
-  border-radius: 5px;
-  border: 1px solid var(--dispatch-zone-border);
-  background: var(--theme-soft-band);
+  justify-content: center;
+  min-width: 1.1rem;
+  height: 1rem;
+  padding: 0 0.3rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 0.52rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
 }
 
-.radio-stock-serie-input,
-.radio-stock-owner-select {
-  min-height: 22px;
+.radio-item {
+  display: grid;
+  grid-template-columns: 60px 1fr 34px 22px;
+  align-items: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 3px 5px;
   border-radius: 4px;
-  border: 1px solid var(--dispatch-zone-border);
-  background: color-mix(in srgb, var(--input-bg) 82%, transparent 18%);
-  color: var(--text-primary);
-  font-size: 0.58rem;
-  font-weight: 700;
-  padding: 0.08rem 0.24rem;
-  width: 100%;
+  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(15, 23, 42, 0.45);
+  transition:
+    background 0.12s,
+    border-color 0.12s;
 
-  &:focus {
-    outline: none;
-    border-color: color-mix(in srgb, var(--accent) 62%, var(--dispatch-zone-border) 38%);
+  &:hover {
+    background: rgba(15, 23, 42, 0.65);
+    border-color: rgba(71, 85, 105, 0.6);
   }
 }
 
-.radio-stock-serie-input {
-  color: #c6dbff;
+.radio-item--active {
+  border-color: rgba(89, 206, 141, 0.25);
 }
 
-.radio-stock-toggle {
-  min-width: 36px;
+.radio-item--assigned {
+  background: rgba(27, 78, 49, 0.2);
+  border-color: rgba(89, 206, 141, 0.35);
+
+  &:hover {
+    background: rgba(27, 78, 49, 0.3);
+  }
+}
+
+.radio-item__serie {
+  width: 100%;
+  min-height: 20px;
+  padding: 2px 6px 2px 4px;
+  border-radius: 3px;
+  border: none;
+  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  background: transparent;
+  color: #93c5fd;
+  font-size: 0.66rem;
+  font-weight: 700;
+  font-family: inherit;
+
+  &:focus {
+    outline: none;
+    background: rgba(30, 41, 59, 0.5);
+  }
+
+  &--readonly {
+    display: inline-flex;
+    align-items: center;
+    color: #94a3b8;
+  }
+}
+
+.radio-item__assign {
+  width: 100%;
+  min-height: 20px;
+  padding: 2px 3px;
+  border-radius: 3px;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.64rem;
+  font-weight: 600;
+
+  &:focus {
+    outline: none;
+    background: rgba(30, 41, 59, 0.5);
+  }
+
+  &:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  option {
+    background: var(--surface-elevated);
+    color: var(--text-primary);
+  }
+}
+
+.radio-item__toggle {
+  min-width: 34px;
+  height: 20px;
   text-align: center;
-  padding: 0.08rem 0.24rem;
-  border-radius: 4px;
-  font-size: 0.52rem;
+  padding: 0 4px;
+  border-radius: 3px;
+  font-size: 0.58rem;
   font-weight: 800;
   line-height: 1;
   letter-spacing: 0.03em;
   text-transform: uppercase;
   border: 1px solid transparent;
   cursor: pointer;
+  transition: background 0.12s;
+
+  &--on {
+    color: #6dffb0;
+    background: rgba(27, 78, 49, 0.65);
+    border-color: rgba(89, 206, 141, 0.45);
+  }
+
+  &--off {
+    color: #ff95a4;
+    background: rgba(78, 27, 39, 0.65);
+    border-color: rgba(232, 121, 141, 0.45);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 }
 
-.radio-stock-toggle--on {
-  color: #6dffb0;
-  background: rgba(27, 78, 49, 0.65);
-  border-color: rgba(89, 206, 141, 0.45);
-}
-
-.radio-stock-toggle--off {
+.radio-item__delete {
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border-radius: 3px;
+  border: 1px solid rgba(232, 121, 141, 0.3);
+  background: rgba(78, 27, 39, 0.35);
   color: #ff95a4;
-  background: rgba(78, 27, 39, 0.65);
-  border-color: rgba(232, 121, 141, 0.45);
-}
+  font-size: 0.58rem;
+  cursor: pointer;
+  transition: background 0.12s;
 
-.radio-stock-toggle:disabled {
-  opacity: 0.78;
-  cursor: not-allowed;
-}
-
-.radio-stock-last {
-  grid-column: 1 / -1;
-  font-size: 0.52rem;
-  color: var(--text-muted);
-  opacity: 0.92;
-  padding-left: 0.1rem;
+  &:hover {
+    background: rgba(78, 27, 39, 0.6);
+  }
 }
 
 .radio-stock-empty {
-  font-size: 0.56rem;
+  font-size: 0.6rem;
   color: var(--text-muted);
-  padding: 0.2rem 0;
+  padding: 0.15rem 0.3rem;
+  opacity: 0.7;
 }
 
 /* =============================================================
@@ -2965,7 +3343,7 @@ onUnmounted(() => {
    EXPANDABLE CRISIS SECTION
    ============================================================= */
 .section-expandable {
-  position: relative;
+  flex-shrink: 0;
   border-top: 2px solid var(--dispatch-zone-border);
   margin-bottom: 0;
   background: color-mix(in srgb, var(--dispatch-zone-bg) 90%, black 10%);
@@ -2974,16 +3352,17 @@ onUnmounted(() => {
 
 .section-toggle {
   width: 100%;
-  min-height: var(--crise-toggle-height);
+  height: calc(var(--crise-toggle-height) - 2px);
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: flex-start;
   gap: 0.55rem;
-  padding: 0.6rem 1.1rem;
+  padding: 0 1rem;
   background: var(--dispatch-col-header);
   border: none;
   color: var(--dispatch-col-header-text);
-  font-size: 0.82rem;
+  font-size: 0.75rem;
   font-weight: 800;
   cursor: pointer;
   transition: filter 0.15s;
@@ -3004,18 +3383,24 @@ onUnmounted(() => {
 .crise-toggle-zip {
   display: inline-flex;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+  opacity: 0.7;
+
+  i {
+    font-size: 0.6rem;
+  }
 }
 
 .zip-crise-input {
-  width: 78px;
-  height: 26px;
-  padding: 0.2rem 0.4rem;
-  border-radius: 5px;
-  border: 1px solid color-mix(in srgb, var(--theme-panel-input-border) 70%, transparent 30%);
-  background: color-mix(in srgb, var(--theme-panel-input-bg) 76%, transparent 24%);
+  width: 60px;
+  height: 20px;
+  padding: 0 0.35rem;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
   color: var(--dispatch-col-header-text);
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   font-weight: 700;
 
   &::placeholder {
@@ -3041,8 +3426,6 @@ onUnmounted(() => {
   padding: 0.65rem 1rem 0.45rem;
   background: var(--dispatch-zone-bg);
   border-top: 1px solid var(--dispatch-zone-border);
-  max-height: none;
-  overflow: visible;
 
   .btn-ajouter {
     margin-top: 0.45rem;
@@ -3200,23 +3583,20 @@ onUnmounted(() => {
 
   .status-grid {
     grid-template-columns: repeat(3, minmax(140px, 1fr));
-    grid-template-rows: minmax(250px, 1.45fr) minmax(96px, 0.75fr) minmax(96px, 0.75fr) minmax(
-        96px,
-        0.75fr
-      );
+    grid-template-rows: minmax(250px, 1.45fr) minmax(96px, 0.75fr) minmax(96px, 0.75fr);
+  }
+
+  .status-grid.status-grid--auto-expand {
+    grid-template-rows: minmax(250px, auto) minmax(96px, auto) minmax(96px, auto);
   }
 
   .status-en-service {
     grid-column: 1 / span 2;
     grid-row: 1;
   }
-  .status-hors-service {
-    grid-column: 3;
-    grid-row: 1 / span 2;
-  }
   .status-conges {
     grid-column: 3;
-    grid-row: 3 / span 2;
+    grid-row: 1 / span 3;
   }
   .status-pause {
     grid-column: 1;
@@ -3267,83 +3647,41 @@ onUnmounted(() => {
   line-height: 1.2;
 }
 
-.radio-stock-delete {
-  width: 22px;
-  height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  border: 1px solid rgba(232, 121, 141, 0.4);
-  background: rgba(78, 27, 39, 0.45);
-  color: #ff95a4;
-  cursor: pointer;
-  transition: all 0.15s;
-
-  &:hover {
-    background: rgba(78, 27, 39, 0.62);
-  }
-}
-
-.radio-stock-serie-readonly {
-  width: 100%;
-  min-height: 22px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  border: 1px solid var(--dispatch-zone-border);
-  background: color-mix(in srgb, var(--input-bg) 82%, transparent 18%);
-  color: #94a3b8;
-  font-size: 0.58rem;
-  font-weight: 700;
-  padding: 0.08rem 0.24rem;
-}
-
 .radios-stock-actions {
   margin-left: auto;
   display: inline-flex;
   align-items: center;
-  gap: 0.24rem;
+  gap: 4px;
 }
 
 .radio-add-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
-  min-height: 20px;
-  padding: 0.1rem 0.36rem;
-  border-radius: 999px;
-  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--dispatch-zone-border) 55%);
-  background: color-mix(in srgb, var(--theme-soft-band) 82%, var(--accent) 18%);
-  color: var(--text-secondary);
-  font-size: 0.55rem;
+  gap: 3px;
+  min-height: 18px;
+  padding: 2px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(89, 206, 141, 0.3);
+  background: rgba(27, 78, 49, 0.35);
+  color: #6dffb0;
+  font-size: 0.5rem;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.15s;
+  transition:
+    background 0.12s,
+    border-color 0.12s;
 
   &:hover {
-    border-color: color-mix(in srgb, var(--accent) 65%, var(--dispatch-zone-border) 35%);
-    color: var(--text-primary);
+    background: rgba(27, 78, 49, 0.55);
+    border-color: rgba(89, 206, 141, 0.5);
   }
 
   &:focus-visible {
-    outline: 2px solid color-mix(in srgb, var(--accent) 72%, #ffffff 28%);
+    outline: 2px solid rgba(89, 206, 141, 0.5);
     outline-offset: 1px;
   }
-}
-
-.radio-add-select {
-  min-height: 20px;
-  padding: 0.1rem 0.34rem;
-  border-radius: 999px;
-  border: 1px solid var(--dispatch-zone-border);
-  background: color-mix(in srgb, var(--input-bg) 84%, transparent 16%);
-  color: var(--text-primary);
-  font-size: 0.56rem;
-  font-weight: 700;
 }
 
 .lses-toggle {
@@ -3411,20 +3749,11 @@ onUnmounted(() => {
   }
 }
 
-.stock-count {
-  font-size: 0.56rem;
-}
-
 .stock-count.zone-header__count {
-  min-width: 2.6rem;
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, var(--surface-elevated) 72%, var(--accent) 28%),
-    color-mix(in srgb, var(--surface) 60%, var(--accent) 40%)
-  );
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--input-border) 55%);
-  color: #ffffff;
-  letter-spacing: 0.03em;
+  font-size: 0.54rem;
+  height: 1.05rem;
+  min-width: 1.1rem;
+  padding: 0 0.32rem;
 }
 
 /* =============================================================
@@ -3450,20 +3779,8 @@ onUnmounted(() => {
 }
 
 /* =============================================================
-   COLUMN CENTRALE — LOCATION INPUTS
+   COLUMN CENTRALE — LOCATION INPUTS (overrides removed, now in .location-pair)
    ============================================================= */
-.column-centrale .card-selects .location-pair .complement-input,
-.column-centrale .intervention-card .location-pair .complement-input {
-  border: 0 !important;
-  border-radius: 0 !important;
-  background: transparent;
-  box-shadow: none;
-}
-
-.column-centrale .card-selects .location-pair .zip-input,
-.column-centrale .intervention-card .location-pair .zip-input {
-  border-right: 1px solid color-mix(in srgb, var(--input-border) 30%, transparent 70%) !important;
-}
 
 /* =============================================================
    RESPONSIVE — STATUS HEADER (narrow screens)
