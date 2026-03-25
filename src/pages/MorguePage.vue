@@ -107,6 +107,10 @@ function majMorgue(section: string, numero: string, nom: string): void {
   height: 100%;
   overflow-y: auto;
 }
+.morgue-content {
+  display: grid;
+  gap: 1rem;
+}
 .page-header {
   display: flex;
   align-items: center;

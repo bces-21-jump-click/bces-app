@@ -96,20 +96,22 @@ export const STATUTS_MEDICAUX_CRISE: string[] = [
   'Évacué',
 ]
 
-export const APPARTENANCES_CRISE: { id: string; label: string }[] = [
-  { id: 'fdo', label: 'FDO' },
-  { id: 'ems', label: 'EMS' },
-  { id: 'civil', label: 'Civil' },
-  { id: 'ballas', label: 'Ballas' },
-  { id: 'vagos', label: 'Vagos' },
-  { id: 'aztecas', label: 'Aztecas' },
-  { id: 'ghost', label: 'Ghost' },
-  { id: 'locura', label: 'Locura' },
-  { id: 'madz', label: 'Madz' },
-  { id: 'lost', label: 'Lost' },
-  { id: 'forsaken', label: 'Forsaken' },
-  { id: 'autre1', label: 'Autre 1' },
-  { id: 'autre2', label: 'Autre 2' },
+export const APPARTENANCES_CRISE: { id: string; label: string; color?: string }[] = [
+  { id: 'fdo', label: 'FDO', color: '#0000ff' },
+  { id: 'civil', label: 'Civil', color: '#ffffff' },
+  { id: 'aztecas', label: 'Aztecas', color: '#bfe1f6' },
+  { id: 'ballas', label: 'Ballas', color: '#5a3286' },
+  { id: 'purgatory', label: 'Purgatory', color: '#b10202' },
+  { id: 'lost_mc', label: 'Lost MC', color: '#e6e6e6' },
+  { id: 'h141', label: 'H141', color: '#e6cff2' },
+  { id: 'madz', label: 'Madz', color: '#ff98ea' },
+  { id: 'vagos', label: 'Vagos', color: '#ffffbf' },
+  { id: 'ghosts', label: 'Ghosts', color: '#3d3d3d' },
+  { id: 'greyshadow', label: 'GreyShadow', color: '#215a6c' },
+  { id: 'sillygoose_mc', label: 'SillyGoose MC', color: '#72788a' },
+  { id: 'forsaken', label: 'Forsaken', color: '#e8eaed' },
+  { id: 'zion_lion', label: 'Zion Lion', color: '#ffc8aa' },
+  { id: 'corvus', label: 'Corvus', color: '#d4edbc' },
 ]
 
 export const CHAMBRES_CRISE: string[] = [

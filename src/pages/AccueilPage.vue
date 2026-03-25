@@ -931,4 +931,16 @@ async function saveCandidature(): Promise<void> {
     width: 100%;
   }
 }
+
+.quick-card:focus-visible,
+.btn-action:focus-visible,
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.form-group select:focus-visible,
+.form-group input:focus-visible,
+.form-group textarea:focus-visible,
+.radio-group input:focus-visible {
+  outline: 2px solid rgba(111, 190, 255, 0.84);
+  outline-offset: 2px;
+}
 </style>

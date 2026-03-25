@@ -1126,6 +1126,10 @@ onMounted(() => {
   gap: 1rem;
   overflow-y: auto;
   animation: fadeIn 0.28s ease;
+  background:
+    radial-gradient(circle at top left, rgba(24, 160, 251, 0.1), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(245, 158, 11, 0.08), transparent 20%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 24%), var(--bg);
 }
 .formation-hero {
   display: flex;

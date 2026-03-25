@@ -795,3 +795,480 @@ body {
     font-size: 1.12rem;
   }
 }
+
+/* ===== LSES-inspired UI Layer (hors Dispatch / Chambres / Morgue) ===== */
+
+:is(
+  .accueil-page,
+  .autopsie-page,
+  .commandes-page,
+  .connexion-page,
+  .formation-page,
+  .garage-page,
+  .inventaire-page,
+  .logs-page,
+  .notes-frais-page,
+  .rapports-page,
+  .rh-page,
+  .rendez-vous-page,
+  .stocks-page,
+  .utilisateurs-page
+) {
+  position: relative;
+  border-radius: 0;
+  border: 1px solid var(--border-subtle);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-elevated) 92%, transparent 8%),
+    color-mix(in srgb, var(--surface) 92%, transparent 8%)
+  );
+  box-shadow: var(--shadow-sm);
+
+  .page-header {
+    padding: 0.2rem 0.2rem 0.65rem;
+    border-bottom: 1px solid color-mix(in srgb, var(--border-subtle) 76%, transparent 24%);
+    margin-bottom: 0.55rem;
+  }
+
+  .tabs {
+    background: color-mix(in srgb, var(--surface) 76%, var(--theme-soft-band) 24%);
+    border: 1px solid var(--border-subtle);
+    box-shadow: inset 0 1px 0 var(--theme-chip-highlight);
+  }
+
+  .tabs button,
+  .tabs .tab {
+    font-weight: 700;
+    border-radius: 999px;
+  }
+
+  .tab-content {
+    padding-top: 0.3rem;
+  }
+
+  .data-table {
+    border: 1px solid var(--border-subtle);
+    background: color-mix(in srgb, var(--surface-elevated) 88%, transparent 12%);
+    box-shadow: var(--shadow-sm);
+
+    th {
+      background: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--surface) 72%, var(--brand-deep) 28%),
+        color-mix(in srgb, var(--surface) 82%, var(--brand-mid) 18%)
+      );
+      color: color-mix(in srgb, var(--text-primary) 85%, var(--accent-light) 15%);
+      letter-spacing: 0.07em;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    td {
+      border-bottom-color: color-mix(in srgb, var(--border-subtle) 82%, transparent 18%);
+    }
+
+    tbody tr:hover {
+      background: color-mix(in srgb, var(--surface-hover) 78%, var(--accent-subtle) 22%);
+    }
+  }
+
+  .btn-primary {
+    border: 1px solid color-mix(in srgb, var(--accent-hover) 54%, transparent 46%);
+    box-shadow:
+      0 8px 18px color-mix(in srgb, var(--accent) 24%, transparent 76%),
+      inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  }
+
+  .search-input {
+    background: color-mix(in srgb, var(--surface) 85%, transparent 15%);
+    border: 1px solid var(--border);
+  }
+
+  .empty-state {
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    background: color-mix(in srgb, var(--surface) 88%, transparent 12%);
+  }
+}
+
+[data-theme='light']
+  :is(
+    .accueil-page,
+    .autopsie-page,
+    .commandes-page,
+    .connexion-page,
+    .formation-page,
+    .garage-page,
+    .inventaire-page,
+    .logs-page,
+    .notes-frais-page,
+    .rapports-page,
+    .rh-page,
+    .rendez-vous-page,
+    .stocks-page,
+    .utilisateurs-page
+  ) {
+  background: linear-gradient(180deg, #fffefb, #f7efe4);
+  border-color: #dfceb3;
+  box-shadow: 0 14px 28px rgba(76, 56, 37, 0.14);
+
+  .data-table th {
+    background: linear-gradient(180deg, #f6ecdd, #ecdfcc);
+    color: #5b4c3b;
+  }
+
+  .empty-state {
+    background: #fbf4ea;
+    border-color: #d9c7ad;
+  }
+}
+
+:is(
+  .accueil-page,
+  .autopsie-page,
+  .commandes-page,
+  .connexion-page,
+  .formation-page,
+  .garage-page,
+  .inventaire-page,
+  .logs-page,
+  .notes-frais-page,
+  .rapports-page,
+  .rh-page,
+  .rendez-vous-page,
+  .stocks-page,
+  .utilisateurs-page
+) {
+  .stat-card,
+  .quick-access,
+  .summary-card,
+  .panel,
+  .widget,
+  .dialog {
+    background: color-mix(in srgb, var(--surface-elevated) 88%, transparent 12%);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    align-items: center;
+  }
+
+  .field,
+  .form-grid .field,
+  .dialog .field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.28rem;
+  }
+
+  .field > span,
+  .form-grid .field > span,
+  .dialog .field > span {
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    letter-spacing: 0.02em;
+  }
+
+  .empty {
+    color: var(--text-muted);
+  }
+}
+
+/* ===== Refonte pages demandées ===== */
+
+:is(
+  .inventaire-page,
+  .commandes-page,
+  .notes-frais-page,
+  .garage-page,
+  .stocks-page,
+  .rapports-page,
+  .rh-page,
+  .utilisateurs-page,
+  .logs-page,
+  .formation-page,
+  .rendez-vous-page
+) {
+  padding: 1.3rem 1.3rem 1.6rem;
+  gap: 1rem;
+
+  .page-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    padding: 0.25rem 0.15rem 0.7rem;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  h1 {
+    font-size: 1.26rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+
+  .tabs {
+    margin-top: 0.2rem;
+  }
+
+  .table-container,
+  .tab-content,
+  .stats-content {
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface-elevated) 90%, transparent 10%);
+    box-shadow: var(--shadow-sm);
+    padding: 0.7rem;
+  }
+
+  .tab-content {
+    margin-top: 0.5rem;
+  }
+
+  .data-table {
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .data-table th {
+    font-size: 0.68rem;
+    letter-spacing: 0.09em;
+  }
+}
+
+[data-theme='light']
+  :is(
+    .inventaire-page,
+    .commandes-page,
+    .notes-frais-page,
+    .garage-page,
+    .stocks-page,
+    .rapports-page,
+    .rh-page,
+    .utilisateurs-page,
+    .logs-page,
+    .formation-page,
+    .rendez-vous-page
+  ) {
+  .table-container,
+  .tab-content,
+  .stats-content {
+    background: #fffefb;
+    border-color: #dfceb3;
+    box-shadow: 0 10px 22px rgba(81, 59, 39, 0.1);
+  }
+}
+
+/* ===== LSES Fidelity Layer (pages demandées) ===== */
+
+:is(
+  .inventaire-page,
+  .commandes-page,
+  .notes-frais-page,
+  .garage-page,
+  .stocks-page,
+  .rapports-page,
+  .rh-page,
+  .utilisateurs-page,
+  .logs-page,
+  .formation-page,
+  .rendez-vous-page
+) {
+  height: calc(100% - 42px);
+  width: 100%;
+  padding: 1.2rem;
+  background: transparent;
+
+  .page-header,
+  > h1 {
+    margin: 0;
+    padding: 0;
+    border: none;
+  }
+
+  > .page-header,
+  > h1,
+  > .tabs,
+  > .tab-content,
+  > .table-container,
+  > .stat-grid,
+  > .stats-content {
+    position: relative;
+    z-index: 1;
+  }
+
+  .tabs {
+    width: fit-content;
+    background: #0f0e22;
+    border: 1px solid #25243e;
+    border-radius: 14px;
+    padding: 0.24rem;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
+
+    button,
+    .tab {
+      border-radius: 10px;
+      color: #9fa6bd;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 0.45rem 0.9rem;
+      border: none;
+      background: transparent;
+      transition: all 0.15s ease;
+    }
+
+    button.active,
+    .tab.active {
+      background: linear-gradient(135deg, #1976d2, #1e88e5);
+      color: #ffffff;
+      box-shadow: 0 6px 14px rgba(30, 136, 229, 0.35);
+    }
+  }
+
+  .table-container,
+  .tab-content,
+  .stats-content {
+    padding: 0.75rem;
+    border-radius: 16px;
+    border: 1px solid #2b3650;
+    background: color-mix(in srgb, var(--surface-elevated) 92%, #0f172a 8%);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+  }
+
+  .data-table {
+    border: 1px solid #2b3650;
+    border-radius: 12px;
+    overflow: hidden;
+    background: color-mix(in srgb, var(--surface-elevated) 94%, #0f172a 6%);
+
+    th {
+      background: linear-gradient(180deg, #121b2f, #0f172a);
+      color: #cbd5e1;
+      border-bottom: 1px solid #334155;
+      font-size: 0.68rem;
+      letter-spacing: 0.08em;
+    }
+
+    td {
+      border-bottom-color: #283548;
+    }
+
+    tbody tr:hover {
+      background: rgba(59, 130, 246, 0.08);
+    }
+  }
+
+  .search-input,
+  select,
+  input[type='text'],
+  input[type='date'] {
+    background: color-mix(in srgb, var(--surface) 88%, #0f172a 12%);
+    border: 1px solid #38506f;
+  }
+}
+
+[data-theme='light']
+  :is(
+    .inventaire-page,
+    .commandes-page,
+    .notes-frais-page,
+    .garage-page,
+    .stocks-page,
+    .rapports-page,
+    .rh-page,
+    .utilisateurs-page,
+    .logs-page,
+    .formation-page,
+    .rendez-vous-page
+  ) {
+  .tabs {
+    background: #e6ebf3;
+    border-color: #c8d2df;
+
+    button,
+    .tab {
+      color: #4b5a6d;
+    }
+  }
+
+  .table-container,
+  .tab-content,
+  .stats-content {
+    background: #ffffff;
+    border-color: #ccd5e2;
+    box-shadow: 0 8px 20px rgba(12, 24, 44, 0.08);
+  }
+
+  .data-table {
+    border-color: #cdd7e5;
+
+    th {
+      background: linear-gradient(180deg, #eff4fa, #e5edf7);
+      color: #3e4f64;
+      border-bottom-color: #cfd9e7;
+    }
+
+    td {
+      border-bottom-color: #e3eaf4;
+    }
+
+    tbody tr:hover {
+      background: rgba(25, 118, 210, 0.08);
+    }
+  }
+
+  .search-input,
+  select,
+  input[type='text'],
+  input[type='date'] {
+    background: #ffffff;
+    border-color: #c4d0df;
+  }
+}
+
+/* ── Dispatch : lisibilité en mode clair ─────────────────────── */
+
+[data-theme='light'] .dispatch-page .zone-header__count {
+  background: linear-gradient(180deg, var(--accent), var(--accent-hover));
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #ffffff;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.18),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+[data-theme='light'] .column-patate .section-header--status .service-chip__value {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 18%, var(--hopital-color, #46966d) 82%),
+    color-mix(in srgb, var(--surface) 10%, var(--hopital-color, #46966d) 90%)
+  );
+}
+
+[data-theme='light'] .column-patate .section-header--status .freq-group--bces .freq-input--inline,
+[data-theme='light'] .column-patate .section-header--status .freq-group--bces label {
+  color: #2d7a4a;
+}
+
+[data-theme='light'] .column-patate .section-header--status .freq-group--commune label {
+  color: #8c6000;
+}
+
+[data-theme='light']
+  .column-patate
+  .section-header--status
+  .freq-group--commune
+  .freq-input--inline {
+  color: #8c6000;
+}
+
+[data-theme='light'] .column-patate .section-header--status .freq-group--inline label {
+  color: #4a6b80;
+}

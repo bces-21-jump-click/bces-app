@@ -1224,6 +1224,23 @@ onUnmounted(() => {
   padding: 2rem;
 }
 
+.inline-input {
+  width: 100%;
+  padding: 0.36rem 0.54rem;
+  background: color-mix(in srgb, var(--input-bg) 86%, transparent 14%);
+  color: var(--text-primary);
+  border: 1px solid color-mix(in srgb, var(--dispatch-zone-border) 55%, transparent 45%);
+  border-radius: 10px;
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.mode-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
 .text-danger {
   color: var(--danger);
 }

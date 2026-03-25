@@ -805,6 +805,10 @@ function salleOperationRemplie(salleId: SalleOperationId): boolean {
   box-shadow: 0 2px 6px var(--theme-shadow-medium);
 }
 
+.column-head--top {
+  min-height: 42px;
+}
+
 .row-label {
   display: flex;
   align-items: center;
